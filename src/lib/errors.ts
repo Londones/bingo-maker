@@ -13,6 +13,7 @@ export enum APIErrorCode {
     MIGRATION_ERROR = "MIGRATION_ERROR",
     FAILED_TO_CREATE_BINGO = "FAILED_TO_CREATE_BINGO",
     MISSING_ID_OR_SHARE_TOKEN = "MISSING_ID_OR_SHARE_TOKEN",
+    FAILED_TO_GET_BINGOS = "FAILED_TO_GET_BINGOS",
 }
 
 export const errorStatusMap: Record<APIErrorCode, number> = {
@@ -22,5 +23,6 @@ export const errorStatusMap: Record<APIErrorCode, number> = {
     [APIErrorCode.DATABASE_ERROR]: 500,
     [APIErrorCode.MIGRATION_ERROR]: 556,
     [APIErrorCode.FAILED_TO_CREATE_BINGO]: 557,
+    [APIErrorCode.FAILED_TO_GET_BINGOS]: 558,
     [APIErrorCode.MISSING_ID_OR_SHARE_TOKEN]: 445,
 };

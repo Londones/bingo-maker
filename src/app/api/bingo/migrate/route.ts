@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
+import { APIError, APIErrorCode } from "@/lib/errors";
 import { authOptions } from "@/lib/auth";
+import { handleAPIError } from "@/lib/api-utils";
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        throw new APIError("Unauthorized", APIErrorCode.UNAUTHORIZED);
     }
 
     const { bingoIds, authorToken, userId } = await req.json();
@@ -24,12 +26,15 @@ export async function POST(req: Request) {
             },
         });
 
+        if (updated.count === 0) {
+            throw new APIError("No bingos found to migrate", APIErrorCode.BINGO_NOT_FOUND, 444);
+        }
+
         return NextResponse.json({
             success: true,
             migratedCount: updated.count,
         });
     } catch (error) {
-        console.error("Migration error:", error);
-        return NextResponse.json({ error: "Failed to migrate bingos" }, { status: 500 });
+        return handleAPIError(error);
     }
 }

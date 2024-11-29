@@ -2,8 +2,18 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { APIError, APIErrorCode } from "@/lib/errors";
+import { handleAPIError } from "@/lib/api-utils";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    const shareToken = searchParams.get("shareToken");
+
+    if (!id || !shareToken) {
+        throw new APIError("Missing ID or shareToken", APIErrorCode.MISSING_ID_OR_SHARE_TOKEN, 445);
+    }
+
     try {
         const bingo = await prisma.bingo.findUnique({
             where: { id: params.id },
@@ -11,12 +21,12 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         });
 
         if (!bingo) {
-            return NextResponse.json({ error: "Bingo not found" }, { status: 404 });
+            throw new APIError("Bingo not found", APIErrorCode.BINGO_NOT_FOUND, 444);
         }
 
         return NextResponse.json(bingo);
     } catch (error) {
-        return NextResponse.json({ error: "Failed to fetch bingo" }, { status: 500 });
+        return handleAPIError(error);
     }
 }
 
@@ -30,12 +40,12 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         });
 
         if (!bingo) {
-            return NextResponse.json({ error: "Bingo not found" }, { status: 404 });
+            throw new APIError("Bingo not found", APIErrorCode.BINGO_NOT_FOUND, 444);
         }
 
         // Check if user has permission to update
         if (bingo.userId !== session?.user?.id && bingo.authorToken !== data.authorToken) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+            throw new APIError("Unauthorized", APIErrorCode.UNAUTHORIZED, 401);
         }
 
         const updated = await prisma.bingo.update({
@@ -65,9 +75,12 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
             },
         });
 
+        if (!updated) {
+            throw new APIError("Failed to update bingo", APIErrorCode.DATABASE_ERROR, 500);
+        }
+
         return NextResponse.json(updated);
     } catch (error) {
-        console.error("Update bingo error:", error);
-        return NextResponse.json({ error: "Failed to update bingo" }, { status: 500 });
+        return handleAPIError(error);
     }
 }

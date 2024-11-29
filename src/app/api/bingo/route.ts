@@ -32,35 +32,60 @@ export async function POST(req: Request) {
             },
         });
 
+        if (!bingo) {
+            throw new APIError("Failed to create bingo", APIErrorCode.FAILED_TO_CREATE_BINGO, 557);
+        }
+
         return NextResponse.json(bingo);
     } catch (error) {
-        console.error("Create bingo error:", error);
-        throw new APIError("Failed to create bingo", APIErrorCode.FAILED_TO_CREATE_BINGO, 557);
+        return handleAPIError(error);
     }
 }
 
 export async function GET(req: Request) {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
-    const shareToken = searchParams.get("shareToken");
-
-    if (!id && !shareToken) {
-        throw new APIError("Missing ID or shareToken", APIErrorCode.MISSING_ID_OR_SHARE_TOKEN, 445);
-    }
-
     try {
-        const bingo = await prisma.bingo.findUnique({
-            where: shareToken ? { shareToken } : { id },
-            include: {
-                cells: true,
-            },
-        });
+        const { searchParams } = new URL(req.url);
+        const cursor = searchParams.get("cursor");
+        const limit = Number(searchParams.get("limit")) || 10;
 
-        if (!bingo) {
-            throw new APIError("Bingo not found", APIErrorCode.BINGO_NOT_FOUND, 444);
+        const totalCount = await prisma.bingo.count();
+
+        if (cursor) {
+            const cursorExists = await prisma.bingo.findUnique({
+                where: { id: cursor },
+            });
+
+            if (!cursorExists) {
+                throw new APIError("Invalid cursor position", APIErrorCode.INVALID_REQUEST, 400);
+            }
         }
 
-        return NextResponse.json(bingo);
+        const bingos = await prisma.bingo.findMany({
+            take: limit + 1,
+            ...(cursor && {
+                cursor: { id: cursor },
+                skip: 1,
+            }),
+            orderBy: { createdAt: "desc" },
+            include: { cells: true },
+        });
+
+        // Handle empty results with existing records
+        if (!bingos?.length && totalCount > 0) {
+            throw new APIError("Failed to retrieve bingos", APIErrorCode.FAILED_TO_GET_BINGOS, 500);
+        }
+
+        const hasMore = bingos.length > limit;
+        const items = hasMore ? bingos.slice(0, limit) : bingos;
+        const nextCursor = hasMore ? items[items.length - 1].id : undefined;
+
+        return NextResponse.json({
+            items,
+            nextCursor,
+            hasMore,
+            total: totalCount,
+            currentPage: cursor ? Math.floor(totalCount / limit) : 1,
+        });
     } catch (error) {
         return handleAPIError(error);
     }
