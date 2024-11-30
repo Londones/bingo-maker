@@ -10,25 +10,3 @@ declare module "next-auth" {
         };
     }
 }
-
-export interface BingoData {
-    id?: string;
-    title: string;
-    gridSize: number;
-    cells: Array<{
-        id?: string;
-        content: string;
-        position: number;
-        validated: boolean;
-    }>;
-    style: {
-        fontSize: number;
-        fontFamily: string;
-        color: string;
-        cellSize: number;
-        gap: number;
-    };
-    background?: string;
-    stamp: string;
-    authorToken?: string;
-}

@@ -17,7 +17,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     try {
         const bingo = await prisma.bingo.findUnique({
             where: { id: params.id },
-            include: { cells: true },
+            include: { cells: true, background: true, stamp: true },
         });
 
         if (!bingo) {
@@ -53,8 +53,36 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
             data: {
                 title: data.title,
                 style: data.style,
-                background: data.background,
-                stamp: data.stamp,
+                background: {
+                    upsert: {
+                        where: { bingoId: bingo.id },
+                        create: {
+                            type: data.background.type,
+                            value: data.background.value,
+                        },
+                        update: {
+                            type: data.background.type,
+                            value: data.background.value,
+                        },
+                    },
+                },
+                stamp: {
+                    upsert: {
+                        where: { bingoId: bingo.id },
+                        create: {
+                            type: data.stamp.type,
+                            value: data.stamp.value,
+                            size: data.stamp.size,
+                            opacity: data.stamp.opacity,
+                        },
+                        update: {
+                            type: data.stamp.type,
+                            value: data.stamp.value,
+                            size: data.stamp.size,
+                            opacity: data.stamp.opacity,
+                        },
+                    },
+                },
                 cells: {
                     upsert: data.cells.map((cell: any) => ({
                         where: { id: cell.id },
@@ -72,6 +100,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
             },
             include: {
                 cells: true,
+                background: true,
+                stamp: true,
             },
         });
 

@@ -69,6 +69,7 @@ describe("Bingo API Routes", () => {
 
     describe("GET /api/bingo", () => {
         it("should return paginated bingos", async () => {
+            // Arrange
             const mockBingos = Array.from({ length: 11 }, (_, i) => ({
                 id: `${i}`,
                 createdAt: new Date(),
@@ -77,8 +78,10 @@ describe("Bingo API Routes", () => {
 
             (prisma.bingo.findMany as jest.Mock).mockResolvedValue(mockBingos);
 
+            // Act
             const response = await GET(new NextRequest(`${API_URL}/api/bingo?limit=10`));
 
+            // Assert
             const data = await response.json();
             expect(data.items).toHaveLength(10);
             expect(data.hasMore).toBe(true);
@@ -86,6 +89,7 @@ describe("Bingo API Routes", () => {
         });
 
         it("handles less than limit entries correctly", async () => {
+            // Arrange
             const smallDataset = Array.from({ length: 5 }, (_, i) => ({
                 id: `${i}`,
                 createdAt: new Date(),
@@ -94,8 +98,10 @@ describe("Bingo API Routes", () => {
 
             (prisma.bingo.findMany as jest.Mock).mockResolvedValue(smallDataset);
 
+            // Act
             const response = await GET(new NextRequest(`${API_URL}/api/bingo?limit=10`));
 
+            // Assert
             const data = await response.json();
             expect(data.items).toHaveLength(5);
             expect(data.hasMore).toBe(false);
@@ -103,6 +109,7 @@ describe("Bingo API Routes", () => {
         });
 
         it("should return second page of bingos", async () => {
+            // Arrange
             const mockBingos = Array.from({ length: 11 }, (_, i) => ({
                 id: `${i}`,
                 createdAt: new Date(),
@@ -111,8 +118,10 @@ describe("Bingo API Routes", () => {
 
             (prisma.bingo.findMany as jest.Mock).mockResolvedValue(mockBingos);
 
+            // Act
             const response = await GET(new NextRequest(`${API_URL}/api/bingo?limit=10&cursor=5`));
 
+            // Assert
             const data = await response.json();
             expect(data.items).toHaveLength(5);
             expect(data.hasMore).toBe(false);

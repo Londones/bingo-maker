@@ -5,6 +5,20 @@ export class APIError extends Error {
     }
 }
 
+export class UploadError extends Error {
+    constructor(public message: string, public code: UploadErrorCode, public status: number = 401) {
+        super(message);
+        this.name = "UploadError";
+    }
+}
+
+export enum UploadErrorCode {
+    INVALID_FILE_TYPE = "INVALID_FILE_TYPE",
+    INVALID_FILE_SIZE = "INVALID_FILE_SIZE",
+    UPLOAD_ERROR = "UPLOAD_ERROR",
+    UNAUTHORIZED = "UNAUTHORIZED",
+}
+
 export enum APIErrorCode {
     BINGO_NOT_FOUND = "BINGO_NOT_FOUND",
     INVALID_REQUEST = "INVALID_REQUEST",
@@ -14,6 +28,8 @@ export enum APIErrorCode {
     FAILED_TO_CREATE_BINGO = "FAILED_TO_CREATE_BINGO",
     MISSING_ID_OR_SHARE_TOKEN = "MISSING_ID_OR_SHARE_TOKEN",
     FAILED_TO_GET_BINGOS = "FAILED_TO_GET_BINGOS",
+    FAILED_TO_CREATE_SUGGESTION = "FAILED_TO_CREATE_SUGGESTION",
+    FAILED_TO_UPDATE_SUGGESTION = "FAILED_TO_UPDATE_SUGGESTION",
 }
 
 export const errorStatusMap: Record<APIErrorCode, number> = {
@@ -24,5 +40,7 @@ export const errorStatusMap: Record<APIErrorCode, number> = {
     [APIErrorCode.MIGRATION_ERROR]: 556,
     [APIErrorCode.FAILED_TO_CREATE_BINGO]: 557,
     [APIErrorCode.FAILED_TO_GET_BINGOS]: 558,
+    [APIErrorCode.FAILED_TO_CREATE_SUGGESTION]: 559,
+    [APIErrorCode.FAILED_TO_UPDATE_SUGGESTION]: 560,
     [APIErrorCode.MISSING_ID_OR_SHARE_TOKEN]: 445,
 };

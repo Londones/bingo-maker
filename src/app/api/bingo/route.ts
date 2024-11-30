@@ -15,8 +15,20 @@ export async function POST(req: Request) {
                 title: data.title,
                 gridSize: data.gridSize,
                 style: data.style,
-                background: data.background,
-                stamp: data.stamp,
+                background: {
+                    create: {
+                        type: data.background.type,
+                        value: data.background.value,
+                    },
+                },
+                stamp: {
+                    create: {
+                        type: data.stamp.type,
+                        value: data.stamp.value,
+                        size: data.stamp.size,
+                        opacity: data.stamp.opacity,
+                    },
+                },
                 userId: session?.user?.id || null,
                 authorToken: data.authorToken, // Store anonymous author token
                 cells: {
@@ -29,6 +41,8 @@ export async function POST(req: Request) {
             },
             include: {
                 cells: true,
+                stamp: true,
+                background: true,
             },
         });
 
