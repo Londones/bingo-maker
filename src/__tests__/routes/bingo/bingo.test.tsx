@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { GET, PATCH } from "@/app/api/bingo/[id]/route";
+import { GET, PATCH, DELETE } from "@/app/api/bingo/[id]/route";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 
@@ -128,6 +128,55 @@ describe("Bingo API Routes", () => {
                 }),
                 { params: { id: "1" } }
             );
+
+            // Assert
+            expect(response.status).toBe(401);
+            const data = await response.json();
+            expect(data.code).toBe("UNAUTHORIZED");
+        });
+    });
+
+    describe("DELETE /api/bingo/[id]", () => {
+        it("should delete bingo when authorized", async () => {
+            // Arrange
+            const mockSession = { user: { id: "1" } };
+            (getServerSession as jest.Mock).mockResolvedValue(mockSession);
+            (prisma.bingo.findUnique as jest.Mock).mockResolvedValue({
+                ...mockBingo,
+                userId: "1",
+            });
+
+            // Act
+            const response = await DELETE(new NextRequest(`${API_URL}/api/bingo/1`), { params: { id: "1" } });
+
+            // Assert
+            expect(response.status).toBe(200);
+        });
+
+        it("should return 444 when bingo not found", async () => {
+            // Arrange
+            (prisma.bingo.findUnique as jest.Mock).mockResolvedValue(null);
+
+            // Act
+            const response = await DELETE(new NextRequest(`${API_URL}/api/bingo/999`), { params: { id: "999" } });
+
+            // Assert
+            expect(response.status).toBe(444);
+            const data = await response.json();
+            expect(data.code).toBe("BINGO_NOT_FOUND");
+        });
+
+        it("should return 401 when unauthorized", async () => {
+            // Arrange
+            const mockSession = { user: { id: "2" } };
+            (getServerSession as jest.Mock).mockResolvedValue(mockSession);
+            (prisma.bingo.findUnique as jest.Mock).mockResolvedValue({
+                ...mockBingo,
+                userId: "1",
+            });
+
+            // Act
+            const response = await DELETE(new NextRequest(`${API_URL}/api/bingo/1`), { params: { id: "1" } });
 
             // Assert
             expect(response.status).toBe(401);

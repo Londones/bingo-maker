@@ -19,35 +19,41 @@ export const authOptions: NextAuthOptions = {
     },
     callbacks: {
         async session({ token, session }) {
-            if (token) {
-                session.user.id = token.id as string;
-                session.user.name = token.name as string;
-                session.user.email = token.email as string;
-                session.user.image = token.picture as string;
+            try {
+                if (token) {
+                    session.user.id = token.id as string;
+                    session.user.name = token.name as string;
+                    session.user.email = token.email as string;
+                }
+                return session;
+            } catch (error) {
+                console.error("Session callback error:", error);
+                return session;
             }
-
-            return session;
         },
         async jwt({ token, user }) {
-            const dbUser = await prisma.user.findFirst({
-                where: {
-                    email: token.email,
-                },
-            });
+            try {
+                const dbUser = await prisma.user.findFirst({
+                    where: { email: token.email },
+                    select: { id: true, name: true, email: true },
+                });
 
-            if (!dbUser) {
-                if (user) {
-                    token.id = user?.id;
+                if (!dbUser) {
+                    if (user) {
+                        token.id = user?.id;
+                    }
+                    return token;
                 }
+
+                return {
+                    id: dbUser.id,
+                    name: dbUser.name,
+                    email: dbUser.email,
+                };
+            } catch (error) {
+                console.error("JWT callback error:", error);
                 return token;
             }
-
-            return {
-                id: dbUser.id,
-                name: dbUser.name,
-                email: dbUser.email,
-                picture: dbUser.image,
-            };
         },
     },
 };

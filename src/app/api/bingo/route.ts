@@ -30,7 +30,7 @@ export async function POST(req: Request) {
                     },
                 },
                 userId: session?.user?.id || null,
-                authorToken: data.authorToken, // Store anonymous author token
+                authorToken: data.authorToken || null, // Store anonymous author token
                 cells: {
                     create: data.cells.map((cell: any, index: number) => ({
                         content: cell.content,
@@ -84,7 +84,6 @@ export async function GET(req: Request) {
             include: { cells: true },
         });
 
-        // Handle empty results with existing records
         if (!bingos?.length && totalCount > 0) {
             throw new APIError("Failed to retrieve bingos", APIErrorCode.FAILED_TO_GET_BINGOS, 500);
         }

@@ -43,8 +43,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
             throw new APIError("Bingo not found", APIErrorCode.BINGO_NOT_FOUND, 444);
         }
 
-        // Check if user has permission to update
-        if (bingo.userId !== session?.user?.id && bingo.authorToken !== data.authorToken) {
+        if (bingo.userId !== session?.user?.id || bingo.authorToken !== data.authorToken) {
             throw new APIError("Unauthorized", APIErrorCode.UNAUTHORIZED, 401);
         }
 
@@ -110,6 +109,32 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         }
 
         return NextResponse.json(updated);
+    } catch (error) {
+        return handleAPIError(error);
+    }
+}
+
+export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+    const session = await getServerSession(authOptions);
+
+    try {
+        const bingo = await prisma.bingo.findUnique({
+            where: { id: params.id },
+        });
+
+        if (!bingo) {
+            throw new APIError("Bingo not found", APIErrorCode.BINGO_NOT_FOUND, 444);
+        }
+
+        if (bingo.userId !== session?.user?.id) {
+            throw new APIError("Unauthorized", APIErrorCode.UNAUTHORIZED, 401);
+        }
+
+        await prisma.bingo.delete({
+            where: { id: params.id },
+        });
+
+        return NextResponse.json({ success: true });
     } catch (error) {
         return handleAPIError(error);
     }

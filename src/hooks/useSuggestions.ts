@@ -1,33 +1,64 @@
-import { useEffect, useState } from "react";
-import { Suggestion } from "@/types/types";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export function useSuggestions(bingoId: string) {
-    const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+    const queryClient = useQueryClient();
 
-    useEffect(() => {
-        const eventSource = new EventSource(`/api/bingo/${bingoId}/suggestions`);
+    // Fetch suggestions with polling
+    const { data: suggestions = [], isLoading } = useQuery({
+        queryKey: ["suggestions", bingoId],
+        queryFn: async () => {
+            const res = await fetch(`/api/bingo/${bingoId}/suggestions`);
+            const data = await res.json();
+            if (!res.ok) return [];
+            return data;
+        },
+        refetchInterval: 3000,
+    });
 
-        eventSource.onmessage = (event) => {
-            const newSuggestions = JSON.parse(event.data);
-            setSuggestions((prev) => [...prev, ...newSuggestions]);
-        };
+    // Add suggestion mutation
+    const useAddSuggestion = useMutation({
+        mutationFn: async (content: string) => {
+            const res = await fetch(`/api/bingo/${bingoId}/suggestions`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ content }),
+            });
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["suggestions", bingoId] });
+        },
+    });
 
-        return () => eventSource.close();
-    }, [bingoId]);
+    // Update suggestion mutation
+    const useUpdateSuggestion = useMutation({
+        mutationFn: async ({
+            suggestionId,
+            status,
+            position,
+        }: {
+            suggestionId: string;
+            status: string;
+            position?: number;
+        }) => {
+            const res = await fetch(`/api/bingo/${bingoId}/suggestions`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ suggestionId, status, position }),
+            });
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["suggestions", bingoId] });
+        },
+    });
 
-    const addSuggestion = async (content: string) => {
-        await fetch(`/api/bingo/${bingoId}/suggestions`, {
-            method: "POST",
-            body: JSON.stringify({ content }),
-        });
+    return {
+        suggestions,
+        isLoading,
+        useAddSuggestion: useAddSuggestion.mutate,
+        useUpdateSuggestion: useUpdateSuggestion.mutate,
+        isAddingError: useAddSuggestion.isError,
+        isUpdatingError: useUpdateSuggestion.isError,
     };
-
-    const updateSuggestion = async (suggestionId: string, status: string) => {
-        await fetch(`/api/bingo/${bingoId}/suggestions`, {
-            method: "PATCH",
-            body: JSON.stringify({ suggestionId, status }),
-        });
-    };
-
-    return { suggestions, addSuggestion, updateSuggestion };
 }

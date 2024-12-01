@@ -1,30 +1,16 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { generateAuthorToken } from "@/lib/generate-token";
-import type { BingoData } from "@/types/next-auth";
-import { APIErrorCode } from "@/lib/errors";
-
-interface APIErrorResponse {
-    code: APIErrorCode;
-    error: string;
-}
+import type { BingoData } from "@/types/types";
 
 export function useBingoStorage() {
     const { data: session } = useSession();
+    const queryClient = useQueryClient();
     const [authorToken, setAuthorToken] = useState<string | null>(null);
 
     useEffect(() => {
-        // Handle user session changes
-        if (session?.user) {
-            // User just logged in - migrate any localStorage bingos
-            const ownedBingos = JSON.parse(localStorage.getItem("ownedBingos") || "[]");
-            const localAuthorToken = localStorage.getItem("bingoAuthorToken");
-
-            if (ownedBingos.length > 0 && localAuthorToken) {
-                migrateBingos(ownedBingos, localAuthorToken, session.user.id);
-            }
-        } else {
-            // No session - handle anonymous user token
+        if (!session?.user) {
             const stored = localStorage.getItem("bingoAuthorToken");
             if (stored) {
                 setAuthorToken(stored);
@@ -36,101 +22,77 @@ export function useBingoStorage() {
         }
     }, [session]);
 
-    const migrateBingos = async (bingoIds: string[], authorToken: string, userId: string) => {
-        try {
-            const response = await fetch("/api/bingo/migrate", {
+    // Get bingo
+    const useGetBingo = (id: string) =>
+        useQuery({
+            queryKey: ["bingo", id],
+            queryFn: () => fetch(`/api/bingo/${id}`).then((res) => res.json()),
+            enabled: !!id,
+        });
+
+    // Save bingo
+    const useSaveBingo = useMutation({
+        mutationFn: (bingoData: BingoData) =>
+            fetch("/api/bingo", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    bingoIds,
-                    authorToken,
-                    userId,
+                    ...bingoData,
+                    authorToken: session?.user ? null : authorToken,
                 }),
-            });
-
-            if (response.ok) {
-                // Clear localStorage after successful migration
-                localStorage.removeItem("ownedBingos");
-                localStorage.removeItem("bingoAuthorToken");
+            }).then((res) => res.json()),
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ["bingos"] });
+            if (!session?.user) {
+                const stored = JSON.parse(localStorage.getItem("ownedBingos") || "[]");
+                localStorage.setItem("ownedBingos", JSON.stringify([...stored, data.id]));
             }
-        } catch (error) {
-            console.error("Failed to migrate bingos:", error);
-        }
-    };
+        },
+    });
 
-    const saveBingo = async (bingoData: BingoData) => {
-        try {
-            const payload = {
-                ...bingoData,
-                userId: session?.user?.id || null,
-                authorToken: !session?.user ? authorToken : null,
-            };
-
-            const response = await fetch("/api/bingo", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            });
-
-            const savedBingo = await response.json();
-
-            // Store bingo ID in localStorage for anonymous users
-            if (!session?.user && savedBingo.id) {
-                const ownedBingos = JSON.parse(localStorage.getItem("ownedBingos") || "[]");
-                if (!ownedBingos.includes(savedBingo.id)) {
-                    localStorage.setItem("ownedBingos", JSON.stringify([...ownedBingos, savedBingo.id]));
-                }
-            }
-
-            return savedBingo;
-        } catch (error) {
-            console.error("Failed to save bingo:", error);
-            throw error;
-        }
-    };
-
-    const getBingo = async (id: string) => {
-        try {
-            const response = await fetch(`/api/bingo?id=${id}`);
-            if (!response.ok) {
-                const errorData = (await response.json()) as APIErrorResponse;
-                throw new Error(`${errorData.code}: ${errorData.error}`);
-            }
-
-            const bingo = await response.json();
-            const canEdit = session?.user?.id === bingo.userId || (!session?.user && authorToken === bingo.authorToken);
-
-            return { ...bingo, canEdit };
-        } catch (error) {
-            console.error("Failed to fetch bingo:", error);
-            throw error;
-        }
-    };
-
-    const updateBingo = async (id: string, updates: Partial<BingoData>) => {
-        try {
-            const response = await fetch(`/api/bingo/${id}`, {
+    // Update bingo
+    const useUpdateBingo = useMutation({
+        mutationFn: ({ id, updates }: { id: string; updates: Partial<BingoData> }) =>
+            fetch(`/api/bingo/${id}`, {
                 method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    ...updates,
-                    userId: session?.user?.id || null,
-                    authorToken: !session?.user ? authorToken : null,
-                }),
-            });
+                body: JSON.stringify(updates),
+            }).then((res) => res.json()),
+        onSuccess: (_, { id }) => {
+            queryClient.invalidateQueries({ queryKey: ["bingo", id] });
+        },
+    });
 
-            return await response.json();
-        } catch (error) {
-            console.error("Failed to update bingo:", error);
-            throw error;
-        }
-    };
+    // Delete bingo
+    const useDeleteBingo = useMutation({
+        mutationFn: (id: string) => fetch(`/api/bingo/${id}`, { method: "DELETE" }),
+        onSuccess: (_, id) => {
+            queryClient.invalidateQueries({ queryKey: ["bingos"] });
+            if (!session?.user) {
+                const stored = JSON.parse(localStorage.getItem("ownedBingos") || "[]");
+                localStorage.setItem("ownedBingos", JSON.stringify(stored.filter((bingoId: string) => bingoId !== id)));
+            }
+        },
+    });
+
+    // Migration mutation
+    const useMigrateBingos = useMutation({
+        mutationFn: ({ bingoIds, authorToken, userId }: { bingoIds: string[]; authorToken: string; userId: string }) =>
+            fetch("/api/bingo/migrate", {
+                method: "POST",
+                body: JSON.stringify({ bingoIds, authorToken, userId }),
+            }).then((res) => res.json()),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["bingos"] });
+            localStorage.removeItem("ownedBingos");
+            localStorage.removeItem("bingoAuthorToken");
+        },
+    });
 
     return {
-        saveBingo,
-        getBingo,
-        updateBingo,
-        isAuthenticated: !!session?.user,
         authorToken,
+        useGetBingo,
+        useSaveBingo,
+        useUpdateBingo,
+        useDeleteBingo,
+        useMigrateBingos,
     };
 }
