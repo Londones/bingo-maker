@@ -4,47 +4,73 @@ import { handleAPIError } from "@/lib/api-utils";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
+import { SuggestionPatchRequest } from "@/types/types";
+import { Suggestions } from "@prisma/client";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-    const headers = new Headers({
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-    });
-
-    const stream = new TransformStream();
-    const writer = stream.writable.getWriter();
-
-    const suggestions = await prisma.suggestion.findMany({
-        where: { bingoId: params.id },
-        orderBy: { createdAt: "desc" },
-    });
-
-    writer.write(`data: ${JSON.stringify(suggestions)}\n\n`);
-
-    const interval = setInterval(async () => {
-        const newSuggestions = await prisma.suggestion.findMany({
-            where: {
-                bingoId: params.id,
-                createdAt: { gt: new Date(Date.now() - 5000) },
-            },
+export async function GET(req: NextRequest, { params }: { params: { id: string } }): Promise<Response> {
+    try {
+        const headers = new Headers({
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive",
         });
-        if (newSuggestions.length > 0) {
-            writer.write(`data: ${JSON.stringify(newSuggestions)}\n\n`);
+
+        const stream = new TransformStream();
+        const writer = stream.writable.getWriter();
+
+        // Initial suggestions fetch
+        try {
+            const suggestions = await prisma.suggestion.findMany({
+                where: { bingoId: params.id },
+                orderBy: { createdAt: "desc" },
+            });
+
+            await writer.write(`data: ${JSON.stringify(suggestions)}\n\n`);
+        } catch (error) {
+            throw new APIError("Failed to fetch initial suggestions", APIErrorCode.SUGGESTION_FETCH_ERROR, 500);
         }
-    }, 5000);
 
-    req.signal.addEventListener("abort", () => {
-        clearInterval(interval);
-        writer.close();
-    });
+        // Poll for new suggestions
+        const interval = setInterval(() => {
+            void (async (): Promise<void> => {
+                try {
+                    const newSuggestions = await prisma.suggestion.findMany({
+                        where: {
+                            bingoId: params.id,
+                            createdAt: { gt: new Date(Date.now() - 5000) },
+                        },
+                    });
 
-    return new Response(stream.readable, { headers });
+                    if (newSuggestions.length > 0) {
+                        await writer.write(`data: ${JSON.stringify(newSuggestions)}\n\n`);
+                    }
+                } catch (error) {
+                    console.error("Polling error:", error);
+                    // Don't throw here - keep connection alive
+                }
+            })();
+        }, 5000);
+
+        // Cleanup on disconnect
+        req.signal.addEventListener("abort", () => {
+            clearInterval(interval);
+            writer.close().catch((error) => {
+                console.error("Stream close error:", error);
+            });
+        });
+
+        return new Response(stream.readable, {
+            headers,
+            status: 200,
+        });
+    } catch (error) {
+        return handleAPIError(error);
+    }
 }
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: { id: string } }): Promise<NextResponse> {
     try {
-        const { content } = await req.json();
+        const { content } = (await req.json()) as Partial<Suggestions>;
         const suggestion = await prisma.suggestion.create({
             data: {
                 content,
@@ -62,10 +88,10 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     }
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: { id: string } }): Promise<NextResponse> {
     try {
         const session = await getServerSession(authOptions);
-        const { suggestionId, status, position } = await req.json();
+        const { suggestionId, status, position } = (await req.json()) as SuggestionPatchRequest;
 
         const bingo = await prisma.bingo.findUnique({
             where: { id: params.id },

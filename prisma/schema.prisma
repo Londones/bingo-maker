@@ -64,6 +64,7 @@ model Bingo {
     background  Background?
     stamp       StampConfig?
     suggestions Suggestion[]
+    status      String       @default("draft") // "draft" | "published"
     userId      String?
     authorToken String?
     shareToken  String?      @unique @default(cuid())

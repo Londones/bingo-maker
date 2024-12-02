@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { GET, POST } from "@/app/api/bingo/route";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
+import { Bingo, Error, PaginatedResponse } from "@/types/test-types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -23,7 +24,7 @@ describe("Bingo API Routes", () => {
         id: "1",
         title: "Test Bingo",
         cells: [{ id: "1", content: "Test Cell", position: 0 }],
-    };
+    } as Bingo;
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -44,7 +45,7 @@ describe("Bingo API Routes", () => {
 
             // Assert
             expect(response.status).toBe(200);
-            const data = await response.json();
+            const data = (await response.json()) as Bingo;
             expect(data).toEqual(mockBingo);
         });
 
@@ -62,7 +63,7 @@ describe("Bingo API Routes", () => {
 
             // Assert
             expect(response.status).toBe(557);
-            const data = await response.json();
+            const data = (await response.json()) as Error;
             expect(data.code).toBe("FAILED_TO_CREATE_BINGO");
         });
     });
@@ -82,7 +83,7 @@ describe("Bingo API Routes", () => {
             const response = await GET(new NextRequest(`${API_URL}/api/bingo?limit=10`));
 
             // Assert
-            const data = await response.json();
+            const data = (await response.json()) as PaginatedResponse<Bingo>;
             expect(data.items).toHaveLength(10);
             expect(data.hasMore).toBe(true);
             expect(data.nextCursor).toBe("9");
@@ -102,7 +103,7 @@ describe("Bingo API Routes", () => {
             const response = await GET(new NextRequest(`${API_URL}/api/bingo?limit=10`));
 
             // Assert
-            const data = await response.json();
+            const data = (await response.json()) as PaginatedResponse<Bingo>;
             expect(data.items).toHaveLength(5);
             expect(data.hasMore).toBe(false);
             expect(data.nextCursor).toBeUndefined();
@@ -122,7 +123,7 @@ describe("Bingo API Routes", () => {
             const response = await GET(new NextRequest(`${API_URL}/api/bingo?limit=10&cursor=5`));
 
             // Assert
-            const data = await response.json();
+            const data = (await response.json()) as PaginatedResponse<Bingo>;
             expect(data.items).toHaveLength(5);
             expect(data.hasMore).toBe(false);
             expect(data.nextCursor).toBeUndefined();

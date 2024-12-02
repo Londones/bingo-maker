@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { POST } from "@/app/api/bingo/migrate/route";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
+import { Bingo, Error, MigrationStatus } from "@/types/test-types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -22,7 +23,7 @@ describe("Bingo Migration API Routes", () => {
         id: "1",
         authorToken: "test-token",
         userId: null,
-    };
+    } as Bingo;
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -49,7 +50,7 @@ describe("Bingo Migration API Routes", () => {
 
             // Assert
             expect(response.status).toBe(200);
-            const data = await response.json();
+            const data = (await response.json()) as MigrationStatus;
             expect(data).toEqual({
                 success: true,
                 migratedCount: 1,
@@ -74,7 +75,7 @@ describe("Bingo Migration API Routes", () => {
 
             // Assert
             expect(response.status).toBe(401);
-            const data = await response.json();
+            const data = (await response.json()) as Error;
             expect(data.code).toBe("UNAUTHORIZED");
         });
 
@@ -98,7 +99,7 @@ describe("Bingo Migration API Routes", () => {
 
             // Assert
             expect(response.status).toBe(444);
-            const data = await response.json();
+            const data = (await response.json()) as Error;
             expect(data.code).toBe("BINGO_NOT_FOUND");
         });
     });

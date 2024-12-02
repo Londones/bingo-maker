@@ -16,7 +16,8 @@ export const uploadRouter = {
 
             return { userId: session.user.id };
         })
-        .onUploadComplete(async ({ metadata, file }) => {
+        // eslint-disable-next-line @typescript-eslint/require-await
+        .onUploadComplete(async ({ file }) => {
             return { url: file.url };
         }),
 
@@ -30,7 +31,8 @@ export const uploadRouter = {
 
             return { userId: session.user.id };
         })
-        .onUploadComplete(async ({ metadata, file }) => {
+        // eslint-disable-next-line @typescript-eslint/require-await
+        .onUploadComplete(async ({ file }) => {
             return { url: file.url };
         }),
 } satisfies FileRouter;

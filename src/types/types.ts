@@ -48,3 +48,21 @@ export interface Suggestion {
     content: string;
     status: "pending" | "added" | "rejected";
 }
+
+export interface PaginatedResponse<T> {
+    items: T[];
+    nextCursor?: string;
+    hasMore: boolean;
+}
+
+export interface MigrateRequest {
+    bingoIds: string[];
+    authorToken: string;
+    userId: string;
+}
+
+export interface SuggestionPatchRequest {
+    suggestionId: string;
+    status: "pending" | "added" | "rejected";
+    position: number;
+}

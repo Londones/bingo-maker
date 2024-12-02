@@ -18,7 +18,7 @@ export const authOptions: NextAuthOptions = {
         signIn: "/auth/signin",
     },
     callbacks: {
-        async session({ token, session }) {
+        session({ token, session }) {
             try {
                 if (token) {
                     session.user.id = token.id as string;

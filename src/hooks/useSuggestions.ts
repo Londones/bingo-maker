@@ -1,14 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Suggestion, SuggestionPatchRequest } from "@/types/types";
 
-export function useSuggestions(bingoId: string) {
+export function useSuggestions(bingoId: string): {
+    suggestions: Suggestion[];
+    isLoading: boolean;
+    useAddSuggestion: (content: string) => void;
+    useUpdateSuggestion: (params: SuggestionPatchRequest) => void;
+    isAddingError: boolean;
+    isUpdatingError: boolean;
+} {
     const queryClient = useQueryClient();
 
     // Fetch suggestions with polling
-    const { data: suggestions = [], isLoading } = useQuery({
+    const { data: suggestions = [], isLoading } = useQuery<Suggestion[]>({
         queryKey: ["suggestions", bingoId],
         queryFn: async () => {
             const res = await fetch(`/api/bingo/${bingoId}/suggestions`);
-            const data = await res.json();
+            const data = (await res.json()) as Suggestion[];
             if (!res.ok) return [];
             return data;
         },
@@ -26,7 +34,7 @@ export function useSuggestions(bingoId: string) {
             return res.json();
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["suggestions", bingoId] });
+            await queryClient.invalidateQueries({ queryKey: ["suggestions", bingoId] });
         },
     });
 
@@ -49,7 +57,7 @@ export function useSuggestions(bingoId: string) {
             return res.json();
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["suggestions", bingoId] });
+            await queryClient.invalidateQueries({ queryKey: ["suggestions", bingoId] });
         },
     });
 

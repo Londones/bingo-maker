@@ -4,9 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { APIError, APIErrorCode } from "@/lib/errors";
 import { handleAPIError } from "@/lib/api-utils";
+import type { Bingo } from "@prisma/client";
 
-export async function POST(req: Request) {
-    const data = await req.json();
+export async function POST(req: Request): Promise<NextResponse> {
+    const data = (await req.json()) as Partial<Bingo>;
     const session = await getServerSession(authOptions);
 
     try {
@@ -15,6 +16,7 @@ export async function POST(req: Request) {
                 title: data.title,
                 gridSize: data.gridSize,
                 style: data.style,
+                status: data.status || "draft",
                 background: {
                     create: {
                         type: data.background.type,
@@ -56,7 +58,7 @@ export async function POST(req: Request) {
     }
 }
 
-export async function GET(req: Request) {
+export async function GET(req: Request): Promise<NextResponse> {
     try {
         const { searchParams } = new URL(req.url);
         const cursor = searchParams.get("cursor");

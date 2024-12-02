@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { GET, PATCH, DELETE } from "@/app/api/bingo/[id]/route";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
+import { Bingo, Error } from "@/types/test-types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -23,7 +24,7 @@ describe("Bingo API Routes", () => {
         id: "1",
         title: "Test Bingo",
         cells: [{ id: "1", content: "Test Cell", position: 0 }],
-    };
+    } as Bingo;
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -39,7 +40,7 @@ describe("Bingo API Routes", () => {
 
             // Assert
             expect(response.status).toBe(200);
-            const data = await response.json();
+            const data = (await response.json()) as Bingo;
             expect(data).toEqual(mockBingo);
         });
 
@@ -49,7 +50,7 @@ describe("Bingo API Routes", () => {
 
             // Assert
             expect(response.status).toBe(445);
-            const data = await response.json();
+            const data = (await response.json()) as Error;
             expect(data.code).toBe("MISSING_ID_OR_SHARE_TOKEN");
         });
 
@@ -62,7 +63,7 @@ describe("Bingo API Routes", () => {
 
             // Assert
             expect(response.status).toBe(444);
-            const data = await response.json();
+            const data = (await response.json()) as Error;
             expect(data.code).toBe("BINGO_NOT_FOUND");
         });
     });
@@ -107,7 +108,7 @@ describe("Bingo API Routes", () => {
 
             // Assert
             expect(response.status).toBe(444);
-            const data = await response.json();
+            const data = (await response.json()) as Error;
             expect(data.code).toBe("BINGO_NOT_FOUND");
         });
 
@@ -131,7 +132,7 @@ describe("Bingo API Routes", () => {
 
             // Assert
             expect(response.status).toBe(401);
-            const data = await response.json();
+            const data = (await response.json()) as Error;
             expect(data.code).toBe("UNAUTHORIZED");
         });
     });
@@ -162,7 +163,7 @@ describe("Bingo API Routes", () => {
 
             // Assert
             expect(response.status).toBe(444);
-            const data = await response.json();
+            const data = (await response.json()) as Error;
             expect(data.code).toBe("BINGO_NOT_FOUND");
         });
 
@@ -180,7 +181,7 @@ describe("Bingo API Routes", () => {
 
             // Assert
             expect(response.status).toBe(401);
-            const data = await response.json();
+            const data = (await response.json()) as Error;
             expect(data.code).toBe("UNAUTHORIZED");
         });
     });

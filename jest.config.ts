@@ -28,9 +28,7 @@ const config: Config = {
     coverageDirectory: "coverage",
 
     // An array of regexp pattern strings used to skip coverage collection
-    // coveragePathIgnorePatterns: [
-    //   "\\\\node_modules\\\\"
-    // ],
+    coveragePathIgnorePatterns: ["\\\\node_modules\\\\"],
 
     // Indicates which provider should be used to instrument code for coverage
     coverageProvider: "v8",
@@ -91,7 +89,7 @@ const config: Config = {
 
     // A map from regular expressions to module names or to arrays of module names that allow to stub out resources with a single module
     moduleNameMapper: {
-        "^@/*": "<rootDir>/src/*",
+        "^@/(.*)$": "<rootDir>/src/$1",
     },
 
     // An array of regexp pattern strings, matched against all module paths before considered 'visible' to the module loader
@@ -104,7 +102,7 @@ const config: Config = {
     // notifyMode: "failure-change",
 
     // A preset that is used as a base for Jest's configuration
-    // preset: undefined,
+    preset: "ts-jest",
 
     // Run tests from one or more projects
     // projects: undefined,

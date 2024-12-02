@@ -4,8 +4,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { APIError, APIErrorCode } from "@/lib/errors";
 import { handleAPIError } from "@/lib/api-utils";
+import type { Bingo } from "@prisma/client";
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: { id: string } }): Promise<NextResponse> {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     const shareToken = searchParams.get("shareToken");
@@ -30,9 +31,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     }
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: { id: string } }): Promise<NextResponse> {
     const session = await getServerSession(authOptions);
-    const data = await req.json();
+    const data = (await req.json()) as Partial<Bingo>;
 
     try {
         const bingo = await prisma.bingo.findUnique({
@@ -52,6 +53,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
             data: {
                 title: data.title,
                 style: data.style,
+                status: data.status || bingo.status,
                 background: {
                     upsert: {
                         where: { bingoId: bingo.id },
@@ -114,7 +116,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: { id: string } }): Promise<NextResponse> {
     const session = await getServerSession(authOptions);
 
     try {

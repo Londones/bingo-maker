@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { GET, PATCH, POST } from "@/app/api/bingo/[id]/suggestions/route";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
+import { Suggestion, Error } from "@/types/test-types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -23,7 +24,8 @@ describe("Bingo Suggestions API Routes", () => {
     const mockSuggestion = {
         id: "1",
         content: "Test Suggestion",
-    };
+        status: "pending",
+    } as Suggestion;
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -39,7 +41,7 @@ describe("Bingo Suggestions API Routes", () => {
 
             // Assert
             expect(response.status).toBe(200);
-            const data = await response.json();
+            const data = (await response.json()) as Suggestion[];
             expect(data).toEqual([mockSuggestion]);
         });
     });
@@ -47,8 +49,6 @@ describe("Bingo Suggestions API Routes", () => {
     describe("POST /api/bingo/[id]/suggestions", () => {
         it("should create suggestion successfully", async () => {
             // Arrange
-            const mockSession = { user: { id: "1" } };
-            (getServerSession as jest.Mock).mockResolvedValue(mockSession);
             (prisma.suggestion.create as jest.Mock).mockResolvedValue(mockSuggestion);
 
             // Act
@@ -62,7 +62,7 @@ describe("Bingo Suggestions API Routes", () => {
 
             // Assert
             expect(response.status).toBe(200);
-            const data = await response.json();
+            const data = (await response.json()) as Suggestion;
             expect(data).toEqual(mockSuggestion);
         });
 
@@ -81,7 +81,7 @@ describe("Bingo Suggestions API Routes", () => {
 
             // Assert
             expect(response.status).toBe(559);
-            const data = await response.json();
+            const data = (await response.json()) as Error;
             expect(data.code).toBe("FAILED_TO_CREATE_SUGGESTION");
         });
     });
@@ -104,7 +104,7 @@ describe("Bingo Suggestions API Routes", () => {
 
             // Assert
             expect(response.status).toBe(200);
-            const data = await response.json();
+            const data = (await response.json()) as Suggestion;
             expect(data).toEqual(mockSuggestion);
         });
 
@@ -123,7 +123,7 @@ describe("Bingo Suggestions API Routes", () => {
 
             // Assert
             expect(response.status).toBe(560);
-            const data = await response.json();
+            const data = (await response.json()) as Error;
             expect(data.code).toBe("FAILED_TO_UPDATE_SUGGESTION");
         });
 
@@ -142,7 +142,7 @@ describe("Bingo Suggestions API Routes", () => {
 
             // Assert
             expect(response.status).toBe(401);
-            const data = await response.json();
+            const data = (await response.json()) as Error;
             expect(data.code).toBe("UNAUTHORIZED");
         });
 
@@ -154,14 +154,14 @@ describe("Bingo Suggestions API Routes", () => {
             const response = await PATCH(
                 new NextRequest(`${API_URL}/api/bingo/1/suggestions`, {
                     method: "PATCH",
-                    body: JSON.stringify({ suggestionId: mockSuggestion.id, status: "approved" }),
+                    body: JSON.stringify({ suggestionId: mockSuggestion.id, status: "added" }),
                 }),
                 { params: { id: "1" } }
             );
 
             // Assert
             expect(response.status).toBe(444);
-            const data = await response.json();
+            const data = (await response.json()) as Error;
             expect(data.code).toBe("BINGO_NOT_FOUND");
         });
     });
