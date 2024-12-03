@@ -33,7 +33,7 @@ export function useSuggestions(bingoId: string): {
             });
             return res.json();
         },
-        onSuccess: () => {
+        onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ["suggestions", bingoId] });
         },
     });
@@ -56,7 +56,7 @@ export function useSuggestions(bingoId: string): {
             });
             return res.json();
         },
-        onSuccess: () => {
+        onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ["suggestions", bingoId] });
         },
     });

@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { SuggestionPatchRequest } from "@/types/types";
-import { Suggestions } from "@prisma/client";
+import { Suggestion } from "@prisma/client";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }): Promise<Response> {
     try {
@@ -70,7 +70,12 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
 export async function POST(req: Request, { params }: { params: { id: string } }): Promise<NextResponse> {
     try {
-        const { content } = (await req.json()) as Partial<Suggestions>;
+        const { content } = (await req.json()) as Partial<Suggestion>;
+
+        if (!content) {
+            throw new APIError("Add text to your suggestion", APIErrorCode.CONTENT_REQUIRED, 402);
+        }
+
         const suggestion = await prisma.suggestion.create({
             data: {
                 content,

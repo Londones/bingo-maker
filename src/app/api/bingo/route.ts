@@ -4,10 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { APIError, APIErrorCode } from "@/lib/errors";
 import { handleAPIError } from "@/lib/api-utils";
-import type { Bingo } from "@prisma/client";
+import { Bingo, BingoCell } from "@/types/types";
 
 export async function POST(req: Request): Promise<NextResponse> {
-    const data = (await req.json()) as Partial<Bingo>;
+    const data = (await req.json()) as Bingo;
     const session = await getServerSession(authOptions);
 
     try {
@@ -16,11 +16,11 @@ export async function POST(req: Request): Promise<NextResponse> {
                 title: data.title,
                 gridSize: data.gridSize,
                 style: data.style,
-                status: data.status || "draft",
+                status: data.status,
                 background: {
                     create: {
-                        type: data.background.type,
-                        value: data.background.value,
+                        type: data.background!.type,
+                        value: data.background!.value,
                     },
                 },
                 stamp: {
@@ -34,7 +34,7 @@ export async function POST(req: Request): Promise<NextResponse> {
                 userId: session?.user?.id || null,
                 authorToken: data.authorToken || null, // Store anonymous author token
                 cells: {
-                    create: data.cells.map((cell: any, index: number) => ({
+                    create: data.cells.map((cell: BingoCell, index: number) => ({
                         content: cell.content,
                         position: index,
                         validated: cell.validated || false,
@@ -92,7 +92,7 @@ export async function GET(req: Request): Promise<NextResponse> {
 
         const hasMore = bingos.length > limit;
         const items = hasMore ? bingos.slice(0, limit) : bingos;
-        const nextCursor = hasMore ? items[items.length - 1].id : undefined;
+        const nextCursor = hasMore ? items[items.length - 1]!.id : undefined;
 
         return NextResponse.json({
             items,

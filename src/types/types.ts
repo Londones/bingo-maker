@@ -1,30 +1,39 @@
-export interface BingoData {
-    id?: string;
+export interface BingoCell {
+    id: string;
+    content: string;
+    position: number;
+    validated: boolean;
+}
+
+export interface Style {
+    fontSize: number;
+    fontFamily: string;
+    color: string;
+    cellSize: number;
+    gap: number;
+}
+
+export interface Background {
+    type: "image" | "gradient";
+    value: string;
+}
+
+export interface Stamp {
+    type: "text" | "image";
+    value: string;
+    size: number;
+    opacity: number;
+}
+
+export interface Bingo {
+    id: string;
     title: string;
     gridSize: number;
-    cells: Array<{
-        id?: string;
-        content: string;
-        position: number;
-        validated: boolean;
-    }>;
-    style: {
-        fontSize: number;
-        fontFamily: string;
-        color: string;
-        cellSize: number;
-        gap: number;
-    };
-    background?: {
-        type: "image" | "gradient";
-        value: string;
-    };
-    stamp: {
-        type: "text" | "image";
-        value: string;
-        size: number;
-        opacity: number;
-    };
+    status: "draft" | "published";
+    cells: BingoCell[];
+    style: Style;
+    background?: Background;
+    stamp: Stamp;
     authorToken?: string;
 }
 

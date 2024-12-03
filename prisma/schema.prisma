@@ -60,7 +60,7 @@ model Bingo {
     title       String
     gridSize    Int
     cells       BingoCell[]
-    style       Json
+    style       String
     background  Background?
     stamp       StampConfig?
     suggestions Suggestion[]

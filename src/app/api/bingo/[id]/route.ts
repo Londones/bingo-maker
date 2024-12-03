@@ -4,9 +4,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { APIError, APIErrorCode } from "@/lib/errors";
 import { handleAPIError } from "@/lib/api-utils";
-import type { Bingo } from "@prisma/client";
+import { Bingo, BingoCell } from "@/types/types";
 
-export async function GET(req: Request, { params }: { params: { id: string } }): Promise<NextResponse> {
+export async function GET(req: Request, { params }: { params: { id: string } }) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     const shareToken = searchParams.get("shareToken");
@@ -31,7 +31,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }):
     }
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }): Promise<NextResponse> {
+export async function PATCH(req: Request, { params }: { params: { id: string } }) {
     const session = await getServerSession(authOptions);
     const data = (await req.json()) as Partial<Bingo>;
 
@@ -52,18 +52,18 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
             where: { id: params.id },
             data: {
                 title: data.title,
-                style: data.style,
+                style: data.style || bingo.style,
                 status: data.status || bingo.status,
                 background: {
                     upsert: {
                         where: { bingoId: bingo.id },
                         create: {
-                            type: data.background.type,
-                            value: data.background.value,
+                            type: data.background?.type,
+                            value: data.background?.value,
                         },
                         update: {
-                            type: data.background.type,
-                            value: data.background.value,
+                            type: data.background?.type,
+                            value: data.background?.value,
                         },
                     },
                 },
@@ -71,21 +71,21 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
                     upsert: {
                         where: { bingoId: bingo.id },
                         create: {
-                            type: data.stamp.type,
-                            value: data.stamp.value,
-                            size: data.stamp.size,
-                            opacity: data.stamp.opacity,
+                            type: data.stamp?.type,
+                            value: data.stamp?.value,
+                            size: data.stamp?.size,
+                            opacity: data.stamp?.opacity,
                         },
                         update: {
-                            type: data.stamp.type,
-                            value: data.stamp.value,
-                            size: data.stamp.size,
-                            opacity: data.stamp.opacity,
+                            type: data.stamp?.type,
+                            value: data.stamp?.value,
+                            size: data.stamp?.size,
+                            opacity: data.stamp?.opacity,
                         },
                     },
                 },
                 cells: {
-                    upsert: data.cells.map((cell: any) => ({
+                    upsert: data.cells?.map((cell: Partial<BingoCell>) => ({
                         where: { id: cell.id },
                         create: {
                             content: cell.content,

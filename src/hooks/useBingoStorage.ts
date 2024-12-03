@@ -2,24 +2,16 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { generateAuthorToken } from "@/lib/generate-token";
-import type { BingoData, MigrateRequest } from "@/types/types";
+import type { Bingo, MigrateRequest } from "@/types/types";
 
 interface PaginatedBingos {
-    items: BingoData[];
+    items: Bingo[];
     nextCursor: string | null;
     hasMore: boolean;
     total: number;
 }
 
-export function useBingoStorage(): {
-    authorToken: string | null;
-    useGetBingo: (id: string) => ReturnType<typeof useQuery<BingoData>>;
-    useGetBingos: (options?: { cursor?: string; limit?: number }) => ReturnType<typeof useQuery<PaginatedBingos>>;
-    useSaveBingo: ReturnType<typeof useMutation>;
-    useUpdateBingo: ReturnType<typeof useMutation>;
-    useDeleteBingo: ReturnType<typeof useMutation>;
-    useMigrateBingos: ReturnType<typeof useMutation>;
-} {
+export function useBingoStorage() {
     const { data: session } = useSession();
     const queryClient = useQueryClient();
     const [authorToken, setAuthorToken] = useState<string | null>(null);
@@ -56,8 +48,8 @@ export function useBingoStorage(): {
         });
 
     // Get bingo
-    const useGetBingo = (id: string): ReturnType<typeof useQuery<BingoData>> =>
-        useQuery<BingoData>({
+    const useGetBingo = (id: string) =>
+        useQuery<Bingo>({
             queryKey: ["bingo", id],
             queryFn: async () => {
                 const res = await fetch(`/api/bingo/${id}`);
@@ -68,7 +60,7 @@ export function useBingoStorage(): {
 
     // Save bingo
     const useSaveBingo = useMutation({
-        mutationFn: (bingoData: BingoData) =>
+        mutationFn: (bingoData: Bingo) =>
             fetch("/api/bingo", {
                 method: "POST",
                 body: JSON.stringify({
@@ -76,10 +68,10 @@ export function useBingoStorage(): {
                     authorToken: session?.user ? null : authorToken,
                 }),
             }).then((res) => res.json()),
-        onSuccess: (data: BingoData) => {
+        onSuccess: async (data: Bingo) => {
             await queryClient.invalidateQueries({ queryKey: ["bingos"] });
             if (!session?.user) {
-                const stored = JSON.parse(localStorage.getItem("ownedBingos") || "[]") as BingoData[];
+                const stored = JSON.parse(localStorage.getItem("ownedBingos") || "[]") as Bingo[];
                 localStorage.setItem("ownedBingos", JSON.stringify([...stored, data.id]));
             }
         },
@@ -87,12 +79,12 @@ export function useBingoStorage(): {
 
     // Update bingo
     const useUpdateBingo = useMutation({
-        mutationFn: ({ id, updates }: { id: string; updates: Partial<BingoData> }) =>
+        mutationFn: ({ id, updates }: { id: string; updates: Partial<Bingo> }) =>
             fetch(`/api/bingo/${id}`, {
                 method: "PATCH",
                 body: JSON.stringify(updates),
             }).then((res) => res.json()),
-        onSuccess: (_, { id }) => {
+        onSuccess: async (_, { id }) => {
             await queryClient.invalidateQueries({ queryKey: ["bingo", id] });
         },
     });
@@ -100,11 +92,11 @@ export function useBingoStorage(): {
     // Delete bingo
     const useDeleteBingo = useMutation({
         mutationFn: (id: string) => fetch(`/api/bingo/${id}`, { method: "DELETE" }),
-        onSuccess: (_, id) => {
+        onSuccess: async (_, id) => {
             await queryClient.invalidateQueries({ queryKey: ["bingos"] });
             if (!session?.user) {
-                const stored = JSON.parse(localStorage.getItem("ownedBingos") || "[]") as BingoData[];
-                localStorage.setItem("ownedBingos", JSON.stringify(stored.filter((bingoId: string) => bingoId !== id)));
+                const stored = JSON.parse(localStorage.getItem("ownedBingos") || "[]") as Bingo[];
+                localStorage.setItem("ownedBingos", JSON.stringify(stored.filter((bingo: Bingo) => bingo.id !== id)));
             }
         },
     });
@@ -116,7 +108,7 @@ export function useBingoStorage(): {
                 method: "POST",
                 body: JSON.stringify({ bingoIds, authorToken, userId }),
             }).then((res) => res.json()),
-        onSuccess: () => {
+        onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ["bingos"] });
             localStorage.removeItem("ownedBingos");
             localStorage.removeItem("bingoAuthorToken");

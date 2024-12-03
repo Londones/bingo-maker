@@ -1,7 +1,7 @@
 export interface Bingo {
     id: string;
-    title: string;
-    cells: { id: string; content: string; position: number }[];
+    title?: string;
+    cells?: { id: string; content: string; position: number }[];
     authorToken?: string;
 }
 
