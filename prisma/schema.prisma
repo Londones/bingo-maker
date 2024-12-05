@@ -60,7 +60,7 @@ model Bingo {
     title       String
     gridSize    Int
     cells       BingoCell[]
-    style       String
+    style       Style?
     background  Background?
     stamp       StampConfig?
     suggestions Suggestion[]
@@ -71,6 +71,18 @@ model Bingo {
     user        User?        @relation(fields: [userId], references: [id])
     createdAt   DateTime     @default(now())
     updatedAt   DateTime     @updatedAt
+}
+
+model Style {
+    id         String   @id @default(cuid())
+    fontFamily String
+    fontSize   Int
+    color      String
+    cellSize   Int
+    gap        Int
+    bingo      Bingo    @relation(fields: [bingoId], references: [id])
+    bingoId    String   @unique
+    createdAt  DateTime @default(now())
 }
 
 model Background {

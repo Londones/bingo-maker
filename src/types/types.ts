@@ -32,7 +32,7 @@ export interface Bingo {
     status: "draft" | "published";
     cells: BingoCell[];
     style: Style;
-    background?: Background;
+    background: Background;
     stamp: Stamp;
     authorToken?: string;
 }

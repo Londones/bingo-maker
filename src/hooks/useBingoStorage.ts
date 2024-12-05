@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { generateAuthorToken } from "@/lib/generate-token";
+import { generateAuthorToken } from "@/lib/utils";
 import type { Bingo, MigrateRequest } from "@/types/types";
 
 interface PaginatedBingos {

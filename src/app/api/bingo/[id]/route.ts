@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { APIError, APIErrorCode } from "@/lib/errors";
 import { handleAPIError } from "@/lib/api-utils";
-import { Bingo, BingoCell } from "@/types/types";
+import { Bingo } from "@/types/types";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
     const { searchParams } = new URL(req.url);
@@ -38,6 +38,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     try {
         const bingo = await prisma.bingo.findUnique({
             where: { id: params.id },
+            include: { cells: true, background: true, stamp: true, style: true },
         });
 
         if (!bingo) {
@@ -51,58 +52,55 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         const updated = await prisma.bingo.update({
             where: { id: params.id },
             data: {
-                title: data.title,
-                style: data.style || bingo.style,
-                status: data.status || bingo.status,
-                background: {
-                    upsert: {
-                        where: { bingoId: bingo.id },
-                        create: {
-                            type: data.background?.type,
-                            value: data.background?.value,
-                        },
+                ...(data.title && { title: data.title }),
+                ...(data.style && {
+                    style: {
                         update: {
-                            type: data.background?.type,
-                            value: data.background?.value,
+                            ...(data.style.fontSize && { fontSize: data.style.fontSize }),
+                            ...(data.style.fontFamily && { fontFamily: data.style.fontFamily }),
+                            ...(data.style.color && { color: data.style.color }),
+                            ...(data.style.cellSize && { cellSize: data.style.cellSize }),
+                            ...(data.style.gap && { gap: data.style.gap }),
                         },
                     },
-                },
-                stamp: {
-                    upsert: {
-                        where: { bingoId: bingo.id },
-                        create: {
-                            type: data.stamp?.type,
-                            value: data.stamp?.value,
-                            size: data.stamp?.size,
-                            opacity: data.stamp?.opacity,
-                        },
+                }),
+                ...(data.background && {
+                    background: {
                         update: {
-                            type: data.stamp?.type,
-                            value: data.stamp?.value,
-                            size: data.stamp?.size,
-                            opacity: data.stamp?.opacity,
+                            ...(data.background.type && { type: data.background.type }),
+                            ...(data.background.value && { value: data.background.value }),
                         },
                     },
-                },
-                cells: {
-                    upsert: data.cells?.map((cell: Partial<BingoCell>) => ({
-                        where: { id: cell.id },
-                        create: {
-                            content: cell.content,
-                            position: cell.position,
-                            validated: cell.validated,
-                        },
+                }),
+                ...(data.stamp && {
+                    stamp: {
                         update: {
-                            content: cell.content,
-                            validated: cell.validated,
+                            ...(data.stamp.type && { type: data.stamp.type }),
+                            ...(data.stamp.value && { value: data.stamp.value }),
+                            ...(data.stamp.size && { size: data.stamp.size }),
+                            ...(data.stamp.opacity && { opacity: data.stamp.opacity }),
                         },
-                    })),
-                },
+                    },
+                }),
+                ...(data.cells && {
+                    cells: {
+                        update: data.cells.map((cell) => ({
+                            where: { id: cell.id },
+                            data: {
+                                ...(cell.content && { content: cell.content }),
+                                ...(cell.position && { position: cell.position }),
+                                ...(cell.validated !== undefined && { validated: cell.validated }),
+                            },
+                        })),
+                    },
+                }),
+                ...(data.status && { status: data.status }),
             },
             include: {
                 cells: true,
                 background: true,
                 stamp: true,
+                style: true,
             },
         });
 

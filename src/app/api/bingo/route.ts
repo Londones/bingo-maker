@@ -15,12 +15,20 @@ export async function POST(req: Request): Promise<NextResponse> {
             data: {
                 title: data.title,
                 gridSize: data.gridSize,
-                style: data.style,
+                style: {
+                    create: {
+                        fontSize: data.style.fontSize,
+                        cellSize: data.style.cellSize,
+                        gap: data.style.gap,
+                        fontFamily: data.style.fontFamily,
+                        color: data.style.color,
+                    },
+                },
                 status: data.status,
                 background: {
                     create: {
-                        type: data.background!.type,
-                        value: data.background!.value,
+                        type: data.background.type,
+                        value: data.background.value,
                     },
                 },
                 stamp: {
@@ -31,13 +39,13 @@ export async function POST(req: Request): Promise<NextResponse> {
                         opacity: data.stamp.opacity,
                     },
                 },
-                userId: session?.user?.id || null,
-                authorToken: data.authorToken || null, // Store anonymous author token
+                userId: session?.user?.id,
+                authorToken: data.authorToken, // Store anonymous author token
                 cells: {
-                    create: data.cells.map((cell: BingoCell, index: number) => ({
+                    create: data.cells.map((cell: BingoCell) => ({
                         content: cell.content,
-                        position: index,
-                        validated: cell.validated || false,
+                        position: cell.position,
+                        validated: cell.validated,
                     })),
                 },
             },
@@ -45,6 +53,7 @@ export async function POST(req: Request): Promise<NextResponse> {
                 cells: true,
                 stamp: true,
                 background: true,
+                style: true,
             },
         });
 
@@ -83,7 +92,7 @@ export async function GET(req: Request): Promise<NextResponse> {
                 skip: 1,
             }),
             orderBy: { createdAt: "desc" },
-            include: { cells: true },
+            include: { cells: true, stamp: true, background: true, style: true },
         });
 
         if (!bingos?.length && totalCount > 0) {

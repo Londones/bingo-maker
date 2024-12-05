@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { APIError, APIErrorCode, errorStatusMap } from "./errors";
+import { APIError, APIErrorCode } from "./errors";
 
 export function handleAPIError(error: unknown) {
     if (error instanceof APIError) {
