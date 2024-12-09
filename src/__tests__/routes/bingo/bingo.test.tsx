@@ -1,22 +1,32 @@
+/**
+ * @jest-environment node
+ */
+
 import { NextRequest } from "next/server";
 import { GET, PATCH, DELETE } from "@/app/api/bingo/[id]/route";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
 import { Bingo, Error } from "@/types/test-types";
+import { getServerSession } from "next-auth";
+import { mockSession } from "@/__mocks__/auth";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = "http://localhost:3000";
+
+jest.mock("next-auth", () => ({
+    getServerSession: jest.fn(() => Promise.resolve(mockSession)),
+}));
+
+jest.mock("@auth/prisma-adapter", () => ({
+    PrismaAdapter: jest.fn(),
+}));
 
 jest.mock("@/lib/prisma", () => ({
     prisma: {
         bingo: {
             findUnique: jest.fn(),
             update: jest.fn(),
+            delete: jest.fn(),
         },
     },
-}));
-
-jest.mock("next-auth", () => ({
-    getServerSession: jest.fn(),
 }));
 
 describe("Bingo API Routes", () => {
@@ -71,7 +81,7 @@ describe("Bingo API Routes", () => {
     describe("PATCH /api/bingo/[id]", () => {
         it("should update bingo when authorized", async () => {
             // Arrange
-            const mockSession = { user: { id: "1" } };
+            //const mockSession = { user: { id: "1" } };
             (getServerSession as jest.Mock).mockResolvedValue(mockSession);
             (prisma.bingo.findUnique as jest.Mock).mockResolvedValue({
                 ...mockBingo,
@@ -114,7 +124,7 @@ describe("Bingo API Routes", () => {
 
         it("should return 401 when unauthorized", async () => {
             // Arrange
-            const mockSession = { user: { id: "2" } };
+            //const mockSession = { user: { id: "2" } };
             (getServerSession as jest.Mock).mockResolvedValue(mockSession);
             (prisma.bingo.findUnique as jest.Mock).mockResolvedValue({
                 ...mockBingo,

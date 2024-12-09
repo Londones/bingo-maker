@@ -4,6 +4,8 @@
  */
 
 import type { Config } from "jest";
+import { pathsToModuleNameMapper } from "ts-jest";
+import { compilerOptions } from "./tsconfig.json";
 
 const config: Config = {
     // All imported modules in your tests should be mocked automatically
@@ -16,7 +18,7 @@ const config: Config = {
     // cacheDirectory: "C:\\Users\\thism\\AppData\\Local\\Temp\\jest",
 
     // Automatically clear mock calls, instances, contexts and results before every test
-    // clearMocks: false,
+    clearMocks: true,
 
     // Indicates whether the coverage information should be collected while executing the test
     collectCoverage: true,
@@ -79,10 +81,7 @@ const config: Config = {
     moduleFileExtensions: ["js", "mjs", "cjs", "jsx", "ts", "tsx", "json", "node"],
 
     // A map from regular expressions to module names or to arrays of module names that allow to stub out resources with a single module
-    moduleNameMapper: {
-        "^@/(.*)$": "<rootDir>/src/$1",
-        "^uploadthing/(.*)$": "<rootDir>/node_modules/uploadthing/$1",
-    },
+    moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, { prefix: "<rootDir>/" }),
 
     // An array of regexp pattern strings, matched against all module paths before considered 'visible' to the module loader
     modulePathIgnorePatterns: ["node_modules/(?!(@auth/prisma-adapters|@prisma|prisma|@prisma/client)/)"],
@@ -126,10 +125,10 @@ const config: Config = {
     // runner: "jest-runner",
 
     // The paths to modules that run some code to configure or set up the testing environment before each test
-    setupFiles: ["<rootDir>/jest.setup.ts"],
+    // setupFiles: ["<rootDir>/jest.setup.ts"],
 
     // A list of paths to modules that run some code to configure or set up the testing framework before each test
-    // setupFilesAfterEnv: [],
+    setupFilesAfterEnv: ["<rootDir>/singleton.ts"],
 
     // The number of seconds after which a test is considered as slow and reported as such in the results.
     // slowTestThreshold: 5,
@@ -138,7 +137,7 @@ const config: Config = {
     // snapshotSerializers: [],
 
     // The test environment that will be used for testing
-    // testEnvironment: "jest-environment-node",
+    testEnvironment: "node",
 
     // Options that will be passed to the testEnvironment
     // testEnvironmentOptions: {},
@@ -153,9 +152,7 @@ const config: Config = {
     // ],
 
     // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
-    // testPathIgnorePatterns: [
-    //   "\\\\node_modules\\\\"
-    // ],
+    testPathIgnorePatterns: ["<rootDir>/node_modules/", "<rootDir>/.next/"],
 
     // The regexp pattern or array of patterns that Jest uses to detect test files
     // testRegex: [],
@@ -171,16 +168,14 @@ const config: Config = {
         "^.+\\.(ts|tsx)$": [
             "ts-jest",
             {
-                tsconfig: "tsconfig.json",
+                tsconfig: "tsconfig.jest.json",
+                useESM: true,
             },
         ],
     },
 
     // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
-    // transformIgnorePatterns: [
-    //   "\\\\node_modules\\\\",
-    //   "\\.pnp\\.[^\\\\]+$"
-    // ],
+    transformIgnorePatterns: ["node_modules/(?!(@auth/prisma-adapter|next/dist/client|next/dist/shared|@swc/helpers))"],
 
     // An array of regexp pattern strings that are matched against all modules before the module loader will automatically return a mock for them
     // unmockedModulePathPatterns: undefined,
