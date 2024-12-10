@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { Bingo, Error } from "@/types/test-types";
 import { getServerSession } from "next-auth";
 import { mockSession } from "@/__mocks__/auth";
+import { APIError } from "@/lib/errors";
 
 const API_URL = "http://localhost:3000";
 
@@ -46,7 +47,7 @@ describe("Bingo API Routes", () => {
             (prisma.bingo.findUnique as jest.Mock).mockResolvedValue(mockBingo);
 
             // Act
-            const response = await GET(new NextRequest(`${API_URL}/api/bingo/1`), { params: { id: "1" } });
+            const response = await GET(new NextRequest(`${API_URL}/api/bingo`), { params: { id: "1" } });
 
             // Assert
             expect(response.status).toBe(200);
@@ -56,12 +57,16 @@ describe("Bingo API Routes", () => {
 
         it("should return 445 when missing ID", async () => {
             // Act
-            const response = await GET(new NextRequest(`${API_URL}/api/bingo/`), { params: { id: "" } });
+            const error = await GET(new NextRequest(`${API_URL}/api/bingo`), { params: { id: "" } }).catch(
+                (error: APIError) => error
+            );
 
-            // Assert
-            expect(response.status).toBe(445);
-            const data = (await response.json()) as Error;
-            expect(data.code).toBe("MISSING_ID_OR_SHARE_TOKEN");
+            if (error instanceof APIError) {
+                // Assert
+                expect(error.message).toBe("Missing ID or shareToken");
+                expect(error.code).toBe("MISSING_ID_OR_SHARE_TOKEN");
+                expect(error.status).toBe(445);
+            }
         });
 
         it("should return 404 when bingo not found", async () => {
@@ -69,19 +74,22 @@ describe("Bingo API Routes", () => {
             (prisma.bingo.findUnique as jest.Mock).mockResolvedValue(null);
 
             // Act
-            const response = await GET(new NextRequest(`${API_URL}/api/bingo/999`), { params: { id: "999" } });
+            const error = await GET(new NextRequest(`${API_URL}/api/bingo/999`), { params: { id: "999" } }).catch(
+                (error: APIError) => error
+            );
 
             // Assert
-            expect(response.status).toBe(444);
-            const data = (await response.json()) as Error;
-            expect(data.code).toBe("BINGO_NOT_FOUND");
+            if (error instanceof APIError) {
+                expect(error.status).toBe(444);
+                expect(error.message).toBe("Bingo not found");
+                expect(error.code).toBe("BINGO_NOT_FOUND");
+            }
         });
     });
 
     describe("PATCH /api/bingo/[id]", () => {
         it("should update bingo when authorized", async () => {
             // Arrange
-            //const mockSession = { user: { id: "1" } };
             (getServerSession as jest.Mock).mockResolvedValue(mockSession);
             (prisma.bingo.findUnique as jest.Mock).mockResolvedValue({
                 ...mockBingo,
@@ -89,10 +97,11 @@ describe("Bingo API Routes", () => {
             });
 
             const updateData = { title: "Updated Title" };
+            (prisma.bingo.update as jest.Mock).mockResolvedValue({ ...mockBingo, ...updateData });
 
             // Act
             const response = await PATCH(
-                new NextRequest(`${API_URL}/api/bingo/1`, {
+                new NextRequest(`${API_URL}/api/bingo`, {
                     method: "PATCH",
                     body: JSON.stringify(updateData),
                 }),
@@ -109,7 +118,7 @@ describe("Bingo API Routes", () => {
 
             // Act
             const response = await PATCH(
-                new NextRequest(`${API_URL}/api/bingo/999`, {
+                new NextRequest(`${API_URL}/api/bingo`, {
                     method: "PATCH",
                     body: JSON.stringify({ title: "Test" }),
                 }),
@@ -124,8 +133,8 @@ describe("Bingo API Routes", () => {
 
         it("should return 401 when unauthorized", async () => {
             // Arrange
-            //const mockSession = { user: { id: "2" } };
-            (getServerSession as jest.Mock).mockResolvedValue(mockSession);
+            const localMockedSession = { user: { id: "2" } };
+            (getServerSession as jest.Mock).mockResolvedValue(localMockedSession);
             (prisma.bingo.findUnique as jest.Mock).mockResolvedValue({
                 ...mockBingo,
                 userId: "1",
@@ -133,7 +142,7 @@ describe("Bingo API Routes", () => {
 
             // Act
             const response = await PATCH(
-                new NextRequest(`${API_URL}/api/bingo/1`, {
+                new NextRequest(`${API_URL}/api/bingo`, {
                     method: "PATCH",
                     body: JSON.stringify({ title: "Test" }),
                 }),

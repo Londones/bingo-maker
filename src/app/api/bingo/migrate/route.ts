@@ -9,7 +9,7 @@ import { MigrateRequest } from "@/types/types";
 export async function POST(req: Request): Promise<NextResponse> {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-        throw new APIError("Unauthorized", APIErrorCode.UNAUTHORIZED);
+        throw new APIError("Unauthorized", APIErrorCode.UNAUTHORIZED, 401);
     }
 
     const { bingoIds, authorToken, userId } = (await req.json()) as MigrateRequest;

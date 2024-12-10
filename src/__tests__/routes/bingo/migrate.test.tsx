@@ -3,8 +3,18 @@ import { POST } from "@/app/api/bingo/migrate/route";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { Bingo, Error, MigrationStatus } from "@/types/test-types";
+import { mockSession } from "@/__mocks__/auth";
+import { APIError } from "@/lib/errors";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = "http://localhost:3000";
+
+jest.mock("next-auth", () => ({
+    getServerSession: jest.fn(() => Promise.resolve(mockSession)),
+}));
+
+jest.mock("@auth/prisma-adapter", () => ({
+    PrismaAdapter: jest.fn(),
+}));
 
 jest.mock("@/lib/prisma", () => ({
     prisma: {
@@ -12,10 +22,6 @@ jest.mock("@/lib/prisma", () => ({
             updateMany: jest.fn(),
         },
     },
-}));
-
-jest.mock("next-auth", () => ({
-    getServerSession: jest.fn(),
 }));
 
 describe("Bingo Migration API Routes", () => {
@@ -62,21 +68,24 @@ describe("Bingo Migration API Routes", () => {
             (getServerSession as jest.Mock).mockResolvedValue(null);
 
             // Act
-            const response = await POST(
+            const error = (await POST(
                 new NextRequest(`${API_URL}/api/bingo/migrate`, {
                     method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
                     body: JSON.stringify({
                         bingoIds: [mockBingo.id],
                         authorToken: mockBingo.authorToken,
                         userId: "1",
                     }),
                 })
-            );
+            ).catch((err: APIError) => err)) as APIError;
 
             // Assert
-            expect(response.status).toBe(401);
-            const data = (await response.json()) as Error;
-            expect(data.code).toBe("UNAUTHORIZED");
+            expect(error.message).toBe("Unauthorized");
+            expect(error.code).toBe("UNAUTHORIZED");
+            expect(error.status).toBe(401);
         });
 
         it("should return 444 when no bingos found to migrate", async () => {

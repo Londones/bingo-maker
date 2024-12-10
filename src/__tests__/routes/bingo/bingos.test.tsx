@@ -3,27 +3,59 @@ import { GET, POST } from "@/app/api/bingo/route";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { Bingo, Error, PaginatedResponse } from "@/types/test-types";
+import { mockSession } from "@/__mocks__/auth";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = "http://localhost:3000";
+
+jest.mock("next-auth", () => ({
+    getServerSession: jest.fn(() => Promise.resolve(mockSession)),
+}));
+
+jest.mock("@auth/prisma-adapter", () => ({
+    PrismaAdapter: jest.fn(),
+}));
 
 jest.mock("@/lib/prisma", () => ({
     prisma: {
         bingo: {
             create: jest.fn(),
+            findMany: jest.fn(),
+            count: jest.fn(),
             findUnique: jest.fn(),
         },
     },
 }));
 
-jest.mock("next-auth", () => ({
-    getServerSession: jest.fn(),
-}));
-
-describe("Bingo API Routes", () => {
+describe("Bingos API Routes", () => {
     const mockBingo = {
         id: "1",
         title: "Test Bingo",
-        cells: [{ id: "1", content: "Test Cell", position: 0 }],
+        cells: [
+            {
+                id: "1",
+                content: "Test Cell",
+                position: 0,
+                validated: false,
+            },
+        ],
+        style: {
+            fontSize: 16,
+            fontFamily: "Arial",
+            color: "#000000",
+            cellSize: 100,
+            gap: 8,
+        },
+        background: {
+            type: "color",
+            value: "#ffffff",
+        },
+        stamp: {
+            type: "emoji",
+            value: "✓",
+            size: 24,
+            opacity: 1,
+        },
+        status: "draft",
     } as Bingo;
 
     beforeEach(() => {
@@ -39,6 +71,8 @@ describe("Bingo API Routes", () => {
             // Act
             const response = await POST(
                 new NextRequest(`${API_URL}/api/bingo`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(mockBingo),
                 })
             );
@@ -57,6 +91,7 @@ describe("Bingo API Routes", () => {
             // Act
             const response = await POST(
                 new NextRequest(`${API_URL}/api/bingo`, {
+                    method: "POST",
                     body: JSON.stringify(mockBingo),
                 })
             );
@@ -112,18 +147,22 @@ describe("Bingo API Routes", () => {
         it("should return second page of bingos", async () => {
             // Arrange
             const mockBingos = Array.from({ length: 11 }, (_, i) => ({
-                id: `${i}`,
+                id: `${i + 5}`,
                 createdAt: new Date(),
                 cells: [],
-            }));
+            })) as Bingo[];
 
-            (prisma.bingo.findMany as jest.Mock).mockResolvedValue(mockBingos);
+            (prisma.bingo.findMany as jest.Mock).mockResolvedValue(mockBingos.slice(0, 5));
+            (prisma.bingo.count as jest.Mock).mockResolvedValue(11);
+            (prisma.bingo.findUnique as jest.Mock).mockResolvedValue(mockBingos[4]);
 
             // Act
             const response = await GET(new NextRequest(`${API_URL}/api/bingo?limit=10&cursor=5`));
 
             // Assert
             const data = (await response.json()) as PaginatedResponse<Bingo>;
+            expect(data).toBeDefined();
+            expect(Array.isArray(data.items)).toBeTruthy();
             expect(data.items).toHaveLength(5);
             expect(data.hasMore).toBe(false);
             expect(data.nextCursor).toBeUndefined();

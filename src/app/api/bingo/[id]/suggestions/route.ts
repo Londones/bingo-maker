@@ -106,7 +106,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
             throw new APIError("Bingo not found", APIErrorCode.BINGO_NOT_FOUND, 444);
         }
 
-        if (bingo.userId !== session?.user?.id) {
+        if (bingo.userId !== session?.user?.id || !session?.user) {
             throw new APIError("Unauthorized", APIErrorCode.UNAUTHORIZED, 401);
         }
 

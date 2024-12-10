@@ -7,11 +7,11 @@ import { handleAPIError } from "@/lib/api-utils";
 import { Bingo } from "@/types/types";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
-    const shareToken = searchParams.get("shareToken");
+    // const { searchParams } = new URL(req.url);
+    // console.log(searchParams.get("id"));
+    const id = params.id;
 
-    if (!id || !shareToken) {
+    if (!id) {
         throw new APIError("Missing ID or shareToken", APIErrorCode.MISSING_ID_OR_SHARE_TOKEN, 445);
     }
 
