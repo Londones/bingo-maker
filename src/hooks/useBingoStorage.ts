@@ -30,10 +30,7 @@ export function useBingoStorage() {
     }, [session]);
 
     // Get bingos
-    const useGetBingos = (options?: {
-        cursor?: string;
-        limit?: number;
-    }): ReturnType<typeof useQuery<PaginatedBingos>> =>
+    const useGetBingos = (options?: { cursor?: string; limit?: number }) =>
         useQuery<PaginatedBingos>({
             queryKey: ["bingos", options?.cursor, options?.limit],
             queryFn: async () => {
