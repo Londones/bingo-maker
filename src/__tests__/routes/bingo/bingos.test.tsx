@@ -1,14 +1,15 @@
 import { NextRequest } from "next/server";
 import { GET, POST } from "@/app/api/bingo/route";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
+import { auth } from "@/lib/auth";
 import { Bingo, Error, PaginatedResponse } from "@/types/test-types";
 import { mockSession } from "@/__mocks__/auth";
 
 const API_URL = "http://localhost:3000";
 
-jest.mock("next-auth", () => ({
-    getServerSession: jest.fn(() => Promise.resolve(mockSession)),
+jest.mock("@/lib/auth", () => ({
+    auth: jest.fn(() => Promise.resolve(mockSession)),
+    GoogleProvider: jest.fn(),
 }));
 
 jest.mock("@auth/prisma-adapter", () => ({
@@ -65,7 +66,7 @@ describe("Bingos API Routes", () => {
     describe("POST /api/bingo", () => {
         it("should create bingo", async () => {
             // Arrange
-            (getServerSession as jest.Mock).mockResolvedValue({ user: { id: "1" } });
+            (auth as jest.Mock).mockResolvedValue({ user: { id: "1" } });
             (prisma.bingo.create as jest.Mock).mockResolvedValue(mockBingo);
 
             // Act
@@ -85,7 +86,7 @@ describe("Bingos API Routes", () => {
 
         it("should return 557 when failed to create bingo", async () => {
             // Arrange
-            (getServerSession as jest.Mock).mockResolvedValue({ user: { id: "1" } });
+            (auth as jest.Mock).mockResolvedValue({ user: { id: "1" } });
             (prisma.bingo.create as jest.Mock).mockResolvedValue(null);
 
             // Act

@@ -1,15 +1,16 @@
 import { NextRequest } from "next/server";
 import { POST } from "@/app/api/bingo/migrate/route";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
+import { auth } from "@/lib/auth";
 import { Bingo, Error, MigrationStatus } from "@/types/test-types";
 import { mockSession } from "@/__mocks__/auth";
 import { APIError } from "@/lib/errors";
 
 const API_URL = "http://localhost:3000";
 
-jest.mock("next-auth", () => ({
-    getServerSession: jest.fn(() => Promise.resolve(mockSession)),
+jest.mock("@/lib/auth", () => ({
+    auth: jest.fn(() => Promise.resolve(mockSession)),
+    GoogleProvider: jest.fn(),
 }));
 
 jest.mock("@auth/prisma-adapter", () => ({
@@ -39,7 +40,7 @@ describe("Bingo Migration API Routes", () => {
         it("should migrate bingos successfully", async () => {
             // Arrange
             const mockSession = { user: { id: "1" } };
-            (getServerSession as jest.Mock).mockResolvedValue(mockSession);
+            (auth as jest.Mock).mockResolvedValue(mockSession);
             (prisma.bingo.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
 
             // Act
@@ -65,7 +66,7 @@ describe("Bingo Migration API Routes", () => {
 
         it("should return 401 when unauthorized", async () => {
             // Arrange
-            (getServerSession as jest.Mock).mockResolvedValue(null);
+            (auth as jest.Mock).mockResolvedValue(null);
 
             // Act
             const error = (await POST(
@@ -91,7 +92,7 @@ describe("Bingo Migration API Routes", () => {
         it("should return 444 when no bingos found to migrate", async () => {
             // Arrange
             const mockSession = { user: { id: "1" } };
-            (getServerSession as jest.Mock).mockResolvedValue(mockSession);
+            (auth as jest.Mock).mockResolvedValue(mockSession);
             (prisma.bingo.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
 
             // Act

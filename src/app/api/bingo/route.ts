@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { authOptions } from "@/lib/auth";
 import { APIError, APIErrorCode } from "@/lib/errors";
 import { handleAPIError } from "@/lib/api-utils";
 import { Bingo, BingoCell } from "@/types/types";
 
 export async function POST(req: Request): Promise<NextResponse> {
     const data = (await req.json()) as Bingo;
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     try {
         const bingo = await prisma.bingo.create({

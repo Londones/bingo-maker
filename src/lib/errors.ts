@@ -5,11 +5,23 @@ export class APIError extends Error {
     }
 }
 
+export class AuthAPIError extends Error {
+    constructor(public message: string, public code: AuthErrorCode, public status: number = 401) {
+        super(message);
+        this.name = "AuthError";
+    }
+}
+
 export class UploadError extends Error {
     constructor(public message: string, public code: UploadErrorCode, public status: number = 401) {
         super(message);
         this.name = "UploadError";
     }
+}
+
+export enum AuthErrorCode {
+    INVALID_CREDENTIALS = "INVALID_CREDENTIALS",
+    DATABASE_ERROR = "DATABASE_ERROR",
 }
 
 export enum UploadErrorCode {

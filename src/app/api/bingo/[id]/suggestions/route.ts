@@ -1,13 +1,16 @@
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { APIError, APIErrorCode } from "@/lib/errors";
 import { handleAPIError } from "@/lib/api-utils";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
 import { SuggestionPatchRequest } from "@/types/types";
 import { Suggestion } from "@prisma/client";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }): Promise<Response> {
+type ParamsType = Promise<{ bingoId: string }>;
+
+export async function GET(req: NextRequest, { params }: { params: ParamsType }): Promise<Response> {
+    const { bingoId: id } = await params;
+
     try {
         const headers = new Headers({
             "Content-Type": "text/event-stream",
@@ -18,10 +21,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         const stream = new TransformStream();
         const writer = stream.writable.getWriter();
 
-        // Initial suggestions fetch
         try {
             const suggestions = await prisma.suggestion.findMany({
-                where: { bingoId: params.id },
+                where: { bingoId: id },
                 orderBy: { createdAt: "desc" },
             });
 
@@ -30,13 +32,12 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
             throw new APIError("Failed to fetch initial suggestions", APIErrorCode.SUGGESTION_FETCH_ERROR, 500);
         }
 
-        // Poll for new suggestions
         const interval = setInterval(() => {
             void (async (): Promise<void> => {
                 try {
                     const newSuggestions = await prisma.suggestion.findMany({
                         where: {
-                            bingoId: params.id,
+                            bingoId: id,
                             createdAt: { gt: new Date(Date.now() - 5000) },
                         },
                     });
@@ -46,7 +47,6 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
                     }
                 } catch (error) {
                     console.error("Polling error:", error);
-                    // Don't throw here - keep connection alive
                 }
             })();
         }, 5000);
@@ -68,7 +68,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     }
 }
 
-export async function POST(req: Request, { params }: { params: { id: string } }): Promise<NextResponse> {
+export async function POST(req: Request, { params }: { params: ParamsType }): Promise<NextResponse> {
+    const { bingoId: id } = await params;
+
     try {
         const { content } = (await req.json()) as Partial<Suggestion>;
 
@@ -79,7 +81,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         const suggestion = await prisma.suggestion.create({
             data: {
                 content,
-                bingoId: params.id,
+                bingoId: id,
             },
         });
 
@@ -93,13 +95,15 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     }
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }): Promise<NextResponse> {
+export async function PATCH(req: Request, { params }: { params: ParamsType }): Promise<NextResponse> {
+    const { bingoId: id } = await params;
+
     try {
-        const session = await getServerSession(authOptions);
+        const session = await auth();
         const { suggestionId, status, position } = (await req.json()) as SuggestionPatchRequest;
 
         const bingo = await prisma.bingo.findUnique({
-            where: { id: params.id },
+            where: { id: id },
         });
 
         if (!bingo) {

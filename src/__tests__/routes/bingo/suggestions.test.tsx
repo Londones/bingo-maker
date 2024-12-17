@@ -1,12 +1,12 @@
 import { NextRequest } from "next/server";
 import { GET, PATCH, POST } from "@/app/api/bingo/[id]/suggestions/route";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
+import { auth } from "@/lib/auth";
 import { Suggestion, Error } from "@/types/test-types";
 //import { APIError } from "@/lib/errors";
 import { mockSession } from "@/__mocks__/auth";
 
-const API_URL = "http://localhost:3000";
+const TEST_URL = "http://localhost:3000";
 
 jest.mock("@/lib/prisma", () => ({
     prisma: {
@@ -27,8 +27,9 @@ jest.mock("@auth/prisma-adapter", () => ({
     PrismaAdapter: jest.fn(),
 }));
 
-jest.mock("next-auth", () => ({
-    getServerSession: jest.fn(() => Promise.resolve(mockSession)),
+jest.mock("@/lib/auth", () => ({
+    auth: jest.fn(() => Promise.resolve(mockSession)),
+    GoogleProvider: jest.fn(),
 }));
 
 describe("Bingo Suggestions API Routes", () => {
@@ -37,6 +38,9 @@ describe("Bingo Suggestions API Routes", () => {
         content: "Test Suggestion",
         status: "pending",
     } as Suggestion;
+
+    const mockBingoId = "1";
+    const mockAsyncParams = Promise.resolve({ bingoId: mockBingoId });
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -70,10 +74,10 @@ describe("Bingo Suggestions API Routes", () => {
             try {
                 // Act
                 const response = await GET(
-                    new NextRequest(`${API_URL}/api/bingo/1/suggestions`, {
+                    new NextRequest(`${TEST_URL}/api/bingo/${mockBingoId}/suggestions`, {
                         signal: controller.signal,
                     }),
-                    { params: { id: "1" } }
+                    { params: mockAsyncParams }
                 );
 
                 // Assert
@@ -95,7 +99,7 @@ describe("Bingo Suggestions API Routes", () => {
             (prisma.suggestion.findMany as jest.Mock).mockResolvedValueOnce([]).mockResolvedValueOnce(newSuggestions);
 
             // Act
-            await GET(new NextRequest(`${API_URL}/api/bingo/1/suggestions`), { params: { id: "1" } });
+            await GET(new NextRequest(`${TEST_URL}/api/bingo/1/suggestions`), { params: mockAsyncParams });
 
             jest.advanceTimersByTime(5000);
             await Promise.resolve();
@@ -112,10 +116,10 @@ describe("Bingo Suggestions API Routes", () => {
 
             // Act
             await GET(
-                new NextRequest(`${API_URL}/api/bingo/1/suggestions`, {
+                new NextRequest(`${TEST_URL}/api/bingo/${mockBingoId}/suggestions`, {
                     signal: controller.signal,
                 }),
-                { params: { id: "1" } }
+                { params: mockAsyncParams }
             );
 
             controller.abort();
@@ -132,11 +136,11 @@ describe("Bingo Suggestions API Routes", () => {
 
             // Act
             const response = await POST(
-                new NextRequest(`${API_URL}/api/bingo/1/suggestions`, {
+                new NextRequest(`${TEST_URL}/api/bingo/${mockBingoId}/suggestions`, {
                     method: "POST",
                     body: JSON.stringify({ content: mockSuggestion.content }),
                 }),
-                { params: { id: "1" } }
+                { params: mockAsyncParams }
             );
 
             // Assert
@@ -151,11 +155,11 @@ describe("Bingo Suggestions API Routes", () => {
 
             // Act
             const response = await POST(
-                new NextRequest(`${API_URL}/api/bingo/1/suggestions`, {
+                new NextRequest(`${TEST_URL}/api/bingo/${mockBingoId}/suggestions`, {
                     method: "POST",
                     body: JSON.stringify({ content: mockSuggestion.content }),
                 }),
-                { params: { id: "1" } }
+                { params: mockAsyncParams }
             );
 
             // Assert
@@ -167,11 +171,11 @@ describe("Bingo Suggestions API Routes", () => {
         it("should return 402 when content is missing", async () => {
             // Act
             const response = await POST(
-                new NextRequest(`${API_URL}/api/bingo/1/suggestions`, {
+                new NextRequest(`${TEST_URL}/api/bingo/${mockBingoId}/suggestions`, {
                     method: "POST",
                     body: JSON.stringify({}),
                 }),
-                { params: { id: "1" } }
+                { params: mockAsyncParams }
             );
 
             // Assert
@@ -184,18 +188,16 @@ describe("Bingo Suggestions API Routes", () => {
     describe("PATCH /api/bingo/[id]/suggestions", () => {
         it("should update suggestion successfully", async () => {
             // Arrange
-            const mockSession = { user: { id: "1" } };
-            (getServerSession as jest.Mock).mockResolvedValue(mockSession);
             (prisma.suggestion.update as jest.Mock).mockResolvedValue(mockSuggestion);
             (prisma.bingo.findUnique as jest.Mock).mockResolvedValue({ userId: "1" });
 
             // Act
             const response = await PATCH(
-                new NextRequest(`${API_URL}/api/bingo/1/suggestions`, {
+                new NextRequest(`${TEST_URL}/api/bingo/${mockBingoId}/suggestions`, {
                     method: "PATCH",
                     body: JSON.stringify({ suggestionId: mockSuggestion.id, status: "approved" }),
                 }),
-                { params: { id: "1" } }
+                { params: mockAsyncParams }
             );
 
             // Assert
@@ -208,15 +210,14 @@ describe("Bingo Suggestions API Routes", () => {
             // Arrange
             (prisma.suggestion.update as jest.Mock).mockResolvedValue(null);
             (prisma.bingo.findUnique as jest.Mock).mockResolvedValue({ userId: "1" });
-            (getServerSession as jest.Mock).mockResolvedValue(mockSession);
 
             // Act
             const response = await PATCH(
-                new NextRequest(`${API_URL}/api/bingo/1/suggestions`, {
+                new NextRequest(`${TEST_URL}/api/bingo/${mockBingoId}/suggestions`, {
                     method: "PATCH",
                     body: JSON.stringify({ suggestionId: mockSuggestion.id, status: "added" }),
                 }),
-                { params: { id: "1" } }
+                { params: mockAsyncParams }
             );
 
             // Assert
@@ -227,16 +228,16 @@ describe("Bingo Suggestions API Routes", () => {
 
         it("should return 401 when unauthorized", async () => {
             // Arrange
-            (getServerSession as jest.Mock).mockResolvedValue(null);
+            (auth as jest.Mock).mockResolvedValue(null);
             (prisma.bingo.findUnique as jest.Mock).mockResolvedValue({ userId: "2" });
 
             // Act
             const response = await PATCH(
-                new NextRequest(`${API_URL}/api/bingo/1/suggestions`, {
+                new NextRequest(`${TEST_URL}/api/bingo/${mockBingoId}/suggestions`, {
                     method: "PATCH",
                     body: JSON.stringify({ suggestionId: mockSuggestion.id, status: "added", position: 1 }),
                 }),
-                { params: { id: "1" } }
+                { params: mockAsyncParams }
             );
 
             // Assert
@@ -248,16 +249,15 @@ describe("Bingo Suggestions API Routes", () => {
         it("should return 444 when bingo not found", async () => {
             // Arrange
             (prisma.bingo.findUnique as jest.Mock).mockResolvedValue(null);
-            const id = "1";
 
             // Act
             const error = await PATCH(
-                new NextRequest(`${API_URL}/api/bingo/${id}/suggestions`, {
+                new NextRequest(`${TEST_URL}/api/bingo/${mockBingoId}/suggestions`, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ suggestionId: mockSuggestion.id, status: "added", position: 1 }),
                 }),
-                { params: { id: "1" } }
+                { params: mockAsyncParams }
             );
 
             // Assert

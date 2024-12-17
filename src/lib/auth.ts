@@ -1,8 +1,8 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { NextAuthOptions, DefaultSession } from "next-auth";
+import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import NextAuth from "next-auth";
 import { cache } from "react";
-import GoogleProvider from "next-auth/providers/google";
+import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { signInSchema } from "@/schemas";
 import { prisma } from "@/lib/prisma";
@@ -16,7 +16,7 @@ declare module "next-auth" {
     }
 }
 
-export const authOptions: NextAuthOptions = {
+export const authOptions = {
     adapter: PrismaAdapter(prisma),
     providers: [
         Credentials({
@@ -48,18 +48,16 @@ export const authOptions: NextAuthOptions = {
                 }
             },
         }),
-        GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID!,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        Google({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         }),
     ],
     session: {
         strategy: "jwt",
     },
-    pages: {
-        signIn: "/auth/signin",
-    },
     callbacks: {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         session: ({ session, token }) => ({
             ...session,
             user: {
@@ -67,34 +65,10 @@ export const authOptions: NextAuthOptions = {
                 id: token.sub,
             },
         }),
-        async jwt({ token, user }) {
-            try {
-                const dbUser = await prisma.user.findFirst({
-                    where: { email: token.email! },
-                    select: { id: true, name: true, email: true },
-                });
-
-                if (!dbUser) {
-                    if (user) {
-                        token.id = user?.id;
-                    }
-                    return token;
-                }
-
-                return {
-                    id: dbUser.id,
-                    name: dbUser.name,
-                    email: dbUser.email,
-                };
-            } catch (error) {
-                console.error("JWT callback error:", error);
-                return token;
-            }
-        },
     },
-};
+} satisfies NextAuthConfig;
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 const { auth: uncachedAuth, signIn, signOut } = NextAuth(authOptions);
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 const auth = cache(uncachedAuth);

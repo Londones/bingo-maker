@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { APIError, APIErrorCode } from "@/lib/errors";
 import { handleAPIError } from "@/lib/api-utils";
 import { Bingo } from "@/types/types";
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
-    // const { searchParams } = new URL(req.url);
-    // console.log(searchParams.get("id"));
-    const id = params.id;
+type ParamsType = Promise<{ bingoId: string }>;
+
+export async function GET(req: Request, { params }: { params: ParamsType }) {
+    const { bingoId: id } = await params;
 
     if (!id) {
         throw new APIError("Missing ID or shareToken", APIErrorCode.MISSING_ID_OR_SHARE_TOKEN, 445);
@@ -17,7 +16,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
     try {
         const bingo = await prisma.bingo.findUnique({
-            where: { id: params.id },
+            where: { id: id },
             include: { cells: true, background: true, stamp: true },
         });
 
@@ -31,13 +30,14 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     }
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-    const session = await getServerSession(authOptions);
+export async function PATCH(req: Request, { params }: { params: ParamsType }) {
+    const session = await auth();
     const data = (await req.json()) as Partial<Bingo>;
+    const { bingoId: id } = await params;
 
     try {
         const bingo = await prisma.bingo.findUnique({
-            where: { id: params.id },
+            where: { id: id },
             include: { cells: true, background: true, stamp: true, style: true },
         });
 
@@ -50,7 +50,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         }
 
         const updated = await prisma.bingo.update({
-            where: { id: params.id },
+            where: { id: id },
             data: {
                 ...(data.title && { title: data.title }),
                 ...(data.style && {
@@ -114,12 +114,13 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }): Promise<NextResponse> {
-    const session = await getServerSession(authOptions);
+export async function DELETE(req: Request, { params }: { params: ParamsType }) {
+    const session = await auth();
+    const { bingoId: id } = await params;
 
     try {
         const bingo = await prisma.bingo.findUnique({
-            where: { id: params.id },
+            where: { id: id },
         });
 
         if (!bingo) {
@@ -131,7 +132,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
         }
 
         await prisma.bingo.delete({
-            where: { id: params.id },
+            where: { id: id },
         });
 
         return NextResponse.json({ success: true });

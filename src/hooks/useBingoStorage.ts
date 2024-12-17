@@ -29,7 +29,6 @@ export function useBingoStorage() {
         }
     }, [session]);
 
-    // Get bingos
     const useGetBingos = (options?: { cursor?: string; limit?: number }) =>
         useQuery<PaginatedBingos>({
             queryKey: ["bingos", options?.cursor, options?.limit],
@@ -44,18 +43,16 @@ export function useBingoStorage() {
             },
         });
 
-    // Get bingo
-    const useGetBingo = (id: string) =>
+    const useGetBingo = (bingoId: string) =>
         useQuery<Bingo>({
-            queryKey: ["bingo", id],
+            queryKey: ["bingo", bingoId],
             queryFn: async () => {
-                const res = await fetch(`/api/bingo/${id}`);
+                const res = await fetch(`/api/bingo/${bingoId}`);
                 if (!res.ok) throw new Error("Failed to fetch bingo");
                 return res.json();
             },
         });
 
-    // Save bingo
     const useSaveBingo = useMutation({
         mutationFn: (bingoData: Bingo) =>
             fetch("/api/bingo", {
@@ -74,31 +71,31 @@ export function useBingoStorage() {
         },
     });
 
-    // Update bingo
     const useUpdateBingo = useMutation({
-        mutationFn: ({ id, updates }: { id: string; updates: Partial<Bingo> }) =>
-            fetch(`/api/bingo/${id}`, {
+        mutationFn: ({ bingoId, updates }: { bingoId: string; updates: Partial<Bingo> }) =>
+            fetch(`/api/bingo/${bingoId}`, {
                 method: "PATCH",
                 body: JSON.stringify(updates),
             }).then((res) => res.json()),
-        onSuccess: async (_, { id }) => {
-            await queryClient.invalidateQueries({ queryKey: ["bingo", id] });
+        onSuccess: async (_, { bingoId }) => {
+            await queryClient.invalidateQueries({ queryKey: ["bingo", bingoId] });
         },
     });
 
-    // Delete bingo
     const useDeleteBingo = useMutation({
-        mutationFn: (id: string) => fetch(`/api/bingo/${id}`, { method: "DELETE" }),
-        onSuccess: async (_, id) => {
+        mutationFn: (bingoId: string) => fetch(`/api/bingo/${bingoId}`, { method: "DELETE" }),
+        onSuccess: async (_, bingoId) => {
             await queryClient.invalidateQueries({ queryKey: ["bingos"] });
             if (!session?.user) {
                 const stored = JSON.parse(localStorage.getItem("ownedBingos") || "[]") as Bingo[];
-                localStorage.setItem("ownedBingos", JSON.stringify(stored.filter((bingo: Bingo) => bingo.id !== id)));
+                localStorage.setItem(
+                    "ownedBingos",
+                    JSON.stringify(stored.filter((bingo: Bingo) => bingo.id !== bingoId))
+                );
             }
         },
     });
 
-    // Migration mutation
     const useMigrateBingos = useMutation({
         mutationFn: ({ bingoIds, authorToken, userId }: MigrateRequest) =>
             fetch("/api/bingo/migrate", {
