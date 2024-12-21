@@ -1,4 +1,4 @@
-import { GradientConfig, RadialGradientStop } from "@/types/types";
+import { GradientConfig, RadialGradientStop, Stamp, Style } from "@/types/types";
 
 const gradientStops: RadialGradientStop[] = [
     {
@@ -52,7 +52,7 @@ const DEFAULT_GRADIENT_CONFIG: GradientConfig = {
 
 export const DEFAULT_GRADIENT_CONFIG_STRING = JSON.stringify(DEFAULT_GRADIENT_CONFIG);
 
-export const DEFAULT_STYLE = {
+export const DEFAULT_STYLE: Style = {
     fontFamily: "Arial",
     fontSize: 16,
     color: "#000000",
@@ -60,8 +60,8 @@ export const DEFAULT_STYLE = {
     gap: 10,
 };
 
-export const DEFAULT_STAMP = {
-    type: "emoji",
+export const DEFAULT_STAMP: Stamp = {
+    type: "text",
     value: "🎉",
     size: 100,
     opacity: 1,

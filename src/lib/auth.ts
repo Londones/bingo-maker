@@ -16,7 +16,7 @@ declare module "next-auth" {
     }
 }
 
-export const authOptions = {
+const authOptions = {
     adapter: PrismaAdapter(prisma),
     providers: [
         Credentials({
@@ -69,8 +69,8 @@ export const authOptions = {
 } satisfies NextAuthConfig;
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-const { auth: uncachedAuth, signIn, signOut } = NextAuth(authOptions);
+const { auth: uncachedAuth, signIn, signOut, handlers } = NextAuth(authOptions);
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 const auth = cache(uncachedAuth);
 
-export { auth, signIn, signOut };
+export { auth, signIn, signOut, handlers };

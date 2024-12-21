@@ -75,3 +75,26 @@ export interface SuggestionPatchRequest {
     status: "pending" | "added" | "rejected";
     position: number;
 }
+
+export interface BingoState {
+    id: string;
+    title: string;
+    gridSize: number;
+    cells: BingoCell[];
+    style: Style;
+    background: Background;
+    stamp: Stamp;
+    status: "draft" | "published";
+}
+
+export interface EditorHistory {
+    past: BingoState[];
+    present: BingoState;
+    future: BingoState[];
+}
+
+export interface EditorState {
+    history: EditorHistory;
+    canUndo: boolean;
+    canRedo: boolean;
+}

@@ -36,6 +36,8 @@ body {
         --input: 0 0% 85%;
         --ring: 0 0% 76%;
 
+        --border-ripple: 0 100% 100%;
+
         --radius: 0.5rem;
     }
 
@@ -67,6 +69,8 @@ body {
         --border: 0 0% 11%;
         --input: 0 0% 16%;
         --ring: 0 0% 40%;
+
+        --border-ripple: 0 100% 100%;
     }
 }
 
