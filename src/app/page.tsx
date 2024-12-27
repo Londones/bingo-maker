@@ -1,4 +1,5 @@
-import Image from "next/image";
+import PreviewPanel from "@/components/editor/preview-panel";
+import SettingsPanel from "@/components/editor/settings-panel";
 import NavBar from "@/components/nav-bar";
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 
@@ -18,8 +19,14 @@ export default function Home() {
                     </>
                 }
             >
-                <Image src='/vercel.svg' alt='Vercel Logo' width={72} height={16} />
-                EDITOOOOOOR
+                <div className='grid grid-cols-4 gap-8 h-full'>
+                    <div className='col-span-1'>
+                        <SettingsPanel />
+                    </div>
+                    <div className='col-span-3'>
+                        <PreviewPanel />
+                    </div>
+                </div>
             </ContainerScroll>
         </div>
     );
