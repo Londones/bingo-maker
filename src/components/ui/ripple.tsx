@@ -6,19 +6,13 @@ import { cn } from "@/lib/utils";
 
 interface RippleProps {
     mainCircleSize?: number;
-    mainCircleOpacity?: number;
     numCircles?: number;
     className?: string;
 }
 
-const Ripple = React.memo(function Ripple({
-    mainCircleSize = 210,
-    mainCircleOpacity = 0.24,
-    numCircles = 8,
-    className,
-}: RippleProps) {
+const Ripple = React.memo(function Ripple({ mainCircleSize = 210, numCircles = 4, className }: RippleProps) {
     const { theme } = useTheme();
-    mainCircleOpacity = theme === "dark" ? 0.24 : 0.65;
+    const adjustedMainCircleOpacity = theme === "dark" ? 0.24 : 0.65;
     return (
         <div
             className={cn(
@@ -28,7 +22,7 @@ const Ripple = React.memo(function Ripple({
         >
             {Array.from({ length: numCircles }, (_, i) => {
                 const size = mainCircleSize + i * 200;
-                const opacity = mainCircleOpacity - i * 0.03;
+                const opacity = adjustedMainCircleOpacity - i * 0.03;
                 const animationDelay = `${i * 0.06}s`;
                 const borderStyle = i === numCircles - 1 ? "dashed" : "solid";
 

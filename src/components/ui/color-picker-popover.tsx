@@ -1,5 +1,8 @@
+"use client";
 import React from "react";
 import { HslStringColorPicker } from "react-colorful";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
 type ColorPickerPopoverProps = {
     color: string;
@@ -8,11 +11,11 @@ type ColorPickerPopoverProps = {
 };
 
 const ColorPickerPopover = ({ color, onChange, onClose }: ColorPickerPopoverProps) => (
-    <div className='absolute top-0 right-0 p-2 bg-white rounded-lg shadow-lg'>
+    <div className='p-2 relative bg-white rounded-lg shadow-lg'>
         <HslStringColorPicker color={color} onChange={onChange} />
-        <button className='mt-2 px-4 py-2 bg-gray-200 rounded' onClick={onClose}>
-            Close
-        </button>
+        <Button onClick={onClose} className='absolute rounded-full p-2 -top-4 -right-2'>
+            <X />
+        </Button>
     </div>
 );
 

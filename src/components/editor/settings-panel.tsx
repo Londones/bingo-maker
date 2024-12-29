@@ -1,9 +1,10 @@
+"use client";
 import React from "react";
 import BackgroundEditor from "@/components/editor/background/background-editor";
 
 const SettingsPanel = () => {
     return (
-        <div className='p-4 border-r dark:border-gray-800'>
+        <div className='border-r pr-4 dark:border-gray-100/10'>
             <BackgroundEditor />
         </div>
     );

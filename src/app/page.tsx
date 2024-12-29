@@ -1,3 +1,4 @@
+"use client";
 import PreviewPanel from "@/components/editor/preview-panel";
 import SettingsPanel from "@/components/editor/settings-panel";
 import NavBar from "@/components/nav-bar";
