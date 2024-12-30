@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { RadialGradientStop } from "@/types/types";
 
@@ -12,10 +12,18 @@ type DraggableStopProps = {
 };
 
 const DraggableStop = ({ stop, index, onDragEnd, containerRef, isHovered }: DraggableStopProps) => {
-    if (!containerRef.current) return null;
+    const [isContainerReady, setIsContainerReady] = useState(false);
 
-    const pixelX = containerRef.current.clientWidth * (stop.position.x / 100) - 10;
-    const pixelY = containerRef.current.clientHeight * (stop.position.y / 100) - 10;
+    useEffect(() => {
+        if (containerRef.current) {
+            setIsContainerReady(true);
+        }
+    }, [containerRef]);
+
+    if (!isContainerReady) return null;
+
+    const pixelX = containerRef.current!.clientWidth * (stop.position.x / 100) - 10;
+    const pixelY = containerRef.current!.clientHeight * (stop.position.y / 100) - 10;
 
     return (
         <motion.div
@@ -26,11 +34,11 @@ const DraggableStop = ({ stop, index, onDragEnd, containerRef, isHovered }: Drag
             dragSnapToOrigin={false}
             dragConstraints={{
                 left: -10,
-                right: containerRef.current.clientWidth - 10,
+                right: containerRef.current!.clientWidth - 10,
                 top: -10,
-                bottom: containerRef.current.clientHeight - 10,
+                bottom: containerRef.current!.clientHeight - 10,
             }}
-            initial={false}
+            initial={{ x: pixelX, y: pixelY }}
             layout={false}
             animate={{ x: pixelX, y: pixelY }}
             dragTransition={{ power: 0, timeConstant: 0 }}
@@ -47,6 +55,7 @@ const DraggableStop = ({ stop, index, onDragEnd, containerRef, isHovered }: Drag
                     : "0 0 0 1px rgba(0,0,0,0.3)",
                 transform: `scale(${isHovered ? 1.2 : 1})`,
                 transition: "transform 0.2s, border 0.2s, box-shadow 0.2s",
+                cursor: "pointer",
             }}
         />
     );

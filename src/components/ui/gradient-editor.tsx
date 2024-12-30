@@ -13,6 +13,7 @@ const GradientEditor = () => {
     const [selectedStop, setSelectedStop] = useState<number | null>(null);
     const [showColorPicker, setShowColorPicker] = useState(false);
     const [editingBackground, setEditingBackground] = useState(false);
+    const [hoveredStopIndex, setHoveredStopIndex] = useState<number | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
     const { backgroundColor, stops } = deserializeGradientConfig(state.background.value);
@@ -33,9 +34,8 @@ const GradientEditor = () => {
         const rect = containerRef.current.getBoundingClientRect();
 
         const relativeX = Math.max(0, Math.min(x - rect.left, rect.width));
-        const relativeY = Math.max(0, Math.min(y - rect.top - rect.bottom - rect.height, rect.height));
+        const relativeY = Math.max(0, Math.min(y - rect.top, rect.height));
 
-        // Convert to percentages
         const percentageX = Math.round((relativeX / rect.width) * 100);
         const percentageY = Math.round((relativeY / rect.height) * 100);
 
@@ -70,11 +70,9 @@ const GradientEditor = () => {
 
         const rect = containerRef.current.getBoundingClientRect();
 
-        // Calculate relative position
         const relativeX = x - rect.left;
         const relativeY = y - rect.top;
 
-        // Convert to percentages and round to nearest integer
         const percentageX = Math.round((relativeX / rect.width) * 100);
         const percentageY = Math.round((relativeY / rect.height) * 100);
 
@@ -109,14 +107,15 @@ const GradientEditor = () => {
                             stop={stop}
                             index={index}
                             onDragEnd={handleDragEnd}
+                            isHovered={hoveredStopIndex === index}
                             containerRef={containerRef}
                         />
                     ))}
                 </div>
             </div>
-            <div className='grid grid-cols-2 gap-2 mt-4 overflow-y-auto rounded-md justify-center items-center border border-gray-100/10 small-scrollbar h-20'>
+            <div className='grid grid-cols-3 mt-4 overflow-y-auto rounded-md items-center border border-gray-100/10 small-scrollbar h-20'>
                 {stops.map((stop, index) => (
-                    <div key={index} className='flex items-center justify-center gap-2'>
+                    <div key={index} className='flex items-center p-2 justify-center'>
                         <div
                             className='w-6 h-6 rounded-full'
                             onClick={() => {
@@ -124,7 +123,9 @@ const GradientEditor = () => {
                                 setEditingBackground(false);
                                 setShowColorPicker(true);
                             }}
-                            style={{ backgroundColor: stop.color }}
+                            onMouseEnter={() => setHoveredStopIndex(index)}
+                            onMouseLeave={() => setHoveredStopIndex(null)}
+                            style={{ backgroundColor: stop.color, cursor: "pointer" }}
                         />
                         <Button
                             variant='ghost'
