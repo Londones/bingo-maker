@@ -61,6 +61,18 @@ export async function PATCH(req: Request, { params }: { params: ParamsType }) {
                             ...(data.style.color && { color: data.style.color }),
                             ...(data.style.cellSize && { cellSize: data.style.cellSize }),
                             ...(data.style.gap && { gap: data.style.gap }),
+                            ...(data.style.cellStyle && {
+                                cellStyle: {
+                                    updateMany: data.style.cellStyle.map((cellStyle) => ({
+                                        where: { position: cellStyle.position },
+                                        data: {
+                                            ...(cellStyle.color && { color: cellStyle.color }),
+                                            ...(cellStyle.fontSize && { fontSize: cellStyle.fontSize }),
+                                            ...(cellStyle.fontFamily && { fontFamily: cellStyle.fontFamily }),
+                                        },
+                                    })),
+                                },
+                            }),
                         },
                     },
                 }),

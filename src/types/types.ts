@@ -11,6 +11,14 @@ export interface Style {
     color: string;
     cellSize: number;
     gap: number;
+    cellStyle?: CellStyle[];
+}
+
+export interface CellStyle {
+    color: string;
+    fontSize: number;
+    fontFamily: string;
+    position: number;
 }
 
 export interface Background {

@@ -80,11 +80,25 @@ export const editorSlice = createSlice({
         },
         setGridSize: (state, action: PayloadAction<number>) => {
             pushToHistory(state);
-            state.history.present.gridSize = action.payload;
-            state.history.present.cells = Array(action.payload * action.payload).fill({
-                content: "",
-                isStamped: false,
-            });
+            const newGridSize = action.payload;
+            const oldCells = [...state.history.present.cells];
+            const newCellCount = newGridSize * newGridSize;
+
+            const newCells = Array(newCellCount)
+                .fill(null)
+                .map((_, index) => {
+                    if (oldCells[index]) {
+                        return oldCells[index];
+                    }
+
+                    return {
+                        content: "",
+                        validated: false,
+                    } as BingoCell;
+                });
+
+            state.history.present.gridSize = newGridSize;
+            state.history.present.cells = newCells;
         },
         updateCell: (state, action: PayloadAction<{ index: number; cell: Partial<BingoCell> }>) => {
             pushToHistory(state);

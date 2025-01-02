@@ -75,14 +75,26 @@ model Bingo {
 }
 
 model Style {
-    id         String   @id @default(cuid())
+    id         String      @id @default(cuid())
     fontFamily String
     fontSize   Int
     color      String
     cellSize   Int
     gap        Int
-    bingo      Bingo    @relation(fields: [bingoId], references: [id])
-    bingoId    String   @unique
+    cellStyle  CellStyle[]
+    bingo      Bingo       @relation(fields: [bingoId], references: [id])
+    bingoId    String      @unique
+    createdAt  DateTime    @default(now())
+}
+
+model CellStyle {
+    id         String   @id @default(cuid())
+    position   Int
+    color      String
+    fontFamily String
+    fontSize   Int
+    styleId    String
+    style      Style    @relation(fields: [styleId], references: [id])
     createdAt  DateTime @default(now())
 }
 

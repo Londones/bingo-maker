@@ -66,3 +66,5 @@ export const DEFAULT_STAMP: Stamp = {
     size: 100,
     opacity: 1,
 };
+
+export const GRID_SIZES = [3, 5, 7, 9] as const;

@@ -21,6 +21,14 @@ export async function POST(req: Request): Promise<NextResponse> {
                         gap: data.style.gap,
                         fontFamily: data.style.fontFamily,
                         color: data.style.color,
+                        cellStyle: {
+                            create: data.style.cellStyle?.map((cellStyle) => ({
+                                color: cellStyle.color,
+                                fontSize: cellStyle.fontSize,
+                                fontFamily: cellStyle.fontFamily,
+                                position: cellStyle.position,
+                            })),
+                        },
                     },
                 },
                 status: data.status,
