@@ -1,6 +1,5 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
-import { getServerSession } from "next-auth";
-import { authOptions } from "./auth";
+import { auth } from "@/lib/auth";
 import { UploadError, UploadErrorCode } from "./errors";
 
 const f = createUploadthing();
@@ -8,7 +7,7 @@ const f = createUploadthing();
 export const uploadRouter = {
     backgroundUploader: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
         .middleware(async () => {
-            const session = await getServerSession(authOptions);
+            const session = await auth();
 
             if (!session?.user) {
                 throw new UploadError("You must be logged in to upload custom images", UploadErrorCode.UNAUTHORIZED);
@@ -23,10 +22,28 @@ export const uploadRouter = {
 
     stampUploader: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
         .middleware(async () => {
-            const session = await getServerSession(authOptions);
+            const session = await auth();
 
             if (!session?.user) {
                 throw new UploadError("You must be logged in to upload custom stamps", UploadErrorCode.UNAUTHORIZED);
+            }
+
+            return { userId: session.user.id };
+        })
+        // eslint-disable-next-line @typescript-eslint/require-await
+        .onUploadComplete(async ({ file }) => {
+            return { url: file.url };
+        }),
+
+    cellBackgroundUploader: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
+        .middleware(async () => {
+            const session = await auth();
+
+            if (!session?.user) {
+                throw new UploadError(
+                    "You must be logged in to upload custom cell backgrounds",
+                    UploadErrorCode.UNAUTHORIZED
+                );
             }
 
             return { userId: session.user.id };

@@ -55,15 +55,12 @@ const PreviewPanel = () => {
                 el.style.fontSize = `${fontSize}px`;
             }
 
-            actions.updateStyle({
-                ...state.style,
+            const existingCellStyle = state.cells[index]?.cellStyle;
+
+            actions.updateCell(index, {
                 cellStyle: {
-                    ...state.style.cellStyle,
-                    ...state.style.cellStyle,
-                    [index]: {
-                        ...(state.style.cellStyle?.[index] || { fontSize: state.style.fontSize }),
-                        fontSize: fontSize,
-                    },
+                    ...existingCellStyle,
+                    fontSize: fontSize,
                 },
             });
         }
@@ -110,26 +107,40 @@ const PreviewPanel = () => {
                     {state.cells.map((cell, index) => (
                         <div
                             key={index}
-                            className='relative items-center justify-center rounded-md border bg-white backdrop-blur-sm transition-all cursor-pointer hover:shadow-md'
+                            className='relative items-center justify-center rounded-md backdrop-blur-sm transition-all cursor-pointer hover:shadow-md'
                             style={{
                                 width: state.style.cellSize,
                                 height: state.style.cellSize,
-                                color: state.style.color,
-                                fontSize: state.style.fontSize,
-                                fontFamily: state.style.fontFamily,
+                                color: state.cells[index]?.cellStyle?.color ?? state.style.color,
+                                fontSize: state.cells[index]?.cellStyle?.fontSize ?? state.style.fontSize,
+                                fontFamily: state.cells[index]?.cellStyle?.fontFamily ?? state.style.fontFamily,
+                                fontWeight: state.cells[index]?.cellStyle?.fontWeight ?? state.style.fontWeight,
+                                fontStyle: state.cells[index]?.cellStyle?.fontStyle ?? state.style.fontStyle,
+                                borderColor:
+                                    state.cells[index]?.cellStyle?.cellBorderColor ?? state.style.cellBorderColor,
+                                borderWidth: state.style.cellBorderWidth,
+                                backgroundColor:
+                                    state.cells[index]?.cellStyle?.cellBackgroundColor ??
+                                    state.style.cellBackgroundColor,
+                                opacity:
+                                    state.cells[index]?.cellStyle?.cellBackgroundOpacity ??
+                                    state.style.cellBackgroundOpacity,
                             }}
                             onClick={() => handleCellClick(index)}
                         >
                             {editingCell === index ? (
                                 <textarea
                                     ref={inputRef}
-                                    className='w-full h-fit p-1 bg-white rounded-md text-center resize-none whitespace-pre-wrap break-words overflow-auto'
+                                    className='w-full h-fit p-1 rounded-md text-center resize-none whitespace-pre-wrap break-words overflow-auto'
                                     value={editContent}
                                     onChange={(e) => setEditContent(e.target.value)}
                                     onBlur={handleBlur}
                                     style={{
                                         fontSize: state.style.fontSize,
                                         fontFamily: state.style.fontFamily,
+                                        backgroundColor:
+                                            state.cells[index]?.cellStyle?.cellBackgroundColor ??
+                                            state.style.cellBackgroundColor,
                                     }}
                                 />
                             ) : (

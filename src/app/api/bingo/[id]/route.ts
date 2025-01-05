@@ -1,3 +1,4 @@
+import { buildBackground, buildStamp, buildCellUpdate, buildStyle } from "@/lib/builders";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
@@ -53,59 +54,10 @@ export async function PATCH(req: Request, { params }: { params: ParamsType }) {
             where: { id: id },
             data: {
                 ...(data.title && { title: data.title }),
-                ...(data.style && {
-                    style: {
-                        update: {
-                            ...(data.style.fontSize && { fontSize: data.style.fontSize }),
-                            ...(data.style.fontFamily && { fontFamily: data.style.fontFamily }),
-                            ...(data.style.color && { color: data.style.color }),
-                            ...(data.style.cellSize && { cellSize: data.style.cellSize }),
-                            ...(data.style.gap && { gap: data.style.gap }),
-                            ...(data.style.cellStyle && {
-                                cellStyle: {
-                                    updateMany: data.style.cellStyle.map((cellStyle) => ({
-                                        where: { position: cellStyle.position },
-                                        data: {
-                                            ...(cellStyle.color && { color: cellStyle.color }),
-                                            ...(cellStyle.fontSize && { fontSize: cellStyle.fontSize }),
-                                            ...(cellStyle.fontFamily && { fontFamily: cellStyle.fontFamily }),
-                                        },
-                                    })),
-                                },
-                            }),
-                        },
-                    },
-                }),
-                ...(data.background && {
-                    background: {
-                        update: {
-                            ...(data.background.type && { type: data.background.type }),
-                            ...(data.background.value && { value: data.background.value }),
-                        },
-                    },
-                }),
-                ...(data.stamp && {
-                    stamp: {
-                        update: {
-                            ...(data.stamp.type && { type: data.stamp.type }),
-                            ...(data.stamp.value && { value: data.stamp.value }),
-                            ...(data.stamp.size && { size: data.stamp.size }),
-                            ...(data.stamp.opacity && { opacity: data.stamp.opacity }),
-                        },
-                    },
-                }),
-                ...(data.cells && {
-                    cells: {
-                        update: data.cells.map((cell) => ({
-                            where: { id: cell.id },
-                            data: {
-                                ...(cell.content && { content: cell.content }),
-                                ...(cell.position && { position: cell.position }),
-                                ...(cell.validated !== undefined && { validated: cell.validated }),
-                            },
-                        })),
-                    },
-                }),
+                ...(data.style && { style: { update: buildStyle(data.style) } }),
+                ...(data.background && { background: { update: buildBackground(data.background) } }),
+                ...(data.stamp && { stamp: { update: buildStamp(data.stamp) } }),
+                ...(data.cells && { cells: { update: buildCellUpdate(data.cells) } }),
                 ...(data.status && { status: data.status }),
             },
             include: {

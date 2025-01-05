@@ -58,6 +58,12 @@ export const DEFAULT_STYLE: Style = {
     color: "#000000",
     cellSize: 100,
     gap: 10,
+    cellBorderColor: "#000000",
+    cellBorderWidth: 1,
+    cellBackgroundColor: "#ffffff",
+    fontWeight: "normal",
+    fontStyle: "normal",
+    cellBackgroundOpacity: 1,
 };
 
 export const DEFAULT_STAMP: Stamp = {

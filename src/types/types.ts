@@ -3,22 +3,35 @@ export interface BingoCell {
     content: string;
     position: number;
     validated: boolean;
+    cellStyle?: CellStyle;
 }
 
 export interface Style {
     fontSize: number;
     fontFamily: string;
+    fontWeight: string;
+    fontStyle: string;
+    cellBorderColor: string;
+    cellBorderWidth: number;
+    cellBackgroundColor: string;
+    cellBackgroundOpacity: number;
     color: string;
     cellSize: number;
     gap: number;
-    cellStyle?: CellStyle[];
 }
 
 export interface CellStyle {
-    color: string;
-    fontSize: number;
-    fontFamily: string;
-    position: number;
+    color?: string;
+    fontSize?: number;
+    fontFamily?: string;
+    fontWeight?: string;
+    fontStyle?: string;
+    cellBorderColor?: string;
+    cellBorderWidth?: number;
+    cellBackgroundColor?: string;
+    cellBackgroundImage?: string;
+    cellBackgroundOpacity?: number;
+    cellBackgroundImageOpacity?: number;
 }
 
 export interface Background {

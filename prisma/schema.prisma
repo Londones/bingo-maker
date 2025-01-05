@@ -75,27 +75,36 @@ model Bingo {
 }
 
 model Style {
-    id         String      @id @default(cuid())
-    fontFamily String
-    fontSize   Int
-    color      String
-    cellSize   Int
-    gap        Int
-    cellStyle  CellStyle[]
-    bingo      Bingo       @relation(fields: [bingoId], references: [id])
-    bingoId    String      @unique
-    createdAt  DateTime    @default(now())
+    id                  String   @id @default(cuid())
+    fontFamily          String
+    fontSize            Int
+    color               String
+    cellSize            Int
+    gap                 Int
+    fontWeight          String
+    fontStyle           String
+    cellBorderColor     String
+    cellBorderWidth     Int
+    cellBackgroundColor String
+    bingo               Bingo    @relation(fields: [bingoId], references: [id])
+    bingoId             String   @unique
+    createdAt           DateTime @default(now())
 }
 
 model CellStyle {
-    id         String   @id @default(cuid())
-    position   Int
-    color      String
-    fontFamily String
-    fontSize   Int
-    styleId    String
-    style      Style    @relation(fields: [styleId], references: [id])
-    createdAt  DateTime @default(now())
+    id                  String    @id @default(cuid())
+    color               String?
+    fontFamily          String?
+    fontSize            Int?
+    fontWeight          String?
+    fontStyle           String?
+    cellBorderColor     String?
+    cellBorderWidth     Int?
+    cellBackgroundType  String?
+    cellBackgroundValue String?
+    bingoCellId         String    @unique
+    bingoCell           BingoCell @relation(fields: [bingoCellId], references: [id])
+    createdAt           DateTime  @default(now())
 }
 
 model Background {
@@ -118,12 +127,13 @@ model StampConfig {
 }
 
 model BingoCell {
-    id        String  @id @default(cuid())
+    id        String     @id @default(cuid())
     content   String
     position  Int
-    validated Boolean @default(false)
+    validated Boolean    @default(false)
+    cellStyle CellStyle?
     bingoId   String
-    bingo     Bingo   @relation(fields: [bingoId], references: [id], onDelete: Cascade)
+    bingo     Bingo      @relation(fields: [bingoId], references: [id], onDelete: Cascade)
 }
 
 model Suggestion {

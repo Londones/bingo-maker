@@ -21,14 +21,11 @@ export async function POST(req: Request): Promise<NextResponse> {
                         gap: data.style.gap,
                         fontFamily: data.style.fontFamily,
                         color: data.style.color,
-                        cellStyle: {
-                            create: data.style.cellStyle?.map((cellStyle) => ({
-                                color: cellStyle.color,
-                                fontSize: cellStyle.fontSize,
-                                fontFamily: cellStyle.fontFamily,
-                                position: cellStyle.position,
-                            })),
-                        },
+                        cellBorderColor: data.style.cellBorderColor,
+                        cellBorderWidth: data.style.cellBorderWidth,
+                        cellBackgroundColor: data.style.cellBackgroundColor,
+                        fontWeight: data.style.fontWeight,
+                        fontStyle: data.style.fontStyle,
                     },
                 },
                 status: data.status,
@@ -53,6 +50,23 @@ export async function POST(req: Request): Promise<NextResponse> {
                         content: cell.content,
                         position: cell.position,
                         validated: cell.validated,
+                        cellStyle: cell.cellStyle
+                            ? {
+                                  create: {
+                                      color: cell.cellStyle.color,
+                                      fontSize: cell.cellStyle.fontSize,
+                                      fontFamily: cell.cellStyle.fontFamily,
+                                      fontWeight: cell.cellStyle.fontWeight,
+                                      fontStyle: cell.cellStyle.fontStyle,
+                                      cellBorderColor: cell.cellStyle.cellBorderColor,
+                                      cellBorderWidth: cell.cellStyle.cellBorderWidth,
+                                      cellBackgroundImage: cell.cellStyle.cellBackgroundImage,
+                                      cellBackgroundColor: cell.cellStyle.cellBackgroundColor,
+                                      cellBackgroundOpacity: cell.cellStyle.cellBackgroundOpacity,
+                                      cellBackgroundImageOpacity: cell.cellStyle.cellBackgroundImageOpacity,
+                                  },
+                              }
+                            : undefined,
                     })),
                 },
             },
