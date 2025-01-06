@@ -10,6 +10,7 @@ const PreviewPanel = () => {
     const [editingCell, setEditingCell] = React.useState<number | null>(null);
     const [editContent, setEditContent] = React.useState<string>("");
     const inputRef = React.useRef<HTMLTextAreaElement>(null);
+    const cellRefs = React.useRef<HTMLDivElement[]>([]);
     const [editingTitle, setEditingTitle] = React.useState(false);
 
     const getBackground = () => {
@@ -45,26 +46,106 @@ const PreviewPanel = () => {
         }
     };
 
-    const checkOverflow = (el: HTMLTextAreaElement, index: number) => {
-        const isOverflowing = el.scrollHeight > el.clientHeight;
-        if (isOverflowing) {
-            let fontSize = state.style.fontSize;
+    const checkOverflow = React.useCallback(
+        (el: HTMLTextAreaElement | HTMLDivElement, index: number) => {
+            const isOverflowing = el.scrollHeight > el.clientHeight;
+            if (isOverflowing) {
+                let fontSize = el.style.fontSize ? parseInt(el.style.fontSize) : state.style.fontSize;
 
-            while (el.scrollHeight > el.clientHeight) {
-                fontSize -= 1;
-                el.style.fontSize = `${fontSize}px`;
+                while (el.scrollHeight > el.clientHeight) {
+                    fontSize -= 1;
+                    el.style.fontSize = `${fontSize}px`;
+                }
+
+                const existingCellStyle = state.cells[index]?.cellStyle;
+
+                actions.updateCell(index, {
+                    cellStyle: {
+                        ...existingCellStyle,
+                        fontSize: fontSize,
+                    },
+                });
             }
+        },
+        [actions, state.cells, state.style.fontSize]
+    );
 
-            const existingCellStyle = state.cells[index]?.cellStyle;
+    const getCellStyles = (index: number) => {
+        const baseStyles = {
+            width: state.style.cellSize,
+            height: state.style.cellSize,
+            color: state.cells[index]?.cellStyle?.color ?? state.style.color,
+            fontSize: state.cells[index]?.cellStyle?.fontSize ?? state.style.fontSize,
+            fontFamily: state.cells[index]?.cellStyle?.fontFamily ?? state.style.fontFamily,
+            fontWeight: state.cells[index]?.cellStyle?.fontWeight ?? state.style.fontWeight,
+            fontStyle: state.cells[index]?.cellStyle?.fontStyle ?? state.style.fontStyle,
+        };
 
-            actions.updateCell(index, {
-                cellStyle: {
-                    ...existingCellStyle,
-                    fontSize: fontSize,
-                },
-            });
-        }
+        const backgroundStyles = {
+            borderColor: state.cells[index]?.cellStyle?.cellBorderColor ?? state.style.cellBorderColor,
+            borderWidth: state.style.cellBorderWidth,
+            backgroundColor: getBgColorWithOpacity(
+                state.cells[index]?.cellStyle?.cellBackgroundColor ?? state.style.cellBackgroundColor,
+                state.cells[index]?.cellStyle?.cellBackgroundOpacity ?? state.style.cellBackgroundOpacity
+            ),
+            ...(state.cells[index]?.cellStyle?.cellBackgroundImage
+                ? getBackgroundImageWithOpacity(
+                      state.cells[index]?.cellStyle?.cellBackgroundImage,
+                      state.cells[index]?.cellStyle?.cellBackgroundOpacity ?? state.style.cellBackgroundOpacity
+                  )
+                : {}),
+        };
+
+        return { baseStyles, backgroundStyles };
     };
+
+    const getBgColorWithOpacity = (color: string, opacity: number) => {
+        if (color.startsWith("hsla")) {
+            return color.replace(/[\d.]+\)$/g, `${opacity})`);
+        }
+
+        if (color.startsWith("#")) {
+            const r = parseInt(color.slice(1, 3), 16);
+            const g = parseInt(color.slice(3, 5), 16);
+            const b = parseInt(color.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+        }
+        return color;
+    };
+
+    const getBackgroundImageWithOpacity = (imageUrl: string | undefined, opacity: number) => {
+        if (!imageUrl) return undefined;
+        return {
+            backgroundImage: `linear-gradient(rgba(255, 255, 255, ${1 - opacity}), rgba(255, 255, 255, ${
+                1 - opacity
+            })), url(${imageUrl})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+        };
+    };
+
+    React.useEffect(() => {
+        const cellObservers = cellRefs.current.map((el, index) => {
+            if (el) {
+                const observer = new ResizeObserver(() => {
+                    checkOverflow(el, index);
+                });
+                observer.observe(el);
+                return observer;
+            }
+        });
+
+        const inputObserver = new ResizeObserver(() => {
+            if (inputRef.current) {
+                checkOverflow(inputRef.current, editingCell!);
+            }
+        });
+
+        return () => {
+            cellObservers.forEach((observer) => observer?.disconnect());
+            inputObserver.disconnect();
+        };
+    }, [state.cells, checkOverflow, editingCell]);
 
     return (
         <div className='flex flex-col h-full items-center space-y-4'>
@@ -107,24 +188,13 @@ const PreviewPanel = () => {
                     {state.cells.map((cell, index) => (
                         <div
                             key={index}
+                            ref={(el) => {
+                                cellRefs.current[index] = el!;
+                            }}
                             className='relative items-center justify-center rounded-md backdrop-blur-sm transition-all cursor-pointer hover:shadow-md'
                             style={{
-                                width: state.style.cellSize,
-                                height: state.style.cellSize,
-                                color: state.cells[index]?.cellStyle?.color ?? state.style.color,
-                                fontSize: state.cells[index]?.cellStyle?.fontSize ?? state.style.fontSize,
-                                fontFamily: state.cells[index]?.cellStyle?.fontFamily ?? state.style.fontFamily,
-                                fontWeight: state.cells[index]?.cellStyle?.fontWeight ?? state.style.fontWeight,
-                                fontStyle: state.cells[index]?.cellStyle?.fontStyle ?? state.style.fontStyle,
-                                borderColor:
-                                    state.cells[index]?.cellStyle?.cellBorderColor ?? state.style.cellBorderColor,
-                                borderWidth: state.style.cellBorderWidth,
-                                backgroundColor:
-                                    state.cells[index]?.cellStyle?.cellBackgroundColor ??
-                                    state.style.cellBackgroundColor,
-                                opacity:
-                                    state.cells[index]?.cellStyle?.cellBackgroundOpacity ??
-                                    state.style.cellBackgroundOpacity,
+                                ...getCellStyles(index).baseStyles,
+                                ...getCellStyles(index).backgroundStyles,
                             }}
                             onClick={() => handleCellClick(index)}
                         >
@@ -136,11 +206,7 @@ const PreviewPanel = () => {
                                     onChange={(e) => setEditContent(e.target.value)}
                                     onBlur={handleBlur}
                                     style={{
-                                        fontSize: state.style.fontSize,
-                                        fontFamily: state.style.fontFamily,
-                                        backgroundColor:
-                                            state.cells[index]?.cellStyle?.cellBackgroundColor ??
-                                            state.style.cellBackgroundColor,
+                                        ...getCellStyles(index).baseStyles,
                                     }}
                                 />
                             ) : (
