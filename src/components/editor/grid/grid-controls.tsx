@@ -45,9 +45,7 @@ const GridControls = () => {
                             cell.validated ? "bg-accent" : ""
                         }`}
                         onClick={() => actions.toggleStamp(index)}
-                    >
-                        {cell.content}
-                    </Card>
+                    />
                 ))}
             </div>
         </div>

@@ -11,7 +11,7 @@ const Editor = () => {
             }}
             className='  mx-auto w-full border border-white/75 dark:border-[#6C6C6C] bg-gray-100/20 dark:bg-[#0c0c0c69] backdrop-blur-xl rounded-[30px] p-3 shadow-2xl'
         >
-            <div className=' h-full w-full bg-gray-100/10 dark:bg-gray-700/10 overflow-hidden rounded-2xl  md:rounded-2xl py-4 pr-4 '>
+            <div className=' h-[50rem] w-full bg-gray-100/10 dark:bg-gray-700/10 overflow-hidden rounded-2xl  md:rounded-2xl py-4 pr-4 '>
                 <div className='grid grid-cols-4 gap-8 h-full'>
                     <div className='col-span-1 border-r px-4 overflow-y-scroll [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden text-foreground/50'>
                         <SettingsPanel />

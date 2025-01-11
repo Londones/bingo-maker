@@ -68,9 +68,9 @@ export const DEFAULT_STYLE: Style = {
 
 export const DEFAULT_STAMP: Stamp = {
     type: "text",
-    value: "🎉",
-    size: 100,
+    value: "✔️",
+    size: 80,
     opacity: 1,
 };
 
-export const GRID_SIZES = [3, 5, 7, 9] as const;
+export const GRID_SIZES = [3, 5] as const;

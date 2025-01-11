@@ -4,6 +4,7 @@ import { useEditor } from "@/hooks/useEditor";
 import { deserializeGradientConfig } from "@/lib/utils";
 import { RadialGradientStop } from "@/types/types";
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 const PreviewPanel = () => {
     const { state, actions } = useEditor();
@@ -79,15 +80,16 @@ const PreviewPanel = () => {
             fontFamily: state.cells[index]?.cellStyle?.fontFamily ?? state.style.fontFamily,
             fontWeight: state.cells[index]?.cellStyle?.fontWeight ?? state.style.fontWeight,
             fontStyle: state.cells[index]?.cellStyle?.fontStyle ?? state.style.fontStyle,
+            backgroundColor: getBgColorWithOpacity(
+                state.cells[index]?.cellStyle?.cellBackgroundColor ?? state.style.cellBackgroundColor,
+                state.cells[index]?.cellStyle?.cellBackgroundOpacity ?? state.style.cellBackgroundOpacity
+            ),
         };
 
         const backgroundStyles = {
             borderColor: state.cells[index]?.cellStyle?.cellBorderColor ?? state.style.cellBorderColor,
             borderWidth: state.style.cellBorderWidth,
-            backgroundColor: getBgColorWithOpacity(
-                state.cells[index]?.cellStyle?.cellBackgroundColor ?? state.style.cellBackgroundColor,
-                state.cells[index]?.cellStyle?.cellBackgroundOpacity ?? state.style.cellBackgroundOpacity
-            ),
+
             ...(state.cells[index]?.cellStyle?.cellBackgroundImage
                 ? getBackgroundImageWithOpacity(
                       state.cells[index]?.cellStyle?.cellBackgroundImage,
@@ -125,25 +127,33 @@ const PreviewPanel = () => {
     };
 
     React.useEffect(() => {
-        const cellObservers = cellRefs.current.map((el, index) => {
-            if (el) {
-                const observer = new ResizeObserver(() => {
-                    checkOverflow(el, index);
+        let cellObserver: ResizeObserver | null = null;
+        if (cellRefs.current.length > 0) {
+            cellObserver = new ResizeObserver((entries) => {
+                entries.forEach((entry) => {
+                    const index = parseInt((entry.target as HTMLElement).dataset.index!, 10);
+                    checkOverflow(entry.target as HTMLDivElement, index);
                 });
-                observer.observe(el);
-                return observer;
-            }
-        });
+            });
 
-        const inputObserver = new ResizeObserver(() => {
-            if (inputRef.current) {
-                checkOverflow(inputRef.current, editingCell!);
-            }
-        });
+            cellRefs.current.forEach((cell) => {
+                cellObserver?.observe(cell);
+            });
+        }
+
+        let inputObserver: ResizeObserver | null = null;
+        if (editingCell !== null && inputRef.current) {
+            inputObserver = new ResizeObserver(() => {
+                if (inputRef.current && editingCell !== null) {
+                    checkOverflow(inputRef.current, editingCell);
+                }
+            });
+            inputObserver.observe(inputRef.current);
+        }
 
         return () => {
-            cellObservers.forEach((observer) => observer?.disconnect());
-            inputObserver.disconnect();
+            cellObserver?.disconnect();
+            inputObserver?.disconnect();
         };
     }, [state.cells, checkOverflow, editingCell]);
 
@@ -186,11 +196,8 @@ const PreviewPanel = () => {
                     }}
                 >
                     {state.cells.map((cell, index) => (
-                        <div
+                        <motion.div
                             key={index}
-                            ref={(el) => {
-                                cellRefs.current[index] = el!;
-                            }}
                             className='relative items-center justify-center rounded-md backdrop-blur-sm transition-all cursor-pointer hover:shadow-md'
                             style={{
                                 ...getCellStyles(index).baseStyles,
@@ -201,7 +208,7 @@ const PreviewPanel = () => {
                             {editingCell === index ? (
                                 <textarea
                                     ref={inputRef}
-                                    className='w-full h-fit p-1 rounded-md text-center resize-none whitespace-pre-wrap break-words overflow-auto'
+                                    className='w-full h-fit p-1 rounded-md text-center content-center resize-none whitespace-pre-wrap break-words overflow-auto'
                                     value={editContent}
                                     onChange={(e) => setEditContent(e.target.value)}
                                     onBlur={handleBlur}
@@ -210,18 +217,22 @@ const PreviewPanel = () => {
                                     }}
                                 />
                             ) : (
-                                <div className='p-2 w-full h-full text-center whitespace-pre-wrap break-words overflow-auto'>
+                                <div className='p-1 w-full h-full text-center whitespace-pre-wrap content-center break-words overflow-auto'>
                                     {cell.content}
                                 </div>
                             )}
 
                             {cell.validated && (
-                                <div
+                                <motion.div
                                     className='absolute inset-0 flex items-center justify-center pointer-events-none'
                                     style={{
                                         fontSize: state.stamp.size,
                                         opacity: state.stamp.opacity,
+                                        fontStyle: "normal",
                                     }}
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    exit={{ scale: 0 }}
                                 >
                                     {state.stamp.type === "text" ? (
                                         state.stamp.value
@@ -236,9 +247,9 @@ const PreviewPanel = () => {
                                             }}
                                         />
                                     )}
-                                </div>
+                                </motion.div>
                             )}
-                        </div>
+                        </motion.div>
                     ))}
                 </div>
             </div>
