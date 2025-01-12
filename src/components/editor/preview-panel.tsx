@@ -5,6 +5,8 @@ import { deserializeGradientConfig } from "@/lib/utils";
 import { RadialGradientStop } from "@/types/types";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { ContextMenu, ContextMenuTrigger, ContextMenuContent } from "@/components/ui/context-menu";
+import CellContextMenu from "@/components/editor/cell/cell-context-menu";
 
 const PreviewPanel = () => {
     const { state, actions } = useEditor();
@@ -171,6 +173,7 @@ const PreviewPanel = () => {
                         style={{
                             color: state.style.color,
                             fontFamily: state.style.fontFamily,
+                            fontStyle: state.style.fontStyle,
                         }}
                         onChange={(e) => actions.setTitle(e.target.value)}
                         onBlur={() => setEditingTitle(false)}
@@ -181,6 +184,7 @@ const PreviewPanel = () => {
                         style={{
                             fontFamily: state.style.fontFamily,
                             color: state.style.color,
+                            fontStyle: state.style.fontStyle,
                         }}
                         onClick={() => setEditingTitle(true)}
                     >
@@ -196,60 +200,67 @@ const PreviewPanel = () => {
                     }}
                 >
                     {state.cells.map((cell, index) => (
-                        <motion.div
-                            key={index}
-                            className='relative items-center justify-center rounded-md backdrop-blur-sm transition-all cursor-pointer hover:shadow-md'
-                            style={{
-                                ...getCellStyles(index).baseStyles,
-                                ...getCellStyles(index).backgroundStyles,
-                            }}
-                            onClick={() => handleCellClick(index)}
-                        >
-                            {editingCell === index ? (
-                                <textarea
-                                    ref={inputRef}
-                                    className='w-full h-fit p-1 rounded-md text-center content-center resize-none whitespace-pre-wrap break-words overflow-auto'
-                                    value={editContent}
-                                    onChange={(e) => setEditContent(e.target.value)}
-                                    onBlur={handleBlur}
+                        <ContextMenu key={index}>
+                            <ContextMenuTrigger>
+                                <motion.div
+                                    key={index}
+                                    className='relative items-center justify-center rounded-md backdrop-blur-sm transition-all cursor-pointer hover:shadow-md'
                                     style={{
                                         ...getCellStyles(index).baseStyles,
+                                        ...getCellStyles(index).backgroundStyles,
                                     }}
-                                />
-                            ) : (
-                                <div className='p-1 w-full h-full text-center whitespace-pre-wrap content-center break-words overflow-auto'>
-                                    {cell.content}
-                                </div>
-                            )}
-
-                            {cell.validated && (
-                                <motion.div
-                                    className='absolute inset-0 flex items-center justify-center pointer-events-none'
-                                    style={{
-                                        fontSize: state.stamp.size,
-                                        opacity: state.stamp.opacity,
-                                        fontStyle: "normal",
-                                    }}
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    exit={{ scale: 0 }}
+                                    onClick={() => handleCellClick(index)}
                                 >
-                                    {state.stamp.type === "text" ? (
-                                        state.stamp.value
-                                    ) : (
-                                        <Image
-                                            src={state.stamp.value}
-                                            alt='stamp'
-                                            className='w-full h-full object-contain'
+                                    {editingCell === index ? (
+                                        <textarea
+                                            ref={inputRef}
+                                            className='w-full h-fit p-1 rounded-md text-center content-center resize-none whitespace-pre-wrap break-words overflow-auto'
+                                            value={editContent}
+                                            onChange={(e) => setEditContent(e.target.value)}
+                                            onBlur={handleBlur}
                                             style={{
-                                                maxWidth: state.stamp.size,
-                                                maxHeight: state.stamp.size,
+                                                ...getCellStyles(index).baseStyles,
                                             }}
                                         />
+                                    ) : (
+                                        <div className='p-1 w-full h-full text-center whitespace-pre-wrap content-center break-words overflow-auto'>
+                                            {cell.content}
+                                        </div>
+                                    )}
+
+                                    {cell.validated && (
+                                        <motion.div
+                                            className='absolute inset-0 flex items-center justify-center pointer-events-none'
+                                            style={{
+                                                fontSize: state.stamp.size,
+                                                opacity: state.stamp.opacity,
+                                                fontStyle: "normal",
+                                            }}
+                                            initial={{ scale: 0 }}
+                                            animate={{ scale: 1 }}
+                                            exit={{ scale: 0 }}
+                                        >
+                                            {state.stamp.type === "text" ? (
+                                                state.stamp.value
+                                            ) : (
+                                                <Image
+                                                    src={state.stamp.value}
+                                                    alt='stamp'
+                                                    className='w-full h-full object-contain'
+                                                    style={{
+                                                        maxWidth: state.stamp.size,
+                                                        maxHeight: state.stamp.size,
+                                                    }}
+                                                />
+                                            )}
+                                        </motion.div>
                                     )}
                                 </motion.div>
-                            )}
-                        </motion.div>
+                            </ContextMenuTrigger>
+                            <ContextMenuContent>
+                                <CellContextMenu index={index} />
+                            </ContextMenuContent>
+                        </ContextMenu>
                     ))}
                 </div>
             </div>

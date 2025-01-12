@@ -74,3 +74,26 @@ export const DEFAULT_STAMP: Stamp = {
 };
 
 export const GRID_SIZES = [3, 5] as const;
+
+export const FONT_SIZES = [12, 14, 16, 18, 20, 24, 28, 32];
+
+export const FONT_FAMILIES = [
+    { value: "Arial", label: "Arial" },
+    { value: "Inter", label: "Inter" },
+    { value: "Times New Roman", label: "Times New Roman" },
+    { value: "Georgia", label: "Georgia" },
+    { value: "Courier New", label: "Courier New" },
+    { value: "Verdana", label: "Verdana" },
+    { value: "Trebuchet MS", label: "Trebuchet MS" },
+    { value: "Comic Sans MS", label: "Comic Sans MS" },
+    { value: "Impact", label: "Impact" },
+    { value: "Lucida Console", label: "Lucida Console" },
+    { value: "Lucida Sans Unicode", label: "Lucida Sans Unicode" },
+    { value: "Palatino Linotype", label: "Palatino Linotype" },
+    { value: "Arial Black", label: "Arial Black" },
+    { value: "Franklin Gothic Medium", label: "Franklin Gothic Medium" },
+    { value: "Symbol", label: "Symbol" },
+    { value: "Webdings", label: "Webdings" },
+    { value: "Wingdings", label: "Wingdings" },
+    { value: "MS Sans Serif", label: "MS Sans Serif" },
+];

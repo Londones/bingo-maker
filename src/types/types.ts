@@ -119,3 +119,5 @@ export interface EditorState {
     canUndo: boolean;
     canRedo: boolean;
 }
+
+export type PopoverType = "textColor" | "borderColor" | "cellBackgroundColor" | null;
