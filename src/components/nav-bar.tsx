@@ -19,7 +19,7 @@ const NavBar = () => {
     return (
         <div className='w-full flex justify-between items-center p-8'>
             <div className='flex items-center'>
-                <h1 className='font-extrabold italic'>Starfirr</h1>
+                <h1 className='font-extrabold italic'>Starfire</h1>
             </div>
             <div className='flex items-center gap-4'>
                 <ProfileOrLoginButton />

@@ -32,6 +32,13 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
         });
     };
 
+    const handleRemoveStyling = () => {
+        handleRemoveImage();
+        actions.updateCell(index, {
+            cellStyle: undefined,
+        });
+    };
+
     const handleRemoveImage = () => {
         if (cellStyle?.cellBackgroundImage) {
             void (async () => {
@@ -185,7 +192,7 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
                                         <Type className='h-4 w-4' />
                                     </Button>
                                 </ContextMenuSubTrigger>
-                                <ContextMenuSubContent className='p-0'>
+                                <ContextMenuSubContent className='p-0 z-10'>
                                     <HexColorPicker
                                         color={cellStyle?.color ?? state.style.color}
                                         onChange={(color) => {
@@ -305,11 +312,7 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
                             <Button
                                 variant='destructive'
                                 size='icon'
-                                onClick={() =>
-                                    actions.updateCell(index, {
-                                        cellStyle: undefined,
-                                    })
-                                }
+                                onClick={handleRemoveStyling}
                                 disabled={!cellStyle}
                             >
                                 <RotateCcw className='h-4 w-4' />

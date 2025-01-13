@@ -258,7 +258,7 @@ const PreviewPanel = () => {
                                     )}
                                 </motion.div>
                             </ContextMenuTrigger>
-                            <ContextMenuContent>
+                            <ContextMenuContent className='bg-background/90 backdrop-blur-md overflow-visible'>
                                 <CellContextMenu index={index} />
                             </ContextMenuContent>
                         </ContextMenu>
