@@ -1,8 +1,9 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { auth } from "@/lib/auth";
-import { UploadError, UploadErrorCode } from "./errors";
+import { UploadThingError, UTApi } from "uploadthing/server";
 
 const f = createUploadthing();
+export const utapi = new UTApi();
 
 export const uploadRouter = {
     backgroundUploader: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
@@ -10,7 +11,7 @@ export const uploadRouter = {
             const session = await auth();
 
             if (!session?.user) {
-                throw new UploadError("You must be logged in to upload custom images", UploadErrorCode.UNAUTHORIZED);
+                throw new UploadThingError("You must be logged in to upload custom backgrounds");
             }
 
             return { userId: session.user.id };
@@ -25,7 +26,7 @@ export const uploadRouter = {
             const session = await auth();
 
             if (!session?.user) {
-                throw new UploadError("You must be logged in to upload custom stamps", UploadErrorCode.UNAUTHORIZED);
+                throw new UploadThingError("You must be logged in to upload custom stamps");
             }
 
             return { userId: session.user.id };
@@ -40,10 +41,7 @@ export const uploadRouter = {
             const session = await auth();
 
             if (!session?.user) {
-                throw new UploadError(
-                    "You must be logged in to upload custom cell backgrounds",
-                    UploadErrorCode.UNAUTHORIZED
-                );
+                throw new UploadThingError("You must be logged in to upload custom cell backgrounds");
             }
 
             return { userId: session.user.id };

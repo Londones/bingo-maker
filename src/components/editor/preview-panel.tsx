@@ -90,12 +90,12 @@ const PreviewPanel = () => {
 
         const backgroundStyles = {
             borderColor: state.cells[index]?.cellStyle?.cellBorderColor ?? state.style.cellBorderColor,
-            borderWidth: state.style.cellBorderWidth,
+            borderWidth: state.cells[index]?.cellStyle?.cellBorderWidth ?? state.style.cellBorderWidth,
 
             ...(state.cells[index]?.cellStyle?.cellBackgroundImage
                 ? getBackgroundImageWithOpacity(
                       state.cells[index]?.cellStyle?.cellBackgroundImage,
-                      state.cells[index]?.cellStyle?.cellBackgroundOpacity ?? state.style.cellBackgroundOpacity
+                      state.cells[index]?.cellStyle?.cellBackgroundImageOpacity ?? state.style.cellBackgroundOpacity
                   )
                 : {}),
         };
@@ -220,6 +220,7 @@ const PreviewPanel = () => {
                                             onBlur={handleBlur}
                                             style={{
                                                 ...getCellStyles(index).baseStyles,
+                                                backgroundColor: "transparent",
                                             }}
                                         />
                                     ) : (

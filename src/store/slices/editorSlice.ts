@@ -8,12 +8,27 @@ const initialBingoState: BingoState = {
     gridSize: 5,
     cells: Array(25)
         .fill(null)
-        .map((_, index) => ({
-            id: `temp-${index}`,
-            content: "",
-            position: index,
-            validated: false,
-        })),
+        .map((_, index) => {
+            const baseCell: BingoCell = {
+                id: `temp-${index}`,
+                content: "",
+                position: index,
+                validated: false,
+            };
+
+            if (index === 0) {
+                return {
+                    ...baseCell,
+                    cellStyle: {
+                        cellBackgroundImage:
+                            "https://r6kb2iiay0.ufs.sh/f/d7e4677c-12c2-44da-98a7-2b375749e276-jcyyig.png",
+                        cellBackgroundOpacity: 1,
+                    },
+                } as BingoCell;
+            }
+
+            return baseCell;
+        }),
     style: DEFAULT_STYLE,
     background: {
         type: "gradient",

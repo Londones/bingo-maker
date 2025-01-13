@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import { useEditor } from "@/hooks/useEditor";
 import { Button } from "@/components/ui/button";
@@ -5,13 +6,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Bold, Italic, Type, Square, Palette, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { HexColorPicker } from "react-colorful";
 import { PopoverType } from "@/types/types";
 import { FONT_SIZES, FONT_FAMILIES } from "@/utils/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UploadButton } from "@/utils/uploadthing";
 import { toast } from "sonner";
+import { ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from "@/components/ui/context-menu";
+import Image from "next/image";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
 
 type CellContextMenuProps = {
     index: number;
@@ -26,6 +30,43 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
         toast.error(message, {
             duration: 3000,
         });
+    };
+
+    const handleRemoveImage = () => {
+        if (cellStyle?.cellBackgroundImage) {
+            void (async () => {
+                try {
+                    const fileKey = cellStyle?.cellBackgroundImage?.split("/").pop();
+                    if (fileKey) {
+                        const response = await fetch("/api/uploadthing/delete", {
+                            method: "DELETE",
+                            body: JSON.stringify({ fileKey }),
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                        });
+
+                        if (!response.ok) {
+                            throw new Error("Failed to delete image");
+                        }
+
+                        actions.updateCell(index, {
+                            cellStyle: {
+                                ...cellStyle,
+                                cellBackgroundImage: undefined,
+                                cellBackgroundImageOpacity: undefined,
+                            },
+                        });
+                    }
+                } catch (err: unknown) {
+                    if (err instanceof Error) {
+                        errorToast(err.message);
+                    } else {
+                        errorToast("An unknown error occurred");
+                    }
+                }
+            })();
+        }
     };
 
     return (
@@ -135,16 +176,16 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
                         </div>
                         <div className='flex items-center justify-between w-full'>
                             <span>Text Color</span>
-                            <Popover
+                            <ContextMenuSub
                                 open={activePopover === "textColor"}
                                 onOpenChange={(isOpen) => setActivePopover(isOpen ? "textColor" : null)}
                             >
-                                <PopoverTrigger asChild>
+                                <ContextMenuSubTrigger>
                                     <Button variant='ghost' size='icon'>
                                         <Type className='h-4 w-4' />
                                     </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className='p-0'>
+                                </ContextMenuSubTrigger>
+                                <ContextMenuSubContent className='p-0'>
                                     <HexColorPicker
                                         color={cellStyle?.color ?? state.style.color}
                                         onChange={(color) => {
@@ -156,8 +197,8 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
                                             });
                                         }}
                                     />
-                                </PopoverContent>
-                            </Popover>
+                                </ContextMenuSubContent>
+                            </ContextMenuSub>
                         </div>
 
                         <div className='flex items-center justify-between w-full'>
@@ -186,16 +227,16 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
 
                         <div className='flex items-center justify-between w-full'>
                             <span>Cell Background Color</span>
-                            <Popover
+                            <ContextMenuSub
                                 open={activePopover === "cellBackgroundColor"}
                                 onOpenChange={(isOpen) => setActivePopover(isOpen ? "cellBackgroundColor" : null)}
                             >
-                                <PopoverTrigger asChild>
+                                <ContextMenuSubTrigger>
                                     <Button variant='ghost' size='icon'>
                                         <Palette className='h-4 w-4' />
                                     </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className='p-0 w-auto'>
+                                </ContextMenuSubTrigger>
+                                <ContextMenuSubContent className='p-0 w-auto'>
                                     <HexColorPicker
                                         color={cellStyle?.cellBackgroundColor ?? state.style.cellBackgroundColor}
                                         onChange={(color) => {
@@ -207,22 +248,22 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
                                             });
                                         }}
                                     />
-                                </PopoverContent>
-                            </Popover>
+                                </ContextMenuSubContent>
+                            </ContextMenuSub>
                         </div>
 
                         <div className='flex items-center justify-between w-full'>
                             <span>Border Color</span>
-                            <Popover
+                            <ContextMenuSub
                                 open={activePopover === "borderColor"}
                                 onOpenChange={(isOpen) => setActivePopover(isOpen ? "borderColor" : null)}
                             >
-                                <PopoverTrigger asChild>
+                                <ContextMenuSubTrigger>
                                     <Button variant='ghost' size='icon'>
                                         <Square className='h-4 w-4' />
                                     </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className='p-0'>
+                                </ContextMenuSubTrigger>
+                                <ContextMenuSubContent className='p-0'>
                                     <HexColorPicker
                                         color={cellStyle?.cellBorderColor ?? state.style.cellBorderColor}
                                         onChange={(color) => {
@@ -234,8 +275,8 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
                                             });
                                         }}
                                     />
-                                </PopoverContent>
-                            </Popover>
+                                </ContextMenuSubContent>
+                            </ContextMenuSub>
                         </div>
 
                         <div className='flex items-center justify-between gap-1 w-full'>
@@ -278,21 +319,58 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
                 </TabsContent>
                 <TabsContent value='image'>
                     <div>
-                        <UploadButton
-                            className='pt-2 ut-button:bg-black ut-button:text-white ut-button:ut-readying:bg-black/50 ut-button:ut-readying:text-white'
-                            endpoint='cellBackgroundUploader'
-                            onClientUploadComplete={(res) => {
-                                actions.updateCell(index, {
-                                    cellStyle: {
-                                        ...cellStyle,
-                                        cellBackgroundImage: res[0]?.url,
-                                    },
-                                });
-                            }}
-                            onUploadError={(err) => {
-                                errorToast(err.message);
-                            }}
-                        />
+                        {cellStyle?.cellBackgroundImage ? (
+                            <div className='flex flex-col gap-2 items-center justify-between w-full'>
+                                <Image
+                                    src={cellStyle?.cellBackgroundImage}
+                                    alt='Cell Background'
+                                    width={96}
+                                    height={96}
+                                    className='object-cover rounded-md'
+                                />
+                                <Label htmlFor='opacity'>Image Opacity</Label>
+                                <Slider
+                                    defaultValue={[(cellStyle?.cellBackgroundImageOpacity ?? 1) * 100]}
+                                    onValueChange={(value: number[]) => {
+                                        actions.updateCell(index, {
+                                            cellStyle: {
+                                                ...cellStyle,
+                                                cellBackgroundImageOpacity: value[0]! / 100,
+                                            },
+                                        });
+                                    }}
+                                    step={1}
+                                    min={0}
+                                    max={100}
+                                    id='opacity'
+                                />
+                                <Button
+                                    variant='destructive'
+                                    onClick={() => {
+                                        handleRemoveImage();
+                                    }}
+                                >
+                                    Remove Image
+                                </Button>
+                            </div>
+                        ) : (
+                            <UploadButton
+                                className='pt-2 ut-button:bg-black ut-button:text-white ut-button:ut-readying:bg-black/50 ut-button:ut-readying:text-white'
+                                endpoint='cellBackgroundUploader'
+                                onClientUploadComplete={(res) => {
+                                    actions.updateCell(index, {
+                                        cellStyle: {
+                                            ...cellStyle,
+                                            cellBackgroundImage: res[0]?.url,
+                                            cellBackgroundImageOpacity: 1,
+                                        },
+                                    });
+                                }}
+                                onUploadError={(err) => {
+                                    errorToast(err.message);
+                                }}
+                            />
+                        )}
                     </div>
                 </TabsContent>
             </Tabs>
