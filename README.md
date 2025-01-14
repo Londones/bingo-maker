@@ -15,7 +15,6 @@ A modern, responsive web application for creating and customizing beautiful grad
 -   **Interactive Grid Editor**
 
     -   Customize your designs with flexible grid sizes
-    -   Drag and drop interface
     -   Real-time preview
 
 -   **Advanced Background Controls**
@@ -34,7 +33,6 @@ A modern, responsive web application for creating and customizing beautiful grad
 -   **Theme Support**
     -   🌓 Dark/Light mode switching
     -   Custom color schemes
-    -   Responsive design
 
 ## 🛠️ Tech Stack
 
@@ -42,7 +40,7 @@ A modern, responsive web application for creating and customizing beautiful grad
 -   **Styling**: Tailwind CSS, Shadcn/ui
 -   **State**: Redux Toolkit
 -   **Database**: Prisma, PostgreSQL
--   **Auth**: NextAuth.js
+-   **Auth**: Auth.js
 -   **Storage**: UploadThing
 
 Made with ❤️ by Mytsu

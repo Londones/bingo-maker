@@ -7,7 +7,6 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { signIn, signOut } from "@/lib/auth";
 import { AuthError } from "next-auth";
-import { AuthAPIError, AuthErrorCode } from "@/lib/errors";
 
 export async function signout() {
     await signOut();
@@ -20,13 +19,19 @@ export async function authenticate(prevState: string | undefined, formData: Form
         if (error instanceof AuthError) {
             switch (error.type) {
                 case "CredentialsSignin":
-                    throw new AuthAPIError("Invalid credentials", AuthErrorCode.INVALID_CREDENTIALS, 401);
+                    return "Invalid credentials";
                 default:
-                    throw new AuthAPIError("Something went wrong", AuthErrorCode.DATABASE_ERROR, 500);
+                    return "Something went wrong";
             }
         }
         throw error;
     }
+
+    redirect("/");
+}
+
+export async function authenticateGoogle() {
+    await signIn("google", { callbackUrl: `${window.location.origin}/` });
 }
 
 export async function register(prevState: string | undefined, formData: FormData) {
