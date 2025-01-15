@@ -331,7 +331,9 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
                                     height={96}
                                     className='object-cover rounded-md'
                                 />
-                                <Label htmlFor='opacity'>Image Opacity</Label>
+                                <Label htmlFor='opacity' className='text-foreground/50'>
+                                    Image Opacity
+                                </Label>
                                 <Slider
                                     defaultValue={[(cellStyle?.cellBackgroundImageOpacity ?? 1) * 100]}
                                     onValueChange={(value: number[]) => {

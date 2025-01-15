@@ -14,6 +14,14 @@ const CellsToolbar = () => {
     const { state, actions } = useEditor();
     const [activePopover, setActivePopover] = React.useState<PopoverType>(null);
 
+    React.useEffect(() => {
+        if (state.style.cellSize > (state.gridSize === 3 ? 350 : 200)) {
+            actions.updateStyle({
+                cellSize: state.gridSize === 3 ? 350 : 200,
+            });
+        }
+    });
+
     return (
         <div className='flex flex-col items-center gap-1 p-2'>
             <div className='flex items-center justify-between w-full'>
@@ -143,6 +151,7 @@ const CellsToolbar = () => {
                             })
                         }
                         min={100}
+                        max={state.gridSize === 3 ? 350 : 200}
                         step={1}
                         className='w-20'
                     />

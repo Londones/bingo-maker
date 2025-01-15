@@ -8,7 +8,11 @@ import { motion } from "framer-motion";
 import { ContextMenu, ContextMenuTrigger, ContextMenuContent } from "@/components/ui/context-menu";
 import CellContextMenu from "@/components/editor/cell/cell-context-menu";
 
-const PreviewPanel = () => {
+type PreviewPanelProps = {
+    ref: React.RefObject<HTMLDivElement>;
+};
+
+const PreviewPanel = ({ ref }: PreviewPanelProps) => {
     const { state, actions } = useEditor();
     const [editingCell, setEditingCell] = React.useState<number | null>(null);
     const [editContent, setEditContent] = React.useState<string>("");
@@ -160,9 +164,9 @@ const PreviewPanel = () => {
     }, [state.cells, checkOverflow, editingCell]);
 
     return (
-        <div className='flex flex-col h-full items-center space-y-4'>
+        <div ref={ref} className='flex flex-col items-center space-y-4'>
             <div
-                className='w-full mx-auto h-full flex items-center flex-col justify-center p-8 rounded-lg'
+                className='w-full min-h-[40rem] mx-auto h-full flex items-center flex-col justify-center p-8 rounded-lg'
                 style={gradientStyle}
             >
                 {editingTitle ? (
@@ -192,7 +196,7 @@ const PreviewPanel = () => {
                     </h1>
                 )}
                 <div
-                    className='grid mt-8 mx-auto'
+                    className='grid mt-8  mx-auto'
                     style={{
                         gridTemplateColumns: `repeat(${state.gridSize}, ${state.style.cellSize}px)`,
                         gap: state.style.gap,
@@ -202,7 +206,7 @@ const PreviewPanel = () => {
                     {state.cells.map((cell, index) => (
                         <ContextMenu key={index}>
                             <ContextMenuTrigger>
-                                <motion.div
+                                <div
                                     key={index}
                                     className='relative items-center justify-center rounded-md backdrop-blur-sm transition-all cursor-pointer hover:shadow-md'
                                     style={{
@@ -256,7 +260,7 @@ const PreviewPanel = () => {
                                             )}
                                         </motion.div>
                                     )}
-                                </motion.div>
+                                </div>
                             </ContextMenuTrigger>
                             <ContextMenuContent className='bg-background/90 backdrop-blur-md overflow-visible'>
                                 <CellContextMenu index={index} />

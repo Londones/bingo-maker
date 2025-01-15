@@ -26,17 +26,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
                         <div
                             style={{
                                 backgroundImage: 'url("/img-noise-300x300.png")',
-                                backgroundPosition: "center",
                                 backgroundRepeat: "repeat",
                                 opacity: 0.5,
+                                position: "fixed",
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
                             }}
-                            className='h-screen w-screen absolute top-0 z-[-1]'
+                            className='z-[-1]'
                         ></div>
                         {/* <Ripple mainCircleSize={500} numCircles={4} className='absolute -top-80' /> */}
                         <AuthProvider>
-                            <div className='w-10/12 flex flex-col h-full'>
+                            <div className='w-10/12 flex flex-col gap-8'>
                                 <NavBar />
-                                <main className='flex items-center justify-center h-full w-full'>{children}</main>
+                                <main className='flex items-center justify-center w-full'>{children}</main>
                             </div>
                         </AuthProvider>
                     </ThemeProvider>

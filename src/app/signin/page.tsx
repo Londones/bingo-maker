@@ -21,7 +21,7 @@ const Page = () => {
     }
 
     return (
-        <div className='flex items-center justify-center px-4'>
+        <div className='flex h-[70vh] items-center justify-center px-4'>
             <div className='w-full max-w-sm space-y-6'>
                 <h1 className='text-center text-2xl font-semibold'>Sign in</h1>
                 <form action={formAction} className='space-y-4'>
@@ -85,7 +85,7 @@ const Page = () => {
                                 fill='#EA4335'
                             />
                         </svg>
-                        {isGooglePending ? "Signing in with Google..." : "Continue with Google"}
+                        {isGooglePending ? "Signing in with Google..." : "Google"}
                     </Button>
 
                     <p className='text-center text-xs text-gray-600'>

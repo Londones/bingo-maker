@@ -83,8 +83,6 @@ body {
     }
 }
 
-/* Firefox (uncomment to work in Firefox, although other properties will not work!)  */
-
 /* Chrome, Edge and Safari */
 .small-scrollbar::-webkit-scrollbar {
     height: 5px;
