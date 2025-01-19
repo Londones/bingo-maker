@@ -19,6 +19,10 @@ const CellsToolbar = () => {
             actions.updateStyle({
                 cellSize: state.gridSize === 3 ? 350 : 200,
             });
+            actions.updateStamp({
+                ...state.stamp,
+                size: state.gridSize === 3 ? 330 : 180,
+            });
         }
     });
 
@@ -145,11 +149,15 @@ const CellsToolbar = () => {
                     <Input
                         type='number'
                         value={state.style.cellSize}
-                        onChange={(e) =>
+                        onChange={(e) => {
                             actions.updateStyle({
                                 cellSize: parseInt(e.target.value),
-                            })
-                        }
+                            });
+                            actions.updateStamp({
+                                ...state.stamp,
+                                size: parseInt(e.target.value) - 20,
+                            });
+                        }}
                         min={100}
                         max={state.gridSize === 3 ? 350 : 200}
                         step={1}

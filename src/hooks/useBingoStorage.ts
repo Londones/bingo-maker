@@ -3,6 +3,7 @@ import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { generateAuthorToken } from "@/lib/utils";
 import type { Bingo, MigrateRequest } from "@/types/types";
+import { APIError } from "@/lib/errors";
 
 interface PaginatedBingos {
     items: Bingo[];
@@ -61,12 +62,27 @@ export function useBingoStorage() {
                     ...bingoData,
                     authorToken: session?.user ? null : authorToken,
                 }),
-            }).then((res) => res.json()),
+            })
+                .catch((error) => {
+                    if (error instanceof APIError) throw new Error(error.message);
+                    else throw new Error("Failed to save bingo");
+                })
+
+                .then((res) => res.json()),
+        onMutate: () => {
+            const previousBingos = queryClient.getQueryData<Bingo[]>(["bingos"]) ?? [];
+            return { previousBingos };
+        },
         onSuccess: async (data: Bingo) => {
             await queryClient.invalidateQueries({ queryKey: ["bingos"] });
             if (!session?.user) {
                 const stored = JSON.parse(localStorage.getItem("ownedBingos") || "[]") as Bingo[];
                 localStorage.setItem("ownedBingos", JSON.stringify([...stored, data.id]));
+            }
+        },
+        onError: (_, __, context) => {
+            if (context) {
+                queryClient.setQueryData(["bingos"], context.previousBingos);
             }
         },
     });
@@ -76,14 +92,25 @@ export function useBingoStorage() {
             fetch(`/api/bingo/${bingoId}`, {
                 method: "PATCH",
                 body: JSON.stringify(updates),
-            }).then((res) => res.json()),
+            })
+                .catch((error) => {
+                    if (error instanceof APIError) throw new Error(error.message);
+                    else throw new Error("Failed to update bingo");
+                })
+                .then((res) => res.json()),
         onSuccess: async (_, { bingoId }) => {
             await queryClient.invalidateQueries({ queryKey: ["bingo", bingoId] });
         },
     });
 
     const useDeleteBingo = useMutation({
-        mutationFn: (bingoId: string) => fetch(`/api/bingo/${bingoId}`, { method: "DELETE" }),
+        mutationFn: (bingoId: string) =>
+            fetch(`/api/bingo/${bingoId}`, { method: "DELETE" })
+                .catch((error) => {
+                    if (error instanceof APIError) throw new Error(error.message);
+                    else throw new Error("Failed to delete bingo");
+                })
+                .then((res) => res.json()),
         onSuccess: async (_, bingoId) => {
             await queryClient.invalidateQueries({ queryKey: ["bingos"] });
             if (!session?.user) {
@@ -101,7 +128,12 @@ export function useBingoStorage() {
             fetch("/api/bingo/migrate", {
                 method: "POST",
                 body: JSON.stringify({ bingoIds, authorToken, userId }),
-            }).then((res) => res.json()),
+            })
+                .catch((error) => {
+                    if (error instanceof APIError) throw new Error(error.message);
+                    else throw new Error("Failed to migrate bingos");
+                })
+                .then((res) => res.json()),
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ["bingos"] });
             localStorage.removeItem("ownedBingos");

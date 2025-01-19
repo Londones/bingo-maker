@@ -1,14 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Suggestion, SuggestionPatchRequest } from "@/types/types";
 
-export function useSuggestions(bingoId: string): {
-    suggestions: Suggestion[];
-    isLoading: boolean;
-    useAddSuggestion: (content: string) => void;
-    useUpdateSuggestion: (params: SuggestionPatchRequest) => void;
-    isAddingError: boolean;
-    isUpdatingError: boolean;
-} {
+export function useSuggestions(bingoId: string) {
     const queryClient = useQueryClient();
 
     // Fetch suggestions with polling
@@ -23,7 +16,6 @@ export function useSuggestions(bingoId: string): {
         refetchInterval: 3000,
     });
 
-    // Add suggestion mutation
     const useAddSuggestion = useMutation({
         mutationFn: async (content: string) => {
             const res = await fetch(`/api/bingo/${bingoId}/suggestions`, {
@@ -38,17 +30,8 @@ export function useSuggestions(bingoId: string): {
         },
     });
 
-    // Update suggestion mutation
     const useUpdateSuggestion = useMutation({
-        mutationFn: async ({
-            suggestionId,
-            status,
-            position,
-        }: {
-            suggestionId: string;
-            status: string;
-            position?: number;
-        }) => {
+        mutationFn: async ({ suggestionId, status, position }: SuggestionPatchRequest) => {
             const res = await fetch(`/api/bingo/${bingoId}/suggestions`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },

@@ -1,5 +1,5 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
-import { auth } from "@/lib/auth";
+import { useSession } from "next-auth/react";
 import { UploadThingError, UTApi } from "uploadthing/server";
 
 const f = createUploadthing();
@@ -7,10 +7,10 @@ export const utapi = new UTApi();
 
 export const uploadRouter = {
     backgroundUploader: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
-        .middleware(async () => {
-            const session = await auth();
+        .middleware(() => {
+            const { data: session, status } = useSession();
 
-            if (!session?.user) {
+            if (status !== "authenticated") {
                 throw new UploadThingError("You must be logged in to upload custom backgrounds");
             }
 
@@ -22,10 +22,10 @@ export const uploadRouter = {
         }),
 
     stampUploader: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
-        .middleware(async () => {
-            const session = await auth();
+        .middleware(() => {
+            const { data: session, status } = useSession();
 
-            if (!session?.user) {
+            if (status !== "authenticated") {
                 throw new UploadThingError("You must be logged in to upload custom stamps");
             }
 
@@ -37,10 +37,10 @@ export const uploadRouter = {
         }),
 
     cellBackgroundUploader: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
-        .middleware(async () => {
-            const session = await auth();
+        .middleware(() => {
+            const { data: session, status } = useSession();
 
-            if (!session?.user) {
+            if (status !== "authenticated") {
                 throw new UploadThingError("You must be logged in to upload custom cell backgrounds");
             }
 

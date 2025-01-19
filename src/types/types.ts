@@ -1,5 +1,5 @@
 export interface BingoCell {
-    id: string;
+    id?: string;
     content: string;
     position: number;
     validated: boolean;
@@ -47,7 +47,7 @@ export interface Stamp {
 }
 
 export interface Bingo {
-    id: string;
+    id?: string;
     title: string;
     gridSize: number;
     status: "draft" | "published";
@@ -74,7 +74,7 @@ export interface GradientConfig {
 }
 
 export interface Suggestion {
-    id: string;
+    id?: string;
     content: string;
     status: "pending" | "added" | "rejected";
 }
@@ -97,21 +97,21 @@ export interface SuggestionPatchRequest {
     position: number;
 }
 
-export interface BingoState {
-    id: string;
-    title: string;
-    gridSize: number;
-    cells: BingoCell[];
-    style: Style;
-    background: Background;
-    stamp: Stamp;
-    status: "draft" | "published";
-}
+// export interface BingoState {
+//     id: string;
+//     title: string;
+//     gridSize: number;
+//     cells: BingoCell[];
+//     style: Style;
+//     background: Background;
+//     stamp: Stamp;
+//     status: "draft" | "published";
+// }
 
 export interface EditorHistory {
-    past: BingoState[];
-    present: BingoState;
-    future: BingoState[];
+    past: Bingo[];
+    present: Bingo;
+    future: Bingo[];
 }
 
 export interface EditorState {

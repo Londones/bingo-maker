@@ -1,8 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import type { BingoState, BingoCell, Style, Background, Stamp, EditorState } from "@/types/types";
+import type { Bingo, BingoCell, Style, Background, Stamp, EditorState } from "@/types/types";
 import { DEFAULT_STYLE, DEFAULT_STAMP, DEFAULT_GRADIENT_CONFIG_STRING } from "@/utils/constants";
 
-const initialBingoState: BingoState = {
+const initialBingoState: Bingo = {
     id: "",
     title: "New Bingo",
     gridSize: 5,
@@ -89,6 +89,13 @@ export const editorSlice = createSlice({
             state.canUndo = true;
             state.canRedo = newFuture.length > 0;
         },
+        setBingo: (state, action: PayloadAction<Bingo>) => {
+            state.history.present = action.payload;
+            state.history.past = [];
+            state.history.future = [];
+            state.canUndo = false;
+            state.canRedo = false;
+        },
         setTitle: (state, action: PayloadAction<string>) => {
             pushToHistory(state);
             state.history.present.title = action.payload;
@@ -157,6 +164,7 @@ export const editorSlice = createSlice({
 export const {
     undo,
     redo,
+    setBingo,
     setTitle,
     setGridSize,
     updateCell,

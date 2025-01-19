@@ -3,6 +3,7 @@ import type { RootState } from "@/store/index";
 import {
     undo,
     redo,
+    setBingo,
     setTitle,
     setGridSize,
     updateCell,
@@ -12,7 +13,7 @@ import {
     toggleStamp,
     resetEditor,
 } from "@/store/slices/editorSlice";
-import { BingoCell, Style, Background, Stamp } from "@/types/types";
+import { Bingo, BingoCell, Style, Background, Stamp } from "@/types/types";
 
 export const useEditor = () => {
     const dispatch = useDispatch();
@@ -25,6 +26,7 @@ export const useEditor = () => {
         actions: {
             undo: () => dispatch(undo()),
             redo: () => dispatch(redo()),
+            setBingo: (bingo: Bingo) => dispatch(setBingo(bingo)),
             setTitle: (title: string) => dispatch(setTitle(title)),
             setGridSize: (size: number) => dispatch(setGridSize(size)),
             updateCell: (index: number, cell: Partial<BingoCell>) => dispatch(updateCell({ index, cell })),
