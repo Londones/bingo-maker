@@ -3,14 +3,12 @@ import type { Bingo, BingoCell, Style, Background, Stamp, EditorState } from "@/
 import { DEFAULT_STYLE, DEFAULT_STAMP, DEFAULT_GRADIENT_CONFIG_STRING } from "@/utils/constants";
 
 const initialBingoState: Bingo = {
-    id: "",
     title: "New Bingo",
     gridSize: 5,
     cells: Array(25)
         .fill(null)
         .map((_, index) => {
             const baseCell: BingoCell = {
-                id: `temp-${index}`,
                 content: "",
                 position: index,
                 validated: false,
@@ -90,7 +88,11 @@ export const editorSlice = createSlice({
             state.canRedo = newFuture.length > 0;
         },
         setBingo: (state, action: PayloadAction<Bingo>) => {
-            state.history.present = action.payload;
+            const sortedCells = action.payload.cells.sort((a, b) => a.position - b.position);
+            state.history.present = {
+                ...action.payload,
+                cells: sortedCells,
+            };
             state.history.past = [];
             state.history.future = [];
             state.canUndo = false;

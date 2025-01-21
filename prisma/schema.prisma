@@ -75,36 +75,39 @@ model Bingo {
 }
 
 model Style {
-    id                  String   @id @default(cuid())
-    fontFamily          String
-    fontSize            Int
-    color               String
-    cellSize            Int
-    gap                 Int
-    fontWeight          String
-    fontStyle           String
-    cellBorderColor     String
-    cellBorderWidth     Int
-    cellBackgroundColor String
-    bingo               Bingo    @relation(fields: [bingoId], references: [id])
-    bingoId             String   @unique
-    createdAt           DateTime @default(now())
+    id                    String   @id @default(cuid())
+    fontFamily            String
+    fontSize              Int
+    color                 String
+    cellSize              Int
+    gap                   Int
+    fontWeight            String
+    fontStyle             String
+    cellBorderColor       String
+    cellBorderWidth       Int
+    cellBackgroundColor   String
+    cellBackgroundOpacity Int
+    bingo                 Bingo    @relation(fields: [bingoId], references: [id])
+    bingoId               String   @unique
+    createdAt             DateTime @default(now())
 }
 
 model CellStyle {
-    id                  String    @id @default(cuid())
-    color               String?
-    fontFamily          String?
-    fontSize            Int?
-    fontWeight          String?
-    fontStyle           String?
-    cellBorderColor     String?
-    cellBorderWidth     Int?
-    cellBackgroundType  String?
-    cellBackgroundValue String?
-    bingoCellId         String    @unique
-    bingoCell           BingoCell @relation(fields: [bingoCellId], references: [id])
-    createdAt           DateTime  @default(now())
+    id                         String    @id @default(cuid())
+    color                      String?
+    fontSize                   Int?
+    fontFamily                 String?
+    fontWeight                 String?
+    fontStyle                  String?
+    cellBorderColor            String?
+    cellBorderWidth            Int?
+    cellBackgroundImage        String?
+    cellBackgroundColor        String?
+    cellBackgroundOpacity      Int?
+    cellBackgroundImageOpacity Int?
+    bingoCellId                String    @unique
+    bingoCell                  BingoCell @relation(fields: [bingoCellId], references: [id])
+    createdAt                  DateTime  @default(now())
 }
 
 model Background {

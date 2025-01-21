@@ -6,10 +6,10 @@ import { APIError, APIErrorCode } from "@/lib/errors";
 import { handleAPIError } from "@/lib/api-utils";
 import { Bingo } from "@/types/types";
 
-type ParamsType = Promise<{ bingoId: string }>;
+type ParamsType = Promise<{ id: string }>;
 
 export async function GET(req: Request, { params }: { params: ParamsType }) {
-    const { bingoId: id } = await params;
+    const { id } = await params;
 
     if (!id) {
         throw new APIError("Missing ID or shareToken", APIErrorCode.MISSING_ID_OR_SHARE_TOKEN, 445);
@@ -18,7 +18,7 @@ export async function GET(req: Request, { params }: { params: ParamsType }) {
     try {
         const bingo = await prisma.bingo.findUnique({
             where: { id: id },
-            include: { cells: true, background: true, stamp: true },
+            include: { cells: { include: { cellStyle: true } }, background: true, stamp: true, style: true },
         });
 
         if (!bingo) {
@@ -34,19 +34,19 @@ export async function GET(req: Request, { params }: { params: ParamsType }) {
 export async function PATCH(req: Request, { params }: { params: ParamsType }) {
     const session = await auth();
     const data = (await req.json()) as Partial<Bingo>;
-    const { bingoId: id } = await params;
+    const { id } = await params;
 
     try {
         const bingo = await prisma.bingo.findUnique({
             where: { id: id },
-            include: { cells: true, background: true, stamp: true, style: true },
+            include: { cells: { include: { cellStyle: true } }, background: true, stamp: true, style: true },
         });
 
         if (!bingo) {
             throw new APIError("Bingo not found", APIErrorCode.BINGO_NOT_FOUND, 444);
         }
 
-        if (bingo.userId !== session?.user?.id || bingo.authorToken !== data.authorToken) {
+        if ((session?.user && bingo.userId !== session?.user?.id) || bingo.authorToken !== data.authorToken) {
             throw new APIError("Unauthorized", APIErrorCode.UNAUTHORIZED, 401);
         }
 
@@ -61,7 +61,9 @@ export async function PATCH(req: Request, { params }: { params: ParamsType }) {
                 ...(data.status && { status: data.status }),
             },
             include: {
-                cells: true,
+                cells: {
+                    include: { cellStyle: true },
+                },
                 background: true,
                 stamp: true,
                 style: true,
@@ -74,13 +76,17 @@ export async function PATCH(req: Request, { params }: { params: ParamsType }) {
 
         return NextResponse.json(updated);
     } catch (error) {
+        if (error instanceof Error) {
+            console.log(error.stack);
+            console.error(error);
+        }
         return handleAPIError(error);
     }
 }
 
 export async function DELETE(req: Request, { params }: { params: ParamsType }) {
     const session = await auth();
-    const { bingoId: id } = await params;
+    const { id } = await params;
 
     try {
         const bingo = await prisma.bingo.findUnique({

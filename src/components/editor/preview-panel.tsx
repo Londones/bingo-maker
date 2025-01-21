@@ -157,11 +157,19 @@ const PreviewPanel = ({ ref }: PreviewPanelProps) => {
             inputObserver.observe(inputRef.current);
         }
 
+        window.onbeforeunload = (e: BeforeUnloadEvent) => {
+            if (!state.id) {
+                e.preventDefault();
+                // display a confirmation dialog
+                alert("You have unsaved changes. Are you sure you want to leave?");
+            }
+        };
+
         return () => {
             cellObserver?.disconnect();
             inputObserver?.disconnect();
         };
-    }, [state.cells, checkOverflow, editingCell]);
+    }, [state.cells, checkOverflow, editingCell, state.id]);
 
     return (
         <div ref={ref} className='flex flex-col items-center space-y-4'>
@@ -252,6 +260,8 @@ const PreviewPanel = ({ ref }: PreviewPanelProps) => {
                                                     src={state.stamp.value}
                                                     alt='stamp'
                                                     className='w-full h-full object-contain'
+                                                    width={state.stamp.size}
+                                                    height={state.stamp.size}
                                                     style={{
                                                         maxWidth: state.stamp.size,
                                                         maxHeight: state.stamp.size,

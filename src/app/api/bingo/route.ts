@@ -24,6 +24,7 @@ export async function POST(req: Request): Promise<NextResponse> {
                         cellBorderColor: data.style.cellBorderColor,
                         cellBorderWidth: data.style.cellBorderWidth,
                         cellBackgroundColor: data.style.cellBackgroundColor,
+                        cellBackgroundOpacity: data.style.cellBackgroundOpacity,
                         fontWeight: data.style.fontWeight,
                         fontStyle: data.style.fontStyle,
                     },
@@ -71,7 +72,9 @@ export async function POST(req: Request): Promise<NextResponse> {
                 },
             },
             include: {
-                cells: true,
+                cells: {
+                    include: { cellStyle: true },
+                },
                 stamp: true,
                 background: true,
                 style: true,
@@ -79,11 +82,20 @@ export async function POST(req: Request): Promise<NextResponse> {
         });
 
         if (!bingo) {
-            throw new APIError("Failed to create bingo", APIErrorCode.FAILED_TO_CREATE_BINGO, 557);
+            throw new APIError("Failed to create bingo!", APIErrorCode.FAILED_TO_CREATE_BINGO, 557);
         }
 
-        return NextResponse.json(bingo);
+        return new NextResponse(JSON.stringify(bingo), {
+            status: 200,
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
     } catch (error) {
+        if (error instanceof Error) {
+            console.log(error.stack);
+            console.error(error);
+        }
         return handleAPIError(error);
     }
 }

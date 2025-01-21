@@ -55,20 +55,24 @@ export function useBingoStorage() {
         });
 
     const useSaveBingo = useMutation({
-        mutationFn: (bingoData: Bingo) =>
-            fetch("/api/bingo", {
+        mutationFn: async (bingoData: Bingo): Promise<Bingo> => {
+            const response = await fetch("/api/bingo", {
                 method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
                 body: JSON.stringify({
                     ...bingoData,
                     authorToken: session?.user ? null : authorToken,
                 }),
-            })
-                .catch((error) => {
-                    if (error instanceof APIError) throw new Error(error.message);
-                    else throw new Error("Failed to save bingo");
-                })
+            });
 
-                .then((res) => res.json()),
+            if (!response.ok) {
+                throw new Error((await response.json()).message as string);
+            }
+
+            return response.json() as Promise<Bingo>;
+        },
         onMutate: () => {
             const previousBingos = queryClient.getQueryData<Bingo[]>(["bingos"]) ?? [];
             return { previousBingos };
@@ -88,16 +92,18 @@ export function useBingoStorage() {
     });
 
     const useUpdateBingo = useMutation({
-        mutationFn: ({ bingoId, updates }: { bingoId: string; updates: Partial<Bingo> }) =>
-            fetch(`/api/bingo/${bingoId}`, {
+        mutationFn: async ({ bingoId, updates }: { bingoId: string; updates: Partial<Bingo> }): Promise<Bingo> => {
+            const response = await fetch(`/api/bingo/${bingoId}`, {
                 method: "PATCH",
                 body: JSON.stringify(updates),
-            })
-                .catch((error) => {
-                    if (error instanceof APIError) throw new Error(error.message);
-                    else throw new Error("Failed to update bingo");
-                })
-                .then((res) => res.json()),
+            });
+
+            if (!response.ok) {
+                throw new Error((await response.json()).message as string);
+            }
+
+            return response.json() as Promise<Bingo>;
+        },
         onSuccess: async (_, { bingoId }) => {
             await queryClient.invalidateQueries({ queryKey: ["bingo", bingoId] });
         },
@@ -136,8 +142,6 @@ export function useBingoStorage() {
                 .then((res) => res.json()),
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ["bingos"] });
-            localStorage.removeItem("ownedBingos");
-            localStorage.removeItem("bingoAuthorToken");
         },
     });
 

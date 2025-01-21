@@ -22,26 +22,41 @@ export const buildCellUpdate = (cells: Partial<BingoCell>[]) =>
             ...(cell.validated !== undefined && { validated: cell.validated }),
             ...(cell.cellStyle && {
                 cellStyle: {
-                    update: {
-                        ...(cell.cellStyle.color && { color: cell.cellStyle.color }),
-                        ...(cell.cellStyle.fontSize && { fontSize: cell.cellStyle.fontSize }),
-                        ...(cell.cellStyle.fontFamily && { fontFamily: cell.cellStyle.fontFamily }),
-                        ...(cell.cellStyle.fontWeight && { fontWeight: cell.cellStyle.fontWeight }),
-                        ...(cell.cellStyle.fontStyle && { fontStyle: cell.cellStyle.fontStyle }),
-                        ...(cell.cellStyle.cellBorderColor && { cellBorderColor: cell.cellStyle.cellBorderColor }),
-                        ...(cell.cellStyle.cellBorderWidth && { cellBorderWidth: cell.cellStyle.cellBorderWidth }),
-                        ...(cell.cellStyle.cellBackgroundColor && {
-                            cellBackgroundType: cell.cellStyle.cellBackgroundColor,
-                        }),
-                        ...(cell.cellStyle.cellBackgroundImage && {
-                            cellBackgroundValue: cell.cellStyle.cellBackgroundImage,
-                        }),
-                        ...(cell.cellStyle.cellBackgroundOpacity && {
+                    upsert: {
+                        create: {
+                            color: cell.cellStyle.color,
+                            fontSize: cell.cellStyle.fontSize,
+                            fontFamily: cell.cellStyle.fontFamily,
+                            fontWeight: cell.cellStyle.fontWeight,
+                            fontStyle: cell.cellStyle.fontStyle,
+                            cellBorderColor: cell.cellStyle.cellBorderColor,
+                            cellBorderWidth: cell.cellStyle.cellBorderWidth,
+                            cellBackgroundColor: cell.cellStyle.cellBackgroundColor,
+                            cellBackgroundImage: cell.cellStyle.cellBackgroundImage,
                             cellBackgroundOpacity: cell.cellStyle.cellBackgroundOpacity,
-                        }),
-                        ...(cell.cellStyle.cellBackgroundImageOpacity && {
                             cellBackgroundImageOpacity: cell.cellStyle.cellBackgroundImageOpacity,
-                        }),
+                        },
+                        update: {
+                            ...(cell.cellStyle.color && { color: cell.cellStyle.color }),
+                            ...(cell.cellStyle.fontSize && { fontSize: cell.cellStyle.fontSize }),
+                            ...(cell.cellStyle.fontFamily && { fontFamily: cell.cellStyle.fontFamily }),
+                            ...(cell.cellStyle.fontWeight && { fontWeight: cell.cellStyle.fontWeight }),
+                            ...(cell.cellStyle.fontStyle && { fontStyle: cell.cellStyle.fontStyle }),
+                            ...(cell.cellStyle.cellBorderColor && { cellBorderColor: cell.cellStyle.cellBorderColor }),
+                            ...(cell.cellStyle.cellBorderWidth && { cellBorderWidth: cell.cellStyle.cellBorderWidth }),
+                            ...(cell.cellStyle.cellBackgroundColor && {
+                                cellBackgroundColor: cell.cellStyle.cellBackgroundColor,
+                            }),
+                            ...(cell.cellStyle.cellBackgroundImage && {
+                                cellBackgroundImage: cell.cellStyle.cellBackgroundImage,
+                            }),
+                            ...(cell.cellStyle.cellBackgroundOpacity && {
+                                cellBackgroundOpacity: cell.cellStyle.cellBackgroundOpacity,
+                            }),
+                            ...(cell.cellStyle.cellBackgroundImageOpacity && {
+                                cellBackgroundImageOpacity: cell.cellStyle.cellBackgroundImageOpacity,
+                            }),
+                        },
                     },
                 },
             }),

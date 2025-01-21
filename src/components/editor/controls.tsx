@@ -17,19 +17,19 @@ import { APIError } from "@/lib/errors";
 //     AlertDialogTitle,
 //     AlertDialogTrigger,
 // } from "@/components/ui/alert-dialog";
-import { redirect } from "next/navigation";
+import { redirect, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 
 const Controls = () => {
     const { actions, canRedo, canUndo, state } = useEditor();
     const { useSaveBingo, useUpdateBingo } = useBingoStorage();
     const { status: saveStatus } = useSaveBingo;
-    const currentUrl = window.location.pathname;
+    const currentUrl = usePathname();
 
     const handleSaveNew = async () => {
         try {
-            await useSaveBingo.mutateAsync(state);
-            actions.setBingo(state);
+            const savedBingo = await useSaveBingo.mutateAsync(state);
+            actions.setBingo(savedBingo);
             toast.success("Bingo saved successfully");
 
             if (currentUrl === "/") {
@@ -39,20 +39,22 @@ const Controls = () => {
             if (error instanceof APIError) {
                 toast.error(error.message);
             } else {
-                toast.error("Failed to save bingo");
+                toast.error(`${error as string}`);
             }
         }
     };
 
     const handleUpdate = async () => {
         try {
-            await useUpdateBingo.mutateAsync({ bingoId: state.id!, updates: state });
+            const updatedBingo = await useUpdateBingo.mutateAsync({ bingoId: state.id!, updates: state });
+            console.log(updatedBingo);
+            actions.setBingo(updatedBingo);
             toast.success("Bingo updated successfully");
         } catch (error) {
             if (error instanceof APIError) {
                 toast.error(error.message);
             } else {
-                toast.error("Failed to update bingo");
+                toast.error(`${error as string}`);
             }
         }
     };

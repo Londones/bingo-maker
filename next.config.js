@@ -22,6 +22,12 @@ const nextConfig = {
                 port: "",
                 search: "",
             },
+            {
+                protocol: "https",
+                hostname: "cdn.jsdelivr.net",
+                port: "",
+                search: "",
+            },
         ],
     },
 };

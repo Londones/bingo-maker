@@ -56,6 +56,7 @@ export interface Bingo {
     background: Background;
     stamp: Stamp;
     authorToken?: string;
+    userId?: string;
 }
 
 export interface RadialGradientStop {
