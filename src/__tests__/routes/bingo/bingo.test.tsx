@@ -42,7 +42,7 @@ describe("Bingo API Routes", () => {
         it("should return bingo when found", async () => {
             // Arrange
             (prisma.bingo.findUnique as jest.Mock).mockResolvedValue(mockBingo);
-            const asyncParams = Promise.resolve({ bingoId: "1" });
+            const asyncParams = Promise.resolve({ id: "1" });
 
             // Act
             const response = await GET(new NextRequest(`${TEST_URL}/api/bingo`), { params: asyncParams });
@@ -55,7 +55,7 @@ describe("Bingo API Routes", () => {
 
         it("should return 445 when missing ID", async () => {
             // Arrange
-            const asyncParams = Promise.resolve({ bingoId: "" });
+            const asyncParams = Promise.resolve({ id: "" });
 
             // Act
             const error = await GET(new NextRequest(`${TEST_URL}/api/bingo`), { params: asyncParams }).catch(
@@ -73,7 +73,7 @@ describe("Bingo API Routes", () => {
         it("should return 404 when bingo not found", async () => {
             // Arrange
             (prisma.bingo.findUnique as jest.Mock).mockResolvedValue(null);
-            const asyncParams = Promise.resolve({ bingoId: "999" });
+            const asyncParams = Promise.resolve({ id: "999" });
 
             // Act
             const error = await GET(new NextRequest(`${TEST_URL}/api/bingo`), { params: asyncParams }).catch(
@@ -97,7 +97,7 @@ describe("Bingo API Routes", () => {
                 ...mockBingo,
                 userId: "1",
             });
-            const asyncParams = Promise.resolve({ bingoId: "1" });
+            const asyncParams = Promise.resolve({ id: "1" });
 
             const updateData = { title: "Updated Title" };
             (prisma.bingo.update as jest.Mock).mockResolvedValue({ ...mockBingo, ...updateData });
@@ -118,7 +118,7 @@ describe("Bingo API Routes", () => {
         it("should return 444 when bingo not found", async () => {
             // Arrange
             (prisma.bingo.findUnique as jest.Mock).mockResolvedValue(null);
-            const asyncParams = Promise.resolve({ bingoId: "999" });
+            const asyncParams = Promise.resolve({ id: "999" });
 
             // Act
             const response = await PATCH(
@@ -143,7 +143,7 @@ describe("Bingo API Routes", () => {
                 ...mockBingo,
                 userId: "1",
             });
-            const asyncParams = Promise.resolve({ bingoId: "1" });
+            const asyncParams = Promise.resolve({ id: "1" });
 
             // Act
             const response = await PATCH(
@@ -170,7 +170,7 @@ describe("Bingo API Routes", () => {
                 ...mockBingo,
                 userId: "1",
             });
-            const asyncParams = Promise.resolve({ bingoId: "1" });
+            const asyncParams = Promise.resolve({ id: "1" });
 
             // Act
             const response = await DELETE(new NextRequest(`${TEST_URL}/api/bingo`), { params: asyncParams });
@@ -182,7 +182,7 @@ describe("Bingo API Routes", () => {
         it("should return 444 when bingo not found", async () => {
             // Arrange
             (prisma.bingo.findUnique as jest.Mock).mockResolvedValue(null);
-            const asyncParams = Promise.resolve({ bingoId: "999" });
+            const asyncParams = Promise.resolve({ id: "999" });
 
             // Act
             const response = await DELETE(new NextRequest(`${TEST_URL}/api/bingo`), { params: asyncParams });
@@ -202,7 +202,7 @@ describe("Bingo API Routes", () => {
                 ...mockBingo,
                 userId: "1",
             });
-            const asyncParams = Promise.resolve({ bingoId: "1" });
+            const asyncParams = Promise.resolve({ id: "1" });
 
             // Act
             const response = await DELETE(new NextRequest(`${TEST_URL}/api/bingo`), { params: asyncParams });
