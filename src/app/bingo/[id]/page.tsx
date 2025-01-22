@@ -5,7 +5,7 @@ import { useEditor } from "@/hooks/useEditor";
 import { useSession } from "next-auth/react";
 import { useBingoStorage } from "@/hooks/useBingoStorage";
 import Editor from "@/components/editor/editor";
-//import BingoPreview from "@/components/bingo-preview";
+import BingoPreview from "@/components/bingo-preview";
 
 const BingoPage = () => {
     const { id } = useParams();
@@ -32,7 +32,7 @@ const BingoPage = () => {
         return <div>Bingo not found</div>;
     }
 
-    return <div className='w-full'>{isAuthor ? <Editor /> : <div>hello</div>}</div>;
+    return <div className='w-full'>{isAuthor ? <Editor /> : <BingoPreview bingo={bingo} />}</div>;
 };
 
 export default BingoPage;

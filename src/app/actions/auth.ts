@@ -36,19 +36,29 @@ export async function authenticateGoogle() {
 
 export async function register(prevState: string | undefined, formData: FormData) {
     try {
-        const { email, password } = await signUpSchema.parseAsync({
+        const {
+            email,
+            username: name,
+            password,
+        } = await signUpSchema.parseAsync({
             email: formData.get("email"),
+            username: formData.get("username"),
             password: formData.get("password"),
         });
 
-        const user = await prisma.user.findUnique({
+        const existingUser = await prisma.user.findFirst({
             where: {
-                email: email,
+                OR: [{ email: email }, { name: name }],
             },
         });
 
-        if (user) {
-            return "User already exists";
+        if (existingUser) {
+            if (existingUser.email === email) {
+                return "Email already in use";
+            }
+            if (existingUser.name === name) {
+                return "Username already taken";
+            }
         }
 
         const hash = await bcrypt.hash(password, 10);
@@ -56,6 +66,7 @@ export async function register(prevState: string | undefined, formData: FormData
         await prisma.user.create({
             data: {
                 email: email,
+                name: name,
                 password: hash,
             },
         });

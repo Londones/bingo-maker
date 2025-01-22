@@ -33,6 +33,11 @@ const Page = () => {
                     </div>
 
                     <div className='relative h-fit'>
+                        <Label className=''>Username</Label>
+                        <Input id='username' className='w-full rounded-md' type='text' name='username' required />
+                    </div>
+
+                    <div className='relative h-fit'>
                         <Label className=''>Password</Label>
                         <Input
                             className='w-full rounded-md border'
