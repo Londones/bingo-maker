@@ -35,8 +35,10 @@ export interface CellStyle {
 }
 
 export interface Background {
-    type: "image" | "gradient";
     value: string;
+    backgroundImage?: string;
+    backgroundImageOpacity?: number;
+    backgroundImagePosition?: string;
 }
 
 export interface Stamp {
@@ -119,6 +121,7 @@ export interface EditorState {
     history: EditorHistory;
     canUndo: boolean;
     canRedo: boolean;
+    canSave: boolean;
 }
 
 export type PopoverType = "textColor" | "borderColor" | "cellBackgroundColor" | null;

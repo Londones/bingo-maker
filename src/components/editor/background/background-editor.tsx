@@ -2,7 +2,7 @@
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import GradientEditor from "@/components/editor/background/gradient-editor";
-
+import ImageControls from "@/components/editor/background/image-controls";
 const BackgroundEditor = () => {
     return (
         <div>
@@ -22,7 +22,7 @@ const BackgroundEditor = () => {
                     <GradientEditor />
                 </TabsContent>
                 <TabsContent value='image'>
-                    <div>Image</div>
+                    <ImageControls />
                 </TabsContent>
             </Tabs>
         </div>

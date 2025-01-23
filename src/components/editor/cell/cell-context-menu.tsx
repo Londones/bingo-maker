@@ -55,15 +55,15 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
 
                         if (!response.ok) {
                             throw new Error("Failed to delete image");
+                        } else {
+                            actions.updateCell(index, {
+                                cellStyle: {
+                                    ...cellStyle,
+                                    cellBackgroundImage: undefined,
+                                    cellBackgroundImageOpacity: undefined,
+                                },
+                            });
                         }
-
-                        actions.updateCell(index, {
-                            cellStyle: {
-                                ...cellStyle,
-                                cellBackgroundImage: undefined,
-                                cellBackgroundImageOpacity: undefined,
-                            },
-                        });
                     }
                 } catch (err: unknown) {
                     if (err instanceof Error) {

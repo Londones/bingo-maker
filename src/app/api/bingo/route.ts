@@ -32,8 +32,10 @@ export async function POST(req: Request): Promise<NextResponse> {
                 status: data.status,
                 background: {
                     create: {
-                        type: data.background.type,
                         value: data.background.value,
+                        backgroundImage: data.background.backgroundImage,
+                        backgroundImageOpacity: data.background.backgroundImageOpacity,
+                        backgroundImagePosition: data.background.backgroundImagePosition,
                     },
                 },
                 stamp: {

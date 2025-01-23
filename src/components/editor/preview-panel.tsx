@@ -19,27 +19,35 @@ const PreviewPanel = ({ ref }: PreviewPanelProps) => {
     const inputRef = React.useRef<HTMLTextAreaElement>(null);
     const cellRefs = React.useRef<HTMLDivElement[]>([]);
     const [editingTitle, setEditingTitle] = React.useState(false);
+    const titleRef = React.useRef<HTMLTextAreaElement>(null);
+    const [rows, setRows] = React.useState(1);
 
     const getBackground = () => {
         const { background } = state;
-        if (background.type === "gradient") {
-            const config = deserializeGradientConfig(background.value);
-            const stopToGradient = (stop: RadialGradientStop) => {
-                return `radial-gradient(at ${stop.position.x}% ${stop.position.y}%, ${stop.color} 0px, transparent 50%)`;
-            };
-            const backgroundImage = config.stops.map(stopToGradient).join(", ");
-            return {
-                backgroundColor: config.backgroundColor,
-                backgroundImage: backgroundImage,
-            };
-        } else {
-            return {
-                backgroundImage: `url(${background.value})`,
-            };
-        }
+        const config = deserializeGradientConfig(background.value);
+        const stopToGradient = (stop: RadialGradientStop) => {
+            return `radial-gradient(at ${stop.position.x}% ${stop.position.y}%, ${stop.color} 0px, transparent 50%)`;
+        };
+        const backgroundImage = config.stops.map(stopToGradient).join(", ");
+        return {
+            backgroundColor: config.backgroundColor,
+            backgroundImage: backgroundImage,
+        };
     };
 
     const gradientStyle = getBackground();
+
+    const getBackgroundImage = () => {
+        const { background } = state;
+        const opacity = (background?.backgroundImageOpacity ?? 100) / 100;
+        return {
+            backgroundImage: `linear-gradient(rgba(255, 255, 255, ${1 - opacity}), rgba(255, 255, 255, ${
+                1 - opacity
+            })), url(${background.backgroundImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: background.backgroundImagePosition || "center",
+        };
+    };
 
     const handleCellClick = (index: number) => {
         setEditingCell(index);
@@ -132,6 +140,22 @@ const PreviewPanel = ({ ref }: PreviewPanelProps) => {
         };
     };
 
+    const calculateRows = React.useCallback(() => {
+        if (titleRef.current) {
+            const textarea = titleRef.current;
+            const lineHeight = parseInt(getComputedStyle(textarea).lineHeight);
+            const paddingTop = parseInt(getComputedStyle(textarea).paddingTop);
+            const paddingBottom = parseInt(getComputedStyle(textarea).paddingBottom);
+
+            textarea.style.height = "auto";
+            const scrollHeight = textarea.scrollHeight - paddingTop - paddingBottom;
+            const newRows = Math.max(1, Math.ceil(scrollHeight / lineHeight));
+
+            setRows(newRows);
+            textarea.style.height = `${scrollHeight}px`;
+        }
+    }, []);
+
     React.useEffect(() => {
         let cellObserver: ResizeObserver | null = null;
         if (cellRefs.current.length > 0) {
@@ -165,11 +189,14 @@ const PreviewPanel = ({ ref }: PreviewPanelProps) => {
             }
         };
 
+        calculateRows();
+        window.addEventListener("resize", calculateRows);
         return () => {
             cellObserver?.disconnect();
             inputObserver?.disconnect();
+            window.removeEventListener("resize", calculateRows);
         };
-    }, [state.cells, checkOverflow, editingCell, state.id]);
+    }, [state.cells, checkOverflow, editingCell, state.id, calculateRows]);
 
     return (
         <div ref={ref} className='flex flex-col items-center space-y-4'>
@@ -177,18 +204,25 @@ const PreviewPanel = ({ ref }: PreviewPanelProps) => {
                 className='w-full min-h-[40rem] mx-auto h-full flex items-center flex-col justify-center p-8 rounded-lg'
                 style={gradientStyle}
             >
+                <div className='relative overflow-hidden  w-full h-full' style={getBackgroundImage()} />
                 {editingTitle ? (
-                    <input
-                        type='text'
-                        className='text-center text-4xl bg-transparent font-bold rounded-lg'
+                    <textarea
+                        ref={titleRef}
+                        className='text-center w-full resize-none overflow-hidden text-4xl text-wrap bg-transparent font-bold rounded-lg'
                         value={state.title}
                         style={{
                             color: state.style.color,
                             fontFamily: state.style.fontFamily,
                             fontStyle: state.style.fontStyle,
+                            height: "fit-content",
                         }}
-                        onChange={(e) => actions.setTitle(e.target.value)}
+                        onChange={(e) => {
+                            actions.setTitle(e.target.value);
+                            calculateRows();
+                        }}
+                        onFocus={calculateRows}
                         onBlur={() => setEditingTitle(false)}
+                        rows={rows}
                     />
                 ) : (
                     <h1

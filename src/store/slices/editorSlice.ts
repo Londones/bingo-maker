@@ -29,8 +29,9 @@ const initialBingoState: Bingo = {
         }),
     style: DEFAULT_STYLE,
     background: {
-        type: "gradient",
         value: DEFAULT_GRADIENT_CONFIG_STRING,
+        backgroundImage: "https://r6kb2iiay0.ufs.sh/f/d7e4677c-12c2-44da-98a7-2b375749e276-jcyyig.png",
+        backgroundImageOpacity: 1,
     },
     stamp: DEFAULT_STAMP,
     status: "draft",
@@ -44,6 +45,7 @@ const initialState: EditorState = {
     },
     canUndo: false,
     canRedo: false,
+    canSave: false,
 };
 
 const pushToHistory = (state: EditorState) => {
@@ -51,6 +53,7 @@ const pushToHistory = (state: EditorState) => {
     state.canUndo = true;
     state.history.future = [];
     state.canRedo = false;
+    state.canSave = true;
 };
 
 export const editorSlice = createSlice({
@@ -71,6 +74,7 @@ export const editorSlice = createSlice({
 
             state.canUndo = newPast.length > 0;
             state.canRedo = true;
+            state.canSave = state.canRedo || state.canUndo;
         },
         redo: (state) => {
             if (state.history.future.length === 0) return;
@@ -86,6 +90,7 @@ export const editorSlice = createSlice({
 
             state.canUndo = true;
             state.canRedo = newFuture.length > 0;
+            state.canSave = state.canRedo || state.canUndo;
         },
         setBingo: (state, action: PayloadAction<Bingo>) => {
             const sortedCells = action.payload.cells.sort((a, b) => a.position - b.position);
@@ -93,10 +98,7 @@ export const editorSlice = createSlice({
                 ...action.payload,
                 cells: sortedCells,
             };
-            state.history.past = [];
-            state.history.future = [];
-            state.canUndo = false;
-            state.canRedo = false;
+            state.canSave = false;
         },
         setTitle: (state, action: PayloadAction<string>) => {
             pushToHistory(state);

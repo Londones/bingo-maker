@@ -111,12 +111,14 @@ model CellStyle {
 }
 
 model Background {
-    id        String   @id @default(cuid())
-    type      String // "image" | "gradient"
-    value     String // URL for images, gradient config for gradients
-    bingo     Bingo    @relation(fields: [bingoId], references: [id])
-    bingoId   String   @unique
-    createdAt DateTime @default(now())
+    id                      String   @id @default(cuid())
+    value                   String // URL for images, gradient config for gradients
+    backgroundImage         String?
+    backgroundImageOpacity  Int?
+    backgroundImagePosition String?
+    bingo                   Bingo    @relation(fields: [bingoId], references: [id])
+    bingoId                 String   @unique
+    createdAt               DateTime @default(now())
 }
 
 model StampConfig {

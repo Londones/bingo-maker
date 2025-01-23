@@ -20,7 +20,6 @@ const GradientEditor = () => {
 
     const updateGradient = (newBackground: string, newStops: RadialGradientStop[]) => {
         actions.updateBackground({
-            type: "gradient",
             value: JSON.stringify({
                 backgroundColor: newBackground,
                 stops: newStops,

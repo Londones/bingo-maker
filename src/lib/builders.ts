@@ -64,8 +64,10 @@ export const buildCellUpdate = (cells: Partial<BingoCell>[]) =>
     }));
 
 export const buildBackground = (background: Partial<Background>) => ({
-    ...(background.type && { type: background.type }),
     ...(background.value && { value: background.value }),
+    ...(background.backgroundImage && { backgroundImage: background.backgroundImage }),
+    ...(background.backgroundImageOpacity && { backgroundImageOpacity: background.backgroundImageOpacity }),
+    ...(background.backgroundImagePosition && { backgroundImagePosition: background.backgroundImagePosition }),
 });
 
 export const buildStamp = (stamp: Partial<Stamp>) => ({
