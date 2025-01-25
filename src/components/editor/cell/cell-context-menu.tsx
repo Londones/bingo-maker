@@ -14,8 +14,8 @@ import { UploadButton } from "@/utils/uploadthing";
 import { toast } from "sonner";
 import { ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from "@/components/ui/context-menu";
 import Image from "next/image";
-import { Slider } from "@/components/ui/slider";
-import { Label } from "@/components/ui/label";
+// import { Slider } from "@/components/ui/slider";
+// import { Label } from "@/components/ui/label";
 
 type CellContextMenuProps = {
     index: number;
@@ -32,47 +32,48 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
         });
     };
 
-    const handleRemoveStyling = () => {
-        handleRemoveImage();
-        actions.updateCell(index, {
-            cellStyle: undefined,
-        });
+    const handleRemoveStyling = async () => {
+        const imageRemoved = await handleRemoveImage();
+        if (imageRemoved) {
+            actions.updateCell(index, {
+                cellStyle: undefined,
+            });
+        }
     };
 
-    const handleRemoveImage = () => {
-        if (cellStyle?.cellBackgroundImage) {
-            void (async () => {
-                try {
-                    const fileKey = cellStyle?.cellBackgroundImage?.split("/").pop();
-                    if (fileKey) {
-                        const response = await fetch("/api/uploadthing/delete", {
-                            method: "DELETE",
-                            body: JSON.stringify({ fileKey }),
-                            headers: {
-                                "Content-Type": "application/json",
-                            },
-                        });
+    const handleRemoveImage = async (): Promise<boolean> => {
+        if (!cellStyle?.cellBackgroundImage) return true;
+        try {
+            const fileKey = cellStyle.cellBackgroundImage.split("/").pop();
+            if (!fileKey) return true;
 
-                        if (!response.ok) {
-                            throw new Error("Failed to delete image");
-                        } else {
-                            actions.updateCell(index, {
-                                cellStyle: {
-                                    ...cellStyle,
-                                    cellBackgroundImage: undefined,
-                                    cellBackgroundImageOpacity: undefined,
-                                },
-                            });
-                        }
-                    }
-                } catch (err: unknown) {
-                    if (err instanceof Error) {
-                        errorToast(err.message);
-                    } else {
-                        errorToast("An unknown error occurred");
-                    }
-                }
-            })();
+            const response = await fetch("/api/uploadthing/delete", {
+                method: "DELETE",
+                body: JSON.stringify({ fileKey }),
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to delete image");
+            }
+
+            actions.updateCell(index, {
+                cellStyle: {
+                    ...cellStyle,
+                    cellBackgroundImage: undefined,
+                    cellBackgroundImageOpacity: undefined,
+                },
+            });
+            return true;
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                errorToast(err.message);
+            } else {
+                errorToast("An error occurred while removing the image");
+            }
+            return false;
         }
     };
 
@@ -312,7 +313,7 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
                             <Button
                                 variant='destructive'
                                 size='icon'
-                                onClick={handleRemoveStyling}
+                                onClick={() => void handleRemoveStyling()}
                                 disabled={!cellStyle}
                             >
                                 <RotateCcw className='h-4 w-4' />
@@ -331,7 +332,7 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
                                     height={96}
                                     className='object-cover rounded-md'
                                 />
-                                <Label htmlFor='opacity' className='text-foreground/50'>
+                                {/* <Label htmlFor='opacity' className='text-foreground/50'>
                                     Image Opacity
                                 </Label>
                                 <Slider
@@ -348,13 +349,8 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
                                     min={0}
                                     max={100}
                                     id='opacity'
-                                />
-                                <Button
-                                    variant='destructive'
-                                    onClick={() => {
-                                        handleRemoveImage();
-                                    }}
-                                >
+                                /> */}
+                                <Button variant='destructive' onClick={() => void handleRemoveImage()}>
                                     Remove Image
                                 </Button>
                             </div>

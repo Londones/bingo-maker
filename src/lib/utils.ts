@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { randomBytes } from "crypto";
-import type { GradientConfig } from "@/types/types";
+import type { CellLocalImage, GradientConfig, LocalImage } from "@/types/types";
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -18,3 +18,16 @@ export function serializeGradientConfig(config: GradientConfig): string {
 export function deserializeGradientConfig(serialized: string): GradientConfig {
     return JSON.parse(serialized) as GradientConfig;
 }
+
+export function handleLocalImage(file: File, position?: number) {
+    const localUrl = URL.createObjectURL(file);
+    return {
+        file,
+        url: localUrl,
+        position,
+    } as LocalImage;
+}
+
+export const isCellLocalImage = (image: LocalImage): image is CellLocalImage => {
+    return image.type === "cell";
+};

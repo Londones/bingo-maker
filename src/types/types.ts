@@ -59,6 +59,7 @@ export interface Bingo {
     stamp: Stamp;
     authorToken?: string;
     userId?: string;
+    localImages?: LocalImage[];
 }
 
 export interface RadialGradientStop {
@@ -123,5 +124,22 @@ export interface EditorState {
     canRedo: boolean;
     canSave: boolean;
 }
+
+export interface BaseLocalImage {
+    file: File;
+    url: string;
+}
+
+export interface CellLocalImage extends BaseLocalImage {
+    type: "cell";
+    position: number;
+}
+
+export interface OtherLocalImage extends BaseLocalImage {
+    type: "background" | "stamp";
+    position?: never;
+}
+
+export type LocalImage = CellLocalImage | OtherLocalImage;
 
 export type PopoverType = "textColor" | "borderColor" | "cellBackgroundColor" | null;

@@ -1,5 +1,6 @@
+import { isCellLocalImage } from "@/lib/utils";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import type { Bingo, BingoCell, Style, Background, Stamp, EditorState } from "@/types/types";
+import type { Bingo, BingoCell, Style, Background, Stamp, EditorState, LocalImage } from "@/types/types";
 import { DEFAULT_STYLE, DEFAULT_STAMP, DEFAULT_GRADIENT_CONFIG_STRING } from "@/utils/constants";
 
 const initialBingoState: Bingo = {
@@ -161,6 +162,40 @@ export const editorSlice = createSlice({
                 cell.validated = !cell.validated;
             }
         },
+        setLocalImage: (state, action: PayloadAction<LocalImage | undefined>) => {
+            pushToHistory(state);
+            if (!action.payload) {
+                state.history.present.localImages = action.payload;
+            } else if (action.payload) {
+                state.history.present.localImages?.push(action.payload);
+                const image = action.payload;
+
+                if (isCellLocalImage(image)) {
+                    const cell = state.history.present.cells[image.position];
+                    if (!cell) {
+                        console.error(`Cell at position ${image.position} does not exist`);
+                        return;
+                    } else {
+                        cell.cellStyle = {
+                            ...cell.cellStyle,
+                            cellBackgroundImage: image.url,
+                            cellBackgroundOpacity: 1,
+                        };
+                    }
+                } else if (image.type === "background") {
+                    state.history.present.background = {
+                        ...state.history.present.background,
+                        backgroundImage: image.url,
+                        backgroundImageOpacity: 1,
+                    };
+                } else if (image.type === "stamp") {
+                    state.history.present.stamp = {
+                        ...state.history.present.stamp,
+                        value: image.url,
+                    };
+                }
+            }
+        },
         resetEditor: () => initialState,
     },
 });
@@ -176,6 +211,7 @@ export const {
     updateBackground,
     updateStamp,
     toggleStamp,
+    setLocalImage,
     resetEditor,
 } = editorSlice.actions;
 

@@ -12,8 +12,9 @@ import {
     updateStamp,
     toggleStamp,
     resetEditor,
+    setLocalImage,
 } from "@/store/slices/editorSlice";
-import { Bingo, BingoCell, Style, Background, Stamp } from "@/types/types";
+import { Bingo, BingoCell, Style, Background, Stamp, LocalImage } from "@/types/types";
 
 export const useEditor = () => {
     const dispatch = useDispatch();
@@ -34,6 +35,7 @@ export const useEditor = () => {
             updateBackground: (background: Partial<Background>) => dispatch(updateBackground(background)),
             updateStamp: (stamp: Partial<Stamp>) => dispatch(updateStamp(stamp)),
             toggleStamp: (index: number) => dispatch(toggleStamp(index)),
+            setLocalImage: (image: LocalImage | undefined) => dispatch(setLocalImage(image)),
             resetEditor: () => dispatch(resetEditor()),
         },
     };
