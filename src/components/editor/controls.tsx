@@ -19,6 +19,7 @@ import { APIError } from "@/lib/errors";
 // } from "@/components/ui/alert-dialog";
 import { redirect, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
+import { uploadPendingImages } from "@/app/actions/uploadthing";
 
 const Controls = () => {
     const { actions, canRedo, canUndo, state } = useEditor();
@@ -28,6 +29,8 @@ const Controls = () => {
 
     const handleSaveNew = async () => {
         try {
+            const uploadRedult = await uploadPendingImages(state);
+            actions.setImageUrls(uploadRedult);
             const savedBingo = await useSaveBingo.mutateAsync(state);
             actions.setBingo(savedBingo);
             toast.success("Bingo saved successfully");
@@ -46,6 +49,8 @@ const Controls = () => {
 
     const handleUpdate = async () => {
         try {
+            const uploadResult = await uploadPendingImages(state);
+            actions.setImageUrls(uploadResult);
             const updatedBingo = await useUpdateBingo.mutateAsync({ bingoId: state.id!, updates: state });
             console.log(updatedBingo);
             actions.setBingo(updatedBingo);

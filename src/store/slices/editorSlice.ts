@@ -1,3 +1,4 @@
+import { ImageUploadResponse } from "./../../types/types";
 import { isCellLocalImage } from "@/lib/utils";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { Bingo, BingoCell, Style, Background, Stamp, EditorState, LocalImage } from "@/types/types";
@@ -196,6 +197,52 @@ export const editorSlice = createSlice({
                 }
             }
         },
+        setImageUrls: (state, action: PayloadAction<ImageUploadResponse>) => {
+            const { cellImages, backgroundImage, stampImage } = action.payload;
+            if (cellImages) {
+                for (const image of cellImages) {
+                    const cell = state.history.present.cells[image.position];
+                    if (!cell) {
+                        console.error(`Cell at position ${image.position} does not exist`);
+                        return;
+                    } else {
+                        cell.cellStyle = {
+                            ...cell.cellStyle,
+                            cellBackgroundImage: image.url,
+                            cellBackgroundOpacity: 1,
+                        };
+                    }
+                }
+                state.history.present.localImages = state.history.present.localImages?.filter(
+                    (img) => !isCellLocalImage(img)
+                );
+            }
+
+            if (backgroundImage) {
+                state.history.present.background = {
+                    ...state.history.present.background,
+                    backgroundImage: backgroundImage,
+                    backgroundImageOpacity: 1,
+                };
+                state.history.present.localImages = state.history.present.localImages?.filter(
+                    (img) => img.type !== "background"
+                );
+            }
+
+            if (stampImage) {
+                state.history.present.stamp = {
+                    ...state.history.present.stamp,
+                    value: stampImage,
+                };
+                state.history.present.localImages = state.history.present.localImages?.filter(
+                    (img) => img.type !== "stamp"
+                );
+            }
+
+            if (state.history.present.localImages?.length === 0) {
+                state.history.present.localImages = undefined;
+            }
+        },
         resetEditor: () => initialState,
     },
 });
@@ -212,6 +259,7 @@ export const {
     updateStamp,
     toggleStamp,
     setLocalImage,
+    setImageUrls,
     resetEditor,
 } = editorSlice.actions;
 

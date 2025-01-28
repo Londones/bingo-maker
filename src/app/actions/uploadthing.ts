@@ -1,25 +1,19 @@
 "use server";
 
-import { Bingo, CellLocalImage, OtherLocalImage } from "@/types/types";
+import { Bingo, CellLocalImage, OtherLocalImage, ImageUploadResponse } from "@/types/types";
 import { utapi } from "@/lib/uploadthing";
 import { auth } from "@/lib/auth";
 
-type UploadResult = {
-    cellImages?: { position: number; url: string }[];
-    backgroundImage?: string;
-    stampImage?: string;
-};
+export async function uploadPendingImages(state: Bingo): Promise<ImageUploadResponse> {
+    if (!state.localImages?.length) return {};
 
-export async function uploadPendingImages(state: Bingo): Promise<UploadResult> {
     const session = await auth();
 
     if (!session?.user) {
         throw new Error("You must be logged in to upload images");
     }
 
-    if (!state.localImages?.length) return {};
-
-    const result: UploadResult = {};
+    const result: ImageUploadResponse = {};
 
     const cellImages = state.localImages.filter((img): img is CellLocalImage => img.type === "cell");
     const backgroundImage = state.localImages.find((img): img is OtherLocalImage => img.type === "background");

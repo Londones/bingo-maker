@@ -143,3 +143,9 @@ export interface OtherLocalImage extends BaseLocalImage {
 export type LocalImage = CellLocalImage | OtherLocalImage;
 
 export type PopoverType = "textColor" | "borderColor" | "cellBackgroundColor" | null;
+
+export interface ImageUploadResponse {
+    cellImages?: { position: number; url: string }[];
+    backgroundImage?: string;
+    stampImage?: string;
+}
