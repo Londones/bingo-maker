@@ -19,9 +19,10 @@ export function deserializeGradientConfig(serialized: string): GradientConfig {
     return JSON.parse(serialized) as GradientConfig;
 }
 
-export function handleLocalImage(file: File, position?: number) {
+export function handleLocalImage(file: File, type: string, position?: number) {
     const localUrl = URL.createObjectURL(file);
     return {
+        type,
         url: localUrl,
         position,
         fileInfo: {

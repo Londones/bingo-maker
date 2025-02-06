@@ -55,7 +55,7 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
             return;
         }
 
-        const localImage = handleLocalImage(file, index);
+        const localImage = handleLocalImage(file, "cell", index);
 
         actions.setLocalImage(localImage);
     };
