@@ -197,6 +197,22 @@ export const editorSlice = createSlice({
                 }
             }
         },
+        removeCellLocalImage: (state, action: PayloadAction<number>) => {
+            const cell = state.history.present.cells[action.payload];
+            if (!cell) {
+                console.error(`Cell at position ${action.payload} does not exist`);
+                return;
+            } else {
+                cell.cellStyle = {
+                    ...cell.cellStyle,
+                    cellBackgroundImage: "",
+                    cellBackgroundOpacity: 1,
+                };
+            }
+            state.history.present.localImages = state.history.present.localImages?.filter(
+                (img) => !isCellLocalImage(img) || img.position !== action.payload
+            );
+        },
         setImageUrls: (state, action: PayloadAction<ImageUploadResponse>) => {
             const { cellImages, backgroundImage, stampImage } = action.payload;
             if (cellImages) {
@@ -259,6 +275,7 @@ export const {
     updateStamp,
     toggleStamp,
     setLocalImage,
+    removeCellLocalImage,
     setImageUrls,
     resetEditor,
 } = editorSlice.actions;

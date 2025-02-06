@@ -1,16 +1,16 @@
 "use client";
-import React from "react";
+import React, { ChangeEvent, useEffect } from "react";
 import { useEditor } from "@/hooks/useEditor";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Bold, Italic, Type, Square, Palette, RotateCcw } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, handleLocalImage } from "@/lib/utils";
 import { HexColorPicker } from "react-colorful";
 import { PopoverType } from "@/types/types";
 import { FONT_SIZES, FONT_FAMILIES } from "@/utils/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UploadButton } from "@/utils/uploadthing";
+//import { UploadButton } from "@/utils/uploadthing";
 import { toast } from "sonner";
 import { ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from "@/components/ui/context-menu";
 import Image from "next/image";
@@ -32,50 +32,77 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
         });
     };
 
-    const handleRemoveStyling = async () => {
-        const imageRemoved = await handleRemoveImage();
-        if (imageRemoved) {
-            actions.updateCell(index, {
-                cellStyle: undefined,
-            });
-        }
+    const handleRemoveStyling = () => {
+        actions.removeCellLocalImage(index);
+        actions.updateCell(index, {
+            cellStyle: undefined,
+        });
     };
 
-    const handleRemoveImage = async (): Promise<boolean> => {
-        if (!cellStyle?.cellBackgroundImage) return true;
-        try {
-            const fileKey = cellStyle.cellBackgroundImage.split("/").pop();
-            if (!fileKey) return true;
+    const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
 
-            const response = await fetch("/api/uploadthing/delete", {
-                method: "DELETE",
-                body: JSON.stringify({ fileKey }),
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error("Failed to delete image");
-            }
-
-            actions.updateCell(index, {
-                cellStyle: {
-                    ...cellStyle,
-                    cellBackgroundImage: undefined,
-                    cellBackgroundImageOpacity: undefined,
-                },
-            });
-            return true;
-        } catch (err: unknown) {
-            if (err instanceof Error) {
-                errorToast(err.message);
-            } else {
-                errorToast("An error occurred while removing the image");
-            }
-            return false;
+        // Validate file type
+        if (!file.type.startsWith("image/")) {
+            errorToast("Please select an image file");
+            return;
         }
+
+        // Validate file size (4MB)
+        if (file.size > 4 * 1024 * 1024) {
+            errorToast("Image must be less than 4MB");
+            return;
+        }
+
+        const localImage = handleLocalImage(file, index);
+
+        actions.setLocalImage(localImage);
     };
+
+    useEffect(() => {
+        return () => {
+            if (cellStyle?.cellBackgroundImage) {
+                URL.revokeObjectURL(cellStyle.cellBackgroundImage);
+            }
+        };
+    }, [cellStyle]);
+
+    // const handleRemoveImage = async (): Promise<boolean> => {
+    //     if (!cellStyle?.cellBackgroundImage) return true;
+    //     try {
+    //         const fileKey = cellStyle.cellBackgroundImage.split("/").pop();
+    //         if (!fileKey) return true;
+
+    //         const response = await fetch("/api/uploadthing/delete", {
+    //             method: "DELETE",
+    //             body: JSON.stringify({ fileKey }),
+    //             headers: {
+    //                 "Content-Type": "application/json",
+    //             },
+    //         });
+
+    //         if (!response.ok) {
+    //             throw new Error("Failed to delete image");
+    //         }
+
+    //         actions.updateCell(index, {
+    //             cellStyle: {
+    //                 ...cellStyle,
+    //                 cellBackgroundImage: undefined,
+    //                 cellBackgroundImageOpacity: undefined,
+    //             },
+    //         });
+    //         return true;
+    //     } catch (err: unknown) {
+    //         if (err instanceof Error) {
+    //             errorToast(err.message);
+    //         } else {
+    //             errorToast("An error occurred while removing the image");
+    //         }
+    //         return false;
+    //     }
+    // };
 
     return (
         <div>
@@ -350,27 +377,12 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
                                     max={100}
                                     id='opacity'
                                 /> */}
-                                <Button variant='destructive' onClick={() => void handleRemoveImage()}>
+                                <Button variant='destructive' onClick={() => actions.removeCellLocalImage(index)}>
                                     Remove Image
                                 </Button>
                             </div>
                         ) : (
-                            <UploadButton
-                                className='pt-2 ut-button:bg-black ut-button:text-white ut-button:ut-readying:bg-black/50 ut-button:ut-readying:text-white'
-                                endpoint='cellBackgroundUploader'
-                                onClientUploadComplete={(res) => {
-                                    actions.updateCell(index, {
-                                        cellStyle: {
-                                            ...cellStyle,
-                                            cellBackgroundImage: res[0]?.url,
-                                            cellBackgroundImageOpacity: 1,
-                                        },
-                                    });
-                                }}
-                                onUploadError={(err) => {
-                                    errorToast(err.message);
-                                }}
-                            />
+                            <Input type='file' onChange={(e) => handleFileSelect(e)} />
                         )}
                     </div>
                 </TabsContent>

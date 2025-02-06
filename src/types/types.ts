@@ -126,8 +126,12 @@ export interface EditorState {
 }
 
 export interface BaseLocalImage {
-    file: File;
     url: string;
+    fileInfo: {
+        name: string;
+        size: number;
+        type: string;
+    };
 }
 
 export interface CellLocalImage extends BaseLocalImage {

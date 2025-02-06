@@ -1,7 +1,7 @@
 "use server";
 
 import { Bingo, CellLocalImage, OtherLocalImage, ImageUploadResponse } from "@/types/types";
-import { utapi } from "@/lib/uploadthing";
+import { uploadFile } from "@/lib/s3upload";
 import { auth } from "@/lib/auth";
 
 export async function uploadPendingImages(state: Bingo): Promise<ImageUploadResponse> {
@@ -20,12 +20,16 @@ export async function uploadPendingImages(state: Bingo): Promise<ImageUploadResp
     const stampImage = state.localImages.find((img): img is OtherLocalImage => img.type === "stamp");
 
     for (const image of cellImages) {
-        const response = await utapi.uploadFiles(image.file);
-        if (response.data) {
-            result.cellImages?.push({
-                position: image.position,
-                url: response.data.url,
-            });
+        const response = await fetch(image.url);
+        const blob = await response.blob();
+        const file = new File([blob], image.fileInfo.name, { type: image.fileInfo.type });
+        const url = await uploadFile(file, image.fileInfo.name);
+
+        if (url) {
+            if (!result.cellImages) {
+                result.cellImages = [];
+            }
+            result.cellImages.push({ position: image.position, url });
             URL.revokeObjectURL(image.url);
         } else {
             throw new Error("Failed to upload cell image");
@@ -33,9 +37,13 @@ export async function uploadPendingImages(state: Bingo): Promise<ImageUploadResp
     }
 
     if (backgroundImage) {
-        const response = await utapi.uploadFiles(backgroundImage.file);
-        if (response.data) {
-            result.backgroundImage = response.data.url;
+        const response = await fetch(backgroundImage.url);
+        const blob = await response.blob();
+        const file = new File([blob], backgroundImage.fileInfo.name, { type: backgroundImage.fileInfo.type });
+        const url = await uploadFile(file, backgroundImage.fileInfo.name);
+
+        if (url) {
+            result.backgroundImage = url;
             URL.revokeObjectURL(backgroundImage.url);
         } else {
             throw new Error("Failed to upload background image");
@@ -43,9 +51,13 @@ export async function uploadPendingImages(state: Bingo): Promise<ImageUploadResp
     }
 
     if (stampImage) {
-        const response = await utapi.uploadFiles(stampImage.file);
-        if (response.data) {
-            result.stampImage = response.data.url;
+        const response = await fetch(stampImage.url);
+        const blob = await response.blob();
+        const file = new File([blob], stampImage.fileInfo.name, { type: stampImage.fileInfo.type });
+        const url = await uploadFile(file, stampImage.fileInfo.name);
+
+        if (url) {
+            result.stampImage = url;
             URL.revokeObjectURL(stampImage.url);
         } else {
             throw new Error("Failed to upload stamp image");

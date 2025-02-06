@@ -22,9 +22,13 @@ export function deserializeGradientConfig(serialized: string): GradientConfig {
 export function handleLocalImage(file: File, position?: number) {
     const localUrl = URL.createObjectURL(file);
     return {
-        file,
         url: localUrl,
         position,
+        fileInfo: {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+        },
     } as LocalImage;
 }
 
