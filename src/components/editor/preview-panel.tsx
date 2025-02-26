@@ -39,13 +39,13 @@ const PreviewPanel = ({ ref }: PreviewPanelProps) => {
 
     const getBackgroundImage = () => {
         const { background } = state;
-        const opacity = (background?.backgroundImageOpacity ?? 100) / 100;
+        //const opacity = (background?.backgroundImageOpacity ?? 100) / 100;
         return {
-            backgroundImage: `linear-gradient(rgba(255, 255, 255, ${1 - opacity}), rgba(255, 255, 255, ${
-                1 - opacity
-            })), url(${background.backgroundImage})`,
-            backgroundSize: "cover",
+            backgroundImage: `url(${background.backgroundImage})`,
+            backgroundSize: "contain",
             backgroundPosition: background.backgroundImagePosition || "center",
+            opacity: (background.backgroundImageOpacity ?? 100) / 100,
+            backgroundRepeat: "no-repeat",
         };
     };
 
@@ -201,14 +201,14 @@ const PreviewPanel = ({ ref }: PreviewPanelProps) => {
     return (
         <div ref={ref} className='flex flex-col items-center space-y-4'>
             <div
-                className='w-full min-h-[40rem] mx-auto h-full flex items-center flex-col justify-center p-8 rounded-lg'
+                className='w-full min-h-[40rem] mx-auto h-full flex items-center flex-col justify-center p-8 rounded-lg relative'
                 style={gradientStyle}
             >
-                <div className='relative overflow-hidden  w-full h-full' style={getBackgroundImage()} />
+                <div className='absolute inset-0 pointer-events-none' style={getBackgroundImage()} />
                 {editingTitle ? (
                     <textarea
                         ref={titleRef}
-                        className='text-center w-full resize-none overflow-hidden text-4xl text-wrap bg-transparent font-bold rounded-lg'
+                        className='text-center w-full z-10 resize-none overflow-hidden text-4xl text-wrap bg-transparent font-bold rounded-lg'
                         value={state.title}
                         style={{
                             color: state.style.color,
@@ -226,7 +226,7 @@ const PreviewPanel = ({ ref }: PreviewPanelProps) => {
                     />
                 ) : (
                     <h1
-                        className='text-center text-4xl font-bold '
+                        className='text-center z-10 text-4xl font-bold '
                         style={{
                             fontFamily: state.style.fontFamily,
                             color: state.style.color,

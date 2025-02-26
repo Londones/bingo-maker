@@ -36,3 +36,12 @@ export function handleLocalImage(file: File, type: string, position?: number) {
 export const isCellLocalImage = (image: LocalImage): image is CellLocalImage => {
     return image.type === "cell";
 };
+
+export const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+};

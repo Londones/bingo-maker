@@ -3,25 +3,49 @@ import { Slider } from "@/components/ui/slider";
 import { useEditor } from "@/hooks/useEditor";
 import { UploadButton } from "@/utils/uploadthing";
 import { motion, PanInfo, useDragControls } from "framer-motion";
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 
 const ImageControls = () => {
     const { state, actions } = useEditor();
     const containerRef = useRef<HTMLDivElement>(null);
     const dragControls = useDragControls();
-    const [position, setPosition] = useState({ x: 50, y: 50 }); // Default center
 
-    const handleDragEnd = (event: MouseEvent, info: PanInfo) => {
+    const [position, setPosition] = useState(() => {
+        const posStr = state.background.backgroundImagePosition || "50% 50%";
+        const [x, y] = posStr.split(" ").map((val) => parseInt(val));
+        return {
+            x: isNaN(x) ? 50 : x,
+            y: isNaN(y) ? 50 : y,
+        };
+    });
+
+    useEffect(() => {
+        if (state.background.backgroundImagePosition) {
+            const posStr = state.background.backgroundImagePosition;
+            const [xStr, yStr] = posStr.split(" ");
+            const x = parseInt(xStr);
+            const y = parseInt(yStr);
+
+            if (!isNaN(x) && !isNaN(y)) {
+                setPosition({ x, y });
+            }
+        }
+    }, [state.background.backgroundImagePosition]);
+
+    const handleDrag = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         if (!containerRef.current) return;
+
         const rect = containerRef.current.getBoundingClientRect();
-        const x = Math.max(0, Math.min(100, (info.point.x / rect.width) * 100));
-        const y = Math.max(0, Math.min(100, (info.point.y / rect.height) * 100));
+        const x = Math.max(0, Math.min(100, ((info.point.x - rect.left) / rect.width) * 100));
+        const y = Math.max(0, Math.min(100, ((info.point.y - rect.top) / rect.height) * 100));
 
         setPosition({ x, y });
+    };
+
+    const handleDragEnd = () => {
         actions.updateBackground({
-            ...state.background,
-            backgroundImagePosition: `${x}% ${y}%`,
+            backgroundImagePosition: `${position.x}% ${position.y}%`,
         });
     };
 
@@ -71,14 +95,28 @@ const ImageControls = () => {
         <div className='space-y-4'>
             {state.background.backgroundImage ? (
                 <div>
-                    <div ref={containerRef} className='relative w-full h-28 border rounded-lg overflow-hidden'>
+                    <div
+                        ref={containerRef}
+                        className='relative w-full h-28 border rounded-lg overflow-hidden cursor-pointer'
+                        onClick={(e) => {
+                            if (!containerRef.current) return;
+                            const rect = containerRef.current.getBoundingClientRect();
+                            const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+                            const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+
+                            setPosition({ x, y });
+                            actions.updateBackground({
+                                backgroundImagePosition: `${x}% ${y}%`,
+                            });
+                        }}
+                    >
                         <div
                             className='w-full h-full'
                             style={{
                                 backgroundImage: `url(${state.background.backgroundImage})`,
                                 backgroundSize: "cover",
                                 backgroundPosition: `${position.x}% ${position.y}%`,
-                                opacity: state.background.backgroundImageOpacity || 1,
+                                opacity: (state.background.backgroundImageOpacity || 100) / 100,
                             }}
                         />
                         <motion.div
@@ -86,36 +124,32 @@ const ImageControls = () => {
                             dragConstraints={containerRef}
                             dragControls={dragControls}
                             dragMomentum={false}
+                            onDrag={handleDrag}
                             onDragEnd={handleDragEnd}
-                            className='absolute w-4 h-4 bg-primary rounded-full cursor-move'
+                            className='absolute w-4 h-4 bg-primary border-2 border-white rounded-full cursor-move transform -translate-x-1/2 -translate-y-1/2 z-10'
                             style={{
-                                left: `calc(${position.x}% - 8px)`,
-                                top: `calc(${position.y}% - 8px)`,
+                                left: `${position.x}%`,
+                                top: `${position.y}%`,
+                                touchAction: "none",
                             }}
                         />
                     </div>
 
-                    <div className='space-y-2'>
+                    <div className='space-y-2 mt-2'>
                         <label className='text-sm'>Opacity</label>
                         <Slider
-                            defaultValue={[state.background.backgroundImageOpacity ?? 100]}
+                            value={[state.background.backgroundImageOpacity ?? 100]}
                             min={0}
                             max={100}
                             step={1}
                             onValueChange={(value) => {
                                 actions.updateBackground({
-                                    ...state.background,
                                     backgroundImageOpacity: value[0],
                                 });
                             }}
                         />
 
-                        <Button
-                            variant='destructive'
-                            onClick={() => {
-                                handleRemoveImage();
-                            }}
-                        >
+                        <Button variant='destructive' onClick={handleRemoveImage}>
                             Remove Image
                         </Button>
                     </div>

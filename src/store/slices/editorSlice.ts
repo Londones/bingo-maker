@@ -203,12 +203,19 @@ export const editorSlice = createSlice({
                 console.error(`Cell at position ${action.payload} does not exist`);
                 return;
             } else {
+                const img = state.history.present.localImages?.find(
+                    (img) => isCellLocalImage(img) && img.position === action.payload
+                );
+                if (img) {
+                    URL.revokeObjectURL(img.url);
+                }
                 cell.cellStyle = {
                     ...cell.cellStyle,
                     cellBackgroundImage: "",
                     cellBackgroundOpacity: 1,
                 };
             }
+
             state.history.present.localImages = state.history.present.localImages?.filter(
                 (img) => !isCellLocalImage(img) || img.position !== action.payload
             );

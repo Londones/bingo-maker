@@ -1,13 +1,13 @@
 "use client";
-import React, { ChangeEvent, useEffect } from "react";
+import React, { ChangeEvent } from "react";
 import { useEditor } from "@/hooks/useEditor";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Bold, Italic, Type, Square, Palette, RotateCcw } from "lucide-react";
-import { cn, handleLocalImage } from "@/lib/utils";
+import { cn, convertFileToBase64 } from "@/lib/utils";
 import { HexColorPicker } from "react-colorful";
-import { PopoverType } from "@/types/types";
+import { LocalImage, PopoverType } from "@/types/types";
 import { FONT_SIZES, FONT_FAMILIES } from "@/utils/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 //import { UploadButton } from "@/utils/uploadthing";
@@ -39,7 +39,7 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
         });
     };
 
-    const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
+    const handleFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
@@ -55,18 +55,29 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
             return;
         }
 
-        const localImage = handleLocalImage(file, "cell", index);
+        const base64Data = await convertFileToBase64(file);
+
+        const localImage: LocalImage = {
+            url: base64Data,
+            type: "cell",
+            position: index,
+            fileInfo: {
+                name: file.name,
+                type: file.type,
+                size: file.size,
+            },
+        };
 
         actions.setLocalImage(localImage);
     };
 
-    useEffect(() => {
-        return () => {
-            if (cellStyle?.cellBackgroundImage) {
-                URL.revokeObjectURL(cellStyle.cellBackgroundImage);
-            }
-        };
-    }, [cellStyle]);
+    // useEffect(() => {
+    //     return () => {
+    //         if (cellStyle?.cellBackgroundImage) {
+    //             URL.revokeObjectURL(cellStyle.cellBackgroundImage);
+    //         }
+    //     };
+    // }, [cellStyle]);
 
     // const handleRemoveImage = async (): Promise<boolean> => {
     //     if (!cellStyle?.cellBackgroundImage) return true;
@@ -382,7 +393,7 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
                                 </Button>
                             </div>
                         ) : (
-                            <Input type='file' onChange={(e) => handleFileSelect(e)} />
+                            <Input type='file' onChange={(e) => void handleFileSelect(e)} />
                         )}
                     </div>
                 </TabsContent>
