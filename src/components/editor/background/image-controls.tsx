@@ -2,14 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useEditor } from "@/hooks/useEditor";
 import { UploadButton } from "@/utils/uploadthing";
-import { motion, PanInfo, useDragControls } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 
 const ImageControls = () => {
     const { state, actions } = useEditor();
     const containerRef = useRef<HTMLDivElement>(null);
-    const dragControls = useDragControls();
 
     const [position, setPosition] = useState(() => {
         const posStr = state.background.backgroundImagePosition || "50% 50%";
@@ -19,6 +17,10 @@ const ImageControls = () => {
             y: isNaN(y) ? 50 : y,
         };
     });
+
+    const [isDragging, setIsDragging] = useState(false);
+    const initialPositionRef = useRef({ x: 0, y: 0 });
+    const initialMouseRef = useRef({ x: 0, y: 0 });
 
     useEffect(() => {
         if (state.background.backgroundImagePosition) {
@@ -33,20 +35,45 @@ const ImageControls = () => {
         }
     }, [state.background.backgroundImagePosition]);
 
-    const handleDrag = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-        if (!containerRef.current) return;
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isDragging || !containerRef.current) return;
 
-        const rect = containerRef.current.getBoundingClientRect();
-        const x = Math.max(0, Math.min(100, ((info.point.x - rect.left) / rect.width) * 100));
-        const y = Math.max(0, Math.min(100, ((info.point.y - rect.top) / rect.height) * 100));
+            const rect = containerRef.current.getBoundingClientRect();
+            const deltaX = e.clientX - initialMouseRef.current.x;
+            const deltaY = e.clientY - initialMouseRef.current.y;
 
-        setPosition({ x, y });
-    };
+            const newX = Math.max(0, Math.min(100, initialPositionRef.current.x + (deltaX / rect.width) * 100));
+            const newY = Math.max(0, Math.min(100, initialPositionRef.current.y + (deltaY / rect.height) * 100));
 
-    const handleDragEnd = () => {
-        actions.updateBackground({
-            backgroundImagePosition: `${position.x}% ${position.y}%`,
-        });
+            setPosition({ x: newX, y: newY });
+        };
+
+        const handleMouseUp = () => {
+            if (isDragging) {
+                setIsDragging(false);
+                actions.updateBackground({
+                    backgroundImagePosition: `${position.x}% ${position.y}%`,
+                });
+            }
+        };
+
+        if (isDragging) {
+            window.addEventListener("mousemove", handleMouseMove);
+            window.addEventListener("mouseup", handleMouseUp);
+        }
+
+        return () => {
+            window.removeEventListener("mousemove", handleMouseMove);
+            window.removeEventListener("mouseup", handleMouseUp);
+        };
+    }, [isDragging, actions, position]);
+
+    const startDrag = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+        initialPositionRef.current = { x: position.x, y: position.y };
+        initialMouseRef.current = { x: e.clientX, y: e.clientY };
     };
 
     const errorToast = (message: string) => {
@@ -116,21 +143,14 @@ const ImageControls = () => {
                                 backgroundImage: `url(${state.background.backgroundImage})`,
                                 backgroundSize: "cover",
                                 backgroundPosition: `${position.x}% ${position.y}%`,
-                                opacity: (state.background.backgroundImageOpacity || 100) / 100,
                             }}
                         />
-                        <motion.div
-                            drag
-                            dragConstraints={containerRef}
-                            dragControls={dragControls}
-                            dragMomentum={false}
-                            onDrag={handleDrag}
-                            onDragEnd={handleDragEnd}
+                        <div
+                            onMouseDown={startDrag}
                             className='absolute w-4 h-4 bg-primary border-2 border-white rounded-full cursor-move transform -translate-x-1/2 -translate-y-1/2 z-10'
                             style={{
                                 left: `${position.x}%`,
                                 top: `${position.y}%`,
-                                touchAction: "none",
                             }}
                         />
                     </div>
