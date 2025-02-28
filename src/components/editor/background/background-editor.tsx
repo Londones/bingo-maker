@@ -10,11 +10,11 @@ const BackgroundEditor = () => {
                 <TabsList className='flex h-12'>
                     <TabsTrigger
                         value='gradient'
-                        className='px-8 data-[state=active]:bg-gradient-to-r from-[hsla(339,100%,55%,1)] to-[hsla(197,100%,64%,1)]'
+                        className=' data-[state=active]:bg-gradient-to-r from-[hsla(339,100%,55%,1)] to-[hsla(197,100%,64%,1)]'
                     >
                         Gradient
                     </TabsTrigger>
-                    <TabsTrigger value='image' className='px-8'>
+                    <TabsTrigger value='image' className=''>
                         Image
                     </TabsTrigger>
                 </TabsList>

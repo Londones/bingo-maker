@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { useEditor } from "@/hooks/useEditor";
-import { UploadButton } from "@/utils/uploadthing";
-import { useEffect, useState, useRef } from "react";
+import { convertFileToBase64 } from "@/lib/utils";
+import { LocalImage } from "@/types/types";
+import { useState, useRef, useEffect, ChangeEvent } from "react";
 import { toast } from "sonner";
 
 const ImageControls = () => {
@@ -13,27 +16,14 @@ const ImageControls = () => {
         const posStr = state.background.backgroundImagePosition || "50% 50%";
         const [x, y] = posStr.split(" ").map((val) => parseInt(val));
         return {
-            x: isNaN(x) ? 50 : x,
-            y: isNaN(y) ? 50 : y,
+            x: isNaN(x!) ? 50 : x,
+            y: isNaN(y!) ? 50 : y,
         };
     });
 
     const [isDragging, setIsDragging] = useState(false);
     const initialPositionRef = useRef({ x: 0, y: 0 });
     const initialMouseRef = useRef({ x: 0, y: 0 });
-
-    useEffect(() => {
-        if (state.background.backgroundImagePosition) {
-            const posStr = state.background.backgroundImagePosition;
-            const [xStr, yStr] = posStr.split(" ");
-            const x = parseInt(xStr);
-            const y = parseInt(yStr);
-
-            if (!isNaN(x) && !isNaN(y)) {
-                setPosition({ x, y });
-            }
-        }
-    }, [state.background.backgroundImagePosition]);
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
@@ -72,8 +62,20 @@ const ImageControls = () => {
     const startDrag = (e: React.MouseEvent) => {
         e.preventDefault();
         setIsDragging(true);
-        initialPositionRef.current = { x: position.x, y: position.y };
+        initialPositionRef.current = { x: position.x!, y: position.y! };
         initialMouseRef.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleImageClick = (e: React.MouseEvent) => {
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+        const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+
+        setPosition({ x, y });
+        actions.updateBackground({
+            backgroundImagePosition: `${x}% ${y}%`,
+        });
     };
 
     const errorToast = (message: string) => {
@@ -84,38 +86,48 @@ const ImageControls = () => {
 
     const handleRemoveImage = () => {
         if (state.background.backgroundImage) {
-            void (async () => {
-                try {
-                    const fileKey = state.background.backgroundImage?.split("/").pop();
-                    if (fileKey) {
-                        const response = await fetch("/api/uploadthing/delete", {
-                            method: "DELETE",
-                            body: JSON.stringify({ fileKey }),
-                            headers: {
-                                "Content-Type": "application/json",
-                            },
-                        });
-
-                        if (!response.ok) {
-                            throw new Error("Failed to delete image");
-                        } else {
-                            actions.updateBackground({
-                                ...state.background,
-                                backgroundImage: undefined,
-                                backgroundImageOpacity: undefined,
-                                backgroundImagePosition: undefined,
-                            });
-                        }
-                    }
-                } catch (err: unknown) {
-                    if (err instanceof Error) {
-                        errorToast(err.message);
-                    } else {
-                        errorToast("An unknown error occurred");
-                    }
-                }
-            })();
+            actions.updateBackground({
+                ...state.background,
+                backgroundImage: undefined,
+                backgroundImageOpacity: undefined,
+                backgroundImagePosition: undefined,
+            });
+            const localBackgroundImage = state.localImages?.find((image) => image.type === "background");
+            if (localBackgroundImage) {
+                actions.removeLocalBackgroundImage();
+            }
         }
+    };
+
+    const handleFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith("image/")) {
+            errorToast("Please select an image file");
+            return;
+        }
+
+        // Validate file size (4MB)
+        if (file.size > 4 * 1024 * 1024) {
+            errorToast("Image must be less than 4MB");
+            return;
+        }
+
+        const base64Data = await convertFileToBase64(file);
+
+        const localImage: LocalImage = {
+            url: base64Data,
+            type: "background",
+            fileInfo: {
+                name: file.name,
+                type: file.type,
+                size: file.size,
+            },
+        };
+
+        actions.setLocalImage(localImage);
     };
 
     return (
@@ -124,25 +136,16 @@ const ImageControls = () => {
                 <div>
                     <div
                         ref={containerRef}
-                        className='relative w-full h-28 border rounded-lg overflow-hidden cursor-pointer'
-                        onClick={(e) => {
-                            if (!containerRef.current) return;
-                            const rect = containerRef.current.getBoundingClientRect();
-                            const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
-                            const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
-
-                            setPosition({ x, y });
-                            actions.updateBackground({
-                                backgroundImagePosition: `${x}% ${y}%`,
-                            });
-                        }}
+                        className='relative w-full h-32 border rounded-lg overflow-hidden cursor-pointer'
+                        onClick={handleImageClick}
                     >
                         <div
                             className='w-full h-full'
                             style={{
                                 backgroundImage: `url(${state.background.backgroundImage})`,
-                                backgroundSize: "cover",
+                                backgroundSize: `${state.background.backgroundImageSize}%` || "100%",
                                 backgroundPosition: `${position.x}% ${position.y}%`,
+                                backgroundRepeat: "no-repeat",
                             }}
                         />
                         <div
@@ -155,7 +158,7 @@ const ImageControls = () => {
                         />
                     </div>
 
-                    <div className='space-y-2 mt-2'>
+                    <div className='space-y-4 mt-2 flex flex-col'>
                         <label className='text-sm'>Opacity</label>
                         <Slider
                             value={[state.background.backgroundImageOpacity ?? 100]}
@@ -164,7 +167,22 @@ const ImageControls = () => {
                             step={1}
                             onValueChange={(value) => {
                                 actions.updateBackground({
+                                    ...state.background,
                                     backgroundImageOpacity: value[0],
+                                });
+                            }}
+                        />
+
+                        <Label>Zoom</Label>
+                        <Slider
+                            value={[state.background.backgroundImageSize ? state.background.backgroundImageSize : 100]}
+                            min={50}
+                            max={200}
+                            step={1}
+                            onValueChange={(value) => {
+                                actions.updateBackground({
+                                    ...state.background,
+                                    backgroundImageSize: value[0],
                                 });
                             }}
                         />
@@ -175,20 +193,7 @@ const ImageControls = () => {
                     </div>
                 </div>
             ) : (
-                <UploadButton
-                    className='pt-2 ut-button:bg-black ut-button:text-white ut-button:ut-readying:bg-black/50 ut-button:ut-readying:text-white'
-                    endpoint='backgroundUploader'
-                    onClientUploadComplete={(res) => {
-                        actions.updateBackground({
-                            ...state.background,
-                            backgroundImage: res[0]?.url,
-                            backgroundImageOpacity: 100,
-                        });
-                    }}
-                    onUploadError={(err) => {
-                        errorToast(err.message);
-                    }}
-                />
+                <Input type='file' onChange={(e) => void handleFileSelect(e)} />
             )}
         </div>
     );

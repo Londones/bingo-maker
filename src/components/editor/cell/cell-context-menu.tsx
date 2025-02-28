@@ -1,5 +1,5 @@
 "use client";
-import React, { ChangeEvent } from "react";
+import React, { ChangeEvent, useRef, useState, useEffect } from "react";
 import { useEditor } from "@/hooks/useEditor";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,9 +13,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 //import { UploadButton } from "@/utils/uploadthing";
 import { toast } from "sonner";
 import { ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from "@/components/ui/context-menu";
-import Image from "next/image";
-// import { Slider } from "@/components/ui/slider";
-// import { Label } from "@/components/ui/label";
+//import Image from "next/image";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 
 type CellContextMenuProps = {
     index: number;
@@ -26,6 +26,79 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
     const [activePopover, setActivePopover] = React.useState<PopoverType>(null);
     const cellStyle = state.cells[index]?.cellStyle ?? undefined;
 
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [position, setPosition] = useState(() => {
+        const posStr = cellStyle?.cellBackgroundImagePosition || "50% 50%";
+        const [x, y] = posStr.split(" ").map((val) => parseInt(val));
+        return {
+            x: isNaN(x!) ? 50 : x,
+            y: isNaN(y!) ? 50 : y,
+        };
+    });
+
+    const [isDragging, setIsDragging] = useState(false);
+    const initialPositionRef = useRef({ x: 0, y: 0 });
+    const initialMouseRef = useRef({ x: 0, y: 0 });
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isDragging || !containerRef.current) return;
+
+            const rect = containerRef.current.getBoundingClientRect();
+            const deltaX = e.clientX - initialMouseRef.current.x;
+            const deltaY = e.clientY - initialMouseRef.current.y;
+
+            const newX = Math.max(0, Math.min(100, initialPositionRef.current.x + (deltaX / rect.width) * 100));
+            const newY = Math.max(0, Math.min(100, initialPositionRef.current.y + (deltaY / rect.height) * 100));
+
+            setPosition({ x: newX, y: newY });
+        };
+
+        const handleMouseUp = () => {
+            if (isDragging) {
+                setIsDragging(false);
+                actions.updateCell(index, {
+                    cellStyle: {
+                        ...cellStyle,
+                        cellBackgroundImagePosition: `${position.x}% ${position.y}%`,
+                    },
+                });
+            }
+        };
+
+        if (isDragging) {
+            window.addEventListener("mousemove", handleMouseMove);
+            window.addEventListener("mouseup", handleMouseUp);
+        }
+
+        return () => {
+            window.removeEventListener("mousemove", handleMouseMove);
+            window.removeEventListener("mouseup", handleMouseUp);
+        };
+    }, [isDragging, actions, position, cellStyle, index]);
+
+    const startDrag = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+        initialPositionRef.current = { x: position.x!, y: position.y! };
+        initialMouseRef.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleImageClick = (e: React.MouseEvent) => {
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+        const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+
+        setPosition({ x, y });
+        actions.updateCell(index, {
+            cellStyle: {
+                ...cellStyle,
+                cellBackgroundImagePosition: `${x}% ${y}%`,
+            },
+        });
+    };
+
     const errorToast = (message: string) => {
         toast.error(message, {
             duration: 3000,
@@ -33,7 +106,10 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
     };
 
     const handleRemoveStyling = () => {
-        actions.removeCellLocalImage(index);
+        const localCellImage = state.localImages?.find((image) => image.position === index);
+        if (localCellImage) {
+            actions.removeCellLocalImage(index);
+        }
         actions.updateCell(index, {
             cellStyle: undefined,
         });
@@ -71,49 +147,21 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
         actions.setLocalImage(localImage);
     };
 
-    // useEffect(() => {
-    //     return () => {
-    //         if (cellStyle?.cellBackgroundImage) {
-    //             URL.revokeObjectURL(cellStyle.cellBackgroundImage);
-    //         }
-    //     };
-    // }, [cellStyle]);
-
-    // const handleRemoveImage = async (): Promise<boolean> => {
-    //     if (!cellStyle?.cellBackgroundImage) return true;
-    //     try {
-    //         const fileKey = cellStyle.cellBackgroundImage.split("/").pop();
-    //         if (!fileKey) return true;
-
-    //         const response = await fetch("/api/uploadthing/delete", {
-    //             method: "DELETE",
-    //             body: JSON.stringify({ fileKey }),
-    //             headers: {
-    //                 "Content-Type": "application/json",
-    //             },
-    //         });
-
-    //         if (!response.ok) {
-    //             throw new Error("Failed to delete image");
-    //         }
-
-    //         actions.updateCell(index, {
-    //             cellStyle: {
-    //                 ...cellStyle,
-    //                 cellBackgroundImage: undefined,
-    //                 cellBackgroundImageOpacity: undefined,
-    //             },
-    //         });
-    //         return true;
-    //     } catch (err: unknown) {
-    //         if (err instanceof Error) {
-    //             errorToast(err.message);
-    //         } else {
-    //             errorToast("An error occurred while removing the image");
-    //         }
-    //         return false;
-    //     }
-    // };
+    const handleRemoveImage = () => {
+        if (cellStyle?.cellBackgroundImage) {
+            actions.updateCell(index, {
+                cellStyle: {
+                    ...cellStyle,
+                    cellBackgroundImage: undefined,
+                    cellBackgroundImageOpacity: undefined,
+                },
+            });
+            const localCellImage = state.localImages?.find((image) => image.position === index);
+            if (localCellImage) {
+                actions.removeCellLocalImage(index);
+            }
+        }
+    };
 
     return (
         <div>
@@ -362,24 +410,41 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
                 <TabsContent value='image'>
                     <div>
                         {cellStyle?.cellBackgroundImage ? (
-                            <div className='flex flex-col gap-2 items-center justify-between w-full'>
-                                <Image
-                                    src={cellStyle?.cellBackgroundImage}
-                                    alt='Cell Background'
-                                    width={96}
-                                    height={96}
-                                    className='object-cover rounded-md'
-                                />
-                                {/* <Label htmlFor='opacity' className='text-foreground/50'>
+                            <div className='flex flex-col gap-4 items-center justify-between w-full'>
+                                <div
+                                    ref={containerRef}
+                                    className='relative w-full h-32 border rounded-lg overflow-hidden cursor-pointer'
+                                    onClick={handleImageClick}
+                                >
+                                    <div
+                                        className='w-full h-full'
+                                        style={{
+                                            backgroundImage: `url(${cellStyle.cellBackgroundImage})`,
+                                            backgroundSize: `${cellStyle.cellBackgroundImageSize || 100}%`,
+                                            backgroundPosition: `${position.x}% ${position.y}%`,
+                                            backgroundRepeat: "no-repeat",
+                                        }}
+                                    />
+                                    <div
+                                        onMouseDown={startDrag}
+                                        className='absolute w-4 h-4 bg-primary border-2 border-white rounded-full cursor-move transform -translate-x-1/2 -translate-y-1/2 z-10'
+                                        style={{
+                                            left: `${position.x}%`,
+                                            top: `${position.y}%`,
+                                        }}
+                                    />
+                                </div>
+
+                                <Label htmlFor='opacity' className='text-foreground/50'>
                                     Image Opacity
                                 </Label>
                                 <Slider
-                                    defaultValue={[(cellStyle?.cellBackgroundImageOpacity ?? 1) * 100]}
+                                    defaultValue={[cellStyle?.cellBackgroundImageOpacity ?? 100]}
                                     onValueChange={(value: number[]) => {
                                         actions.updateCell(index, {
                                             cellStyle: {
                                                 ...cellStyle,
-                                                cellBackgroundImageOpacity: value[0]! / 100,
+                                                cellBackgroundImageOpacity: value[0]!,
                                             },
                                         });
                                     }}
@@ -387,8 +452,28 @@ const CellContextMenu = ({ index }: CellContextMenuProps) => {
                                     min={0}
                                     max={100}
                                     id='opacity'
-                                /> */}
-                                <Button variant='destructive' onClick={() => actions.removeCellLocalImage(index)}>
+                                />
+
+                                <Label htmlFor='zoom' className='text-foreground/50'>
+                                    Zoom
+                                </Label>
+                                <Slider
+                                    defaultValue={[cellStyle?.cellBackgroundImageSize ?? 100]}
+                                    onValueChange={(value: number[]) => {
+                                        actions.updateCell(index, {
+                                            cellStyle: {
+                                                ...cellStyle,
+                                                cellBackgroundImageSize: value[0]!,
+                                            },
+                                        });
+                                    }}
+                                    step={1}
+                                    min={50}
+                                    max={200}
+                                    id='zoom'
+                                />
+
+                                <Button variant='destructive' onClick={handleRemoveImage}>
                                     Remove Image
                                 </Button>
                             </div>

@@ -22,7 +22,9 @@ const initialBingoState: Bingo = {
                     cellStyle: {
                         cellBackgroundImage:
                             "https://r6kb2iiay0.ufs.sh/f/d7e4677c-12c2-44da-98a7-2b375749e276-jcyyig.png",
-                        cellBackgroundOpacity: 1,
+                        cellBackgroundOpacity: 100,
+                        cellBackgroundImagePosition: "50% 50%",
+                        cellBackgroundImageSize: 100,
                     },
                 } as BingoCell;
             }
@@ -33,7 +35,9 @@ const initialBingoState: Bingo = {
     background: {
         value: DEFAULT_GRADIENT_CONFIG_STRING,
         backgroundImage: "https://r6kb2iiay0.ufs.sh/f/d7e4677c-12c2-44da-98a7-2b375749e276-jcyyig.png",
-        backgroundImageOpacity: 1,
+        backgroundImageOpacity: 100,
+        backgroundImagePosition: "50% 50%",
+        backgroundImageSize: 100,
     },
     stamp: DEFAULT_STAMP,
     status: "draft",
@@ -220,6 +224,16 @@ export const editorSlice = createSlice({
                 (img) => !isCellLocalImage(img) || img.position !== action.payload
             );
         },
+        removeLocalBackgroundImage: (state) => {
+            state.history.present.background = {
+                ...state.history.present.background,
+                backgroundImage: undefined,
+                backgroundImageOpacity: undefined,
+            };
+            state.history.present.localImages = state.history.present.localImages?.filter(
+                (img) => img.type !== "background"
+            );
+        },
         setImageUrls: (state, action: PayloadAction<ImageUploadResponse>) => {
             const { cellImages, backgroundImage, stampImage } = action.payload;
             if (cellImages) {
@@ -283,6 +297,7 @@ export const {
     toggleStamp,
     setLocalImage,
     removeCellLocalImage,
+    removeLocalBackgroundImage,
     setImageUrls,
     resetEditor,
 } = editorSlice.actions;

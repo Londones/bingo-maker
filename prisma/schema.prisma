@@ -93,21 +93,23 @@ model Style {
 }
 
 model CellStyle {
-    id                         String    @id @default(cuid())
-    color                      String?
-    fontSize                   Int?
-    fontFamily                 String?
-    fontWeight                 String?
-    fontStyle                  String?
-    cellBorderColor            String?
-    cellBorderWidth            Int?
-    cellBackgroundImage        String?
-    cellBackgroundColor        String?
-    cellBackgroundOpacity      Int?
-    cellBackgroundImageOpacity Int?
-    bingoCellId                String    @unique
-    bingoCell                  BingoCell @relation(fields: [bingoCellId], references: [id])
-    createdAt                  DateTime  @default(now())
+    id                          String    @id @default(cuid())
+    color                       String?
+    fontSize                    Int?
+    fontFamily                  String?
+    fontWeight                  String?
+    fontStyle                   String?
+    cellBorderColor             String?
+    cellBorderWidth             Int?
+    cellBackgroundImage         String?
+    cellBackgroundColor         String?
+    cellBackgroundOpacity       Int?
+    cellBackgroundImageOpacity  Int?
+    cellBackgroundImageSize     Int?
+    cellBackgroundImagePosition String?
+    bingoCellId                 String    @unique
+    bingoCell                   BingoCell @relation(fields: [bingoCellId], references: [id])
+    createdAt                   DateTime  @default(now())
 }
 
 model Background {
@@ -116,6 +118,7 @@ model Background {
     backgroundImage         String?
     backgroundImageOpacity  Int?
     backgroundImagePosition String?
+    backgroundImageSize     Int?
     bingo                   Bingo    @relation(fields: [bingoId], references: [id])
     bingoId                 String   @unique
     createdAt               DateTime @default(now())

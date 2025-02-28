@@ -42,9 +42,25 @@ const PreviewPanel = ({ ref }: PreviewPanelProps) => {
         //const opacity = (background?.backgroundImageOpacity ?? 100) / 100;
         return {
             backgroundImage: `url(${background.backgroundImage})`,
-            backgroundSize: "contain",
+            backgroundSize: `${background.backgroundImageSize}%` || "100%",
             backgroundPosition: background.backgroundImagePosition || "center",
             opacity: (background.backgroundImageOpacity ?? 100) / 100,
+            backgroundRepeat: "no-repeat",
+        };
+    };
+
+    const getBackgroundCellImage = (index: number) => {
+        const {
+            cellBackgroundImage,
+            cellBackgroundImageOpacity,
+            cellBackgroundImagePosition,
+            cellBackgroundImageSize,
+        } = state.cells[index]?.cellStyle || {};
+        return {
+            backgroundImage: `url(${cellBackgroundImage})`,
+            backgroundSize: `${cellBackgroundImageSize}%` || "100%",
+            backgroundPosition: cellBackgroundImagePosition || "center",
+            opacity: (cellBackgroundImageOpacity ?? 100) / 100,
             backgroundRepeat: "no-repeat",
         };
     };
@@ -103,13 +119,6 @@ const PreviewPanel = ({ ref }: PreviewPanelProps) => {
         const backgroundStyles = {
             borderColor: state.cells[index]?.cellStyle?.cellBorderColor ?? state.style.cellBorderColor,
             borderWidth: state.cells[index]?.cellStyle?.cellBorderWidth ?? state.style.cellBorderWidth,
-
-            ...(state.cells[index]?.cellStyle?.cellBackgroundImage
-                ? getBackgroundImageWithOpacity(
-                      state.cells[index]?.cellStyle?.cellBackgroundImage,
-                      state.cells[index]?.cellStyle?.cellBackgroundImageOpacity ?? state.style.cellBackgroundOpacity
-                  )
-                : {}),
         };
 
         return { baseStyles, backgroundStyles };
@@ -129,16 +138,16 @@ const PreviewPanel = ({ ref }: PreviewPanelProps) => {
         return color;
     };
 
-    const getBackgroundImageWithOpacity = (imageUrl: string | undefined, opacity: number) => {
-        if (!imageUrl) return undefined;
-        return {
-            backgroundImage: `linear-gradient(rgba(255, 255, 255, ${1 - opacity}), rgba(255, 255, 255, ${
-                1 - opacity
-            })), url(${imageUrl})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-        };
-    };
+    // const getBackgroundImageWithOpacity = (imageUrl: string | undefined, opacity: number) => {
+    //     if (!imageUrl) return undefined;
+    //     return {
+    //         backgroundImage: `linear-gradient(rgba(255, 255, 255, ${1 - opacity}), rgba(255, 255, 255, ${
+    //             1 - opacity
+    //         })), url(${imageUrl})`,
+    //         backgroundSize: "cover",
+    //         backgroundPosition: "center",
+    //     };
+    // };
 
     const calculateRows = React.useCallback(() => {
         if (titleRef.current) {
@@ -260,7 +269,7 @@ const PreviewPanel = ({ ref }: PreviewPanelProps) => {
                                     {editingCell === index ? (
                                         <textarea
                                             ref={inputRef}
-                                            className='w-full h-fit p-1 rounded-md text-center content-center resize-none whitespace-pre-wrap break-words overflow-auto'
+                                            className='w-full bg-transparent h-fit p-1 rounded-md text-center content-center resize-none whitespace-pre-wrap break-words overflow-auto'
                                             value={editContent}
                                             onChange={(e) => setEditContent(e.target.value)}
                                             onBlur={handleBlur}
@@ -270,8 +279,12 @@ const PreviewPanel = ({ ref }: PreviewPanelProps) => {
                                             }}
                                         />
                                     ) : (
-                                        <div className='p-1 w-full h-full text-center whitespace-pre-wrap content-center break-words overflow-auto'>
-                                            {cell.content}
+                                        <div className='p-1 w-full h-full text-center whitespace-pre-wrap content-center break-words overflow-auto relative'>
+                                            <div
+                                                className='absolute inset-0 pointer-events-none'
+                                                style={getBackgroundCellImage(index)}
+                                            />
+                                            <div className=' relative'>{cell.content}</div>
                                         </div>
                                     )}
 

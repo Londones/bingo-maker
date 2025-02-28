@@ -32,6 +32,8 @@ export interface CellStyle {
     cellBackgroundImage?: string;
     cellBackgroundOpacity?: number;
     cellBackgroundImageOpacity?: number;
+    cellBackgroundImagePosition?: string;
+    cellBackgroundImageSize?: number;
 }
 
 export interface Background {
@@ -39,6 +41,7 @@ export interface Background {
     backgroundImage?: string;
     backgroundImageOpacity?: number;
     backgroundImagePosition?: string;
+    backgroundImageSize?: number;
 }
 
 export interface Stamp {

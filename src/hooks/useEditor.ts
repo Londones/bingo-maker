@@ -15,6 +15,7 @@ import {
     setLocalImage,
     setImageUrls,
     removeCellLocalImage,
+    removeLocalBackgroundImage,
 } from "@/store/slices/editorSlice";
 import { Bingo, BingoCell, Style, Background, Stamp, LocalImage, ImageUploadResponse } from "@/types/types";
 
@@ -39,6 +40,7 @@ export const useEditor = () => {
             toggleStamp: (index: number) => dispatch(toggleStamp(index)),
             setLocalImage: (image: LocalImage | undefined) => dispatch(setLocalImage(image)),
             removeCellLocalImage: (index: number) => dispatch(removeCellLocalImage(index)),
+            removeLocalBackgroundImage: () => dispatch(removeLocalBackgroundImage()),
             setImageUrls: (urls: ImageUploadResponse) => dispatch(setImageUrls(urls)),
             resetEditor: () => dispatch(resetEditor()),
         },
