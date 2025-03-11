@@ -7,73 +7,75 @@ import { useBingoStorage } from "@/hooks/useBingoStorage";
 import Editor from "@/components/editor/editor";
 import BingoPreview from "@/components/bingo-preview";
 import { BingoCell } from "@/types/types";
-import { prisma } from "@/lib/prisma";
 
 const BingoPage = () => {
-    const { id } = useParams();
-    const { state, actions } = useEditor();
-    const { data: session } = useSession();
-    const { useGetBingo } = useBingoStorage();
-    const [authorToken, setAuthorToken] = useState<string | null>(null);
-    const [author, setAuthor] = useState<string>("You");
-    const { data: bingo, isLoading, error } = useGetBingo(id as string);
+  const { id } = useParams<{ id: string }>();
+  const { state, actions } = useEditor();
+  const { data: session } = useSession();
+  const { useGetBingo, useCheckOwnership, isClient } = useBingoStorage();
+  const [author, setAuthor] = useState<string>("Anonymous");
 
-    useEffect(() => {
-        setAuthorToken(localStorage.getItem("bingoAuthorToken"));
-    }, []);
+  const { data: bingo, isLoading: isBingoLoading, error } = useGetBingo(id);
 
-    const isAuthor = session?.user?.id === bingo?.userId || authorToken === bingo?.authorToken;
+  const { data: ownershipData, isLoading: isOwnershipLoading } =
+    useCheckOwnership(id);
 
-    useEffect(() => {
-        const getBingoAuthor = async () => {
-            if (bingo?.userId) {
-                const user = await prisma.user.findUnique({
-                    where: { id: bingo.userId },
-                });
-                if (user) {
-                    return user.name ?? "Anonymous";
-                }
-            } else {
-                if (isAuthor) {
-                    return "You";
-                }
-            }
-            return "Anonymous";
-        };
+  const isAuthor =
+    (!!session?.user?.id && bingo?.userId === session.user.id) ||
+    !!ownershipData?.isOwner;
 
-        if (bingo && isAuthor && state.id !== bingo.id) {
-            actions.setBingo(bingo);
-        }
-        if (bingo) {
-            const orderedCells: BingoCell[] = Array(bingo.gridSize ** 2).fill(null);
-            bingo.cells.forEach((cell) => {
-                orderedCells[cell.position] = cell;
-            });
-            bingo.cells = orderedCells;
+  const isLoading = isBingoLoading || (isClient && isOwnershipLoading);
 
-            getBingoAuthor()
-                .then((author) => setAuthor(author))
-                .catch((error) => console.error(error));
-        }
-    }, [bingo, isAuthor, state.id, actions]);
-
-    if (isLoading) {
-        return <div>Loading...</div>;
+  useEffect(() => {
+    if (bingo && isAuthor && state.id !== bingo.id) {
+      actions.setBingo(bingo);
     }
 
-    if (error || !bingo) {
-        return <div>Bingo not found</div>;
-    }
+    if (bingo) {
+      const orderedCells: BingoCell[] = Array(bingo.gridSize ** 2).fill(null);
+      bingo.cells.forEach((cell) => {
+        orderedCells[cell.position] = cell;
+      });
+      bingo.cells = orderedCells;
 
+      if (isAuthor) {
+        setAuthor("You");
+      }
+
+      if (bingo.userId && !isAuthor) {
+        fetch(`/api/user/${bingo.userId}`)
+          .then((res) => res.json())
+          .then((userData) => {
+            setAuthor((userData.name as string) || "Anonymous");
+          })
+          .catch(() => setAuthor("Anonymous"));
+      }
+    }
+  }, [bingo, session, isAuthor, actions, state.id]);
+
+  if (isLoading) {
     return (
-        <div className='w-full'>
-            <div className='text-foreground/50 mb-4'>
-                <h1 className='text-5xl font-bold'>{isAuthor ? state.title : bingo.title}</h1>
-                <p className='text-xs'>By: {author}</p>
-            </div>
-            {isAuthor ? <Editor /> : <BingoPreview bingo={bingo} />}
-        </div>
+      <div className="w-full h-screen flex items-center justify-center">
+        <div className="animate-pulse text-foreground/50">Loading bingo...</div>
+      </div>
     );
+  }
+
+  if (error || !bingo) {
+    return <div className="w-full text-center mt-10">Bingo not found</div>;
+  }
+
+  return (
+    <div className="w-full">
+      <div className="text-foreground/50 mb-4">
+        <h1 className="text-5xl font-bold">
+          {isAuthor ? state.title : bingo.title}
+        </h1>
+        <p className="text-xs">By: {author}</p>
+      </div>
+      {isAuthor ? <Editor /> : <BingoPreview bingo={bingo} />}
+    </div>
+  );
 };
 
 export default BingoPage;
