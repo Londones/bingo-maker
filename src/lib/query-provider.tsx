@@ -19,7 +19,6 @@ export default function QueryProvider({ children }: { children: ReactNode }) {
       },
     });
 
-    // Set up persistence for the client
     if (typeof window !== "undefined") {
       const persister = createSyncStoragePersister({
         storage: window.localStorage,
@@ -34,7 +33,7 @@ export default function QueryProvider({ children }: { children: ReactNode }) {
       });
     }
 
-    return client as QueryClient;
+    return client;
   });
 
   return (
