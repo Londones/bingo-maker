@@ -323,7 +323,7 @@ const PreviewPanel = ({ ref }: PreviewPanelProps) => {
                     <motion.div
                       className="absolute inset-0 flex items-center justify-center pointer-events-none"
                       style={{
-                        fontSize: state.stamp.size,
+                        fontSize: pxToRem(state.stamp.size),
                         opacity: state.stamp.opacity,
                         fontStyle: "normal",
                       }}

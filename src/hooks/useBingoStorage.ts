@@ -139,9 +139,6 @@ export function useBingoStorage() {
 
       return response.json() as Promise<Bingo>;
     },
-    onSuccess: async (_, { bingoId }) => {
-      await queryClient.invalidateQueries({ queryKey: ["bingo", bingoId] });
-    },
   });
 
   const useDeleteBingo = useMutation({
@@ -182,7 +179,7 @@ export function useBingoStorage() {
     },
   });
 
-  const useCheckOwnership = (bingoId: string) => {
+  const useCheckOwnership = (bingoId: string, options = {}) => {
     return useQuery({
       queryKey: ["bingo", bingoId, "ownership"],
       queryFn: async (): Promise<{ isOwner: boolean }> => {
@@ -207,6 +204,7 @@ export function useBingoStorage() {
       },
       enabled: !!bingoId && isClient,
       staleTime: 1000 * 60 * 60,
+      ...options,
     });
   };
 

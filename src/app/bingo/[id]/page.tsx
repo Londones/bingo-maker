@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useEditor } from "@/hooks/useEditor";
 import { useSession } from "next-auth/react";
@@ -14,51 +14,80 @@ const BingoPage = () => {
   const { data: session } = useSession();
   const { useGetBingo, useCheckOwnership, isClient } = useBingoStorage();
   const [author, setAuthor] = useState<string>("Anonymous");
+  const [mounted, setMounted] = useState(false);
 
   const { data: bingo, isLoading: isBingoLoading, error } = useGetBingo(id);
 
+  const skipOwnershipCheck = useMemo(
+    () => !!state.id && state.id === id,
+    [state.id, id]
+  );
+
   const { data: ownershipData, isLoading: isOwnershipLoading } =
-    useCheckOwnership(id);
+    useCheckOwnership(id, { enabled: !skipOwnershipCheck });
 
-  const isAuthor =
-    (!!session?.user?.id && bingo?.userId === session.user.id) ||
-    !!ownershipData?.isOwner;
+  const isAuthor = useMemo(
+    () =>
+      (!!session?.user?.id && bingo?.userId === session.user.id) ||
+      !!ownershipData?.isOwner,
+    [session?.user?.id, bingo?.userId, ownershipData?.isOwner]
+  );
 
-  const isLoading = isBingoLoading || (isClient && isOwnershipLoading);
+  const isLoading = useMemo(
+    () =>
+      isBingoLoading ||
+      (!mounted && isClient) ||
+      (isClient && isOwnershipLoading),
+    [isBingoLoading, mounted, isClient, isOwnershipLoading]
+  );
+
+  const fetchUserData = useCallback(async (userId: string) => {
+    try {
+      const res = await fetch(`/api/bingo/user/${userId}`);
+      const userData = await res.json();
+      setAuthor((userData.name as string) || "Anonymous");
+    } catch {
+      setAuthor("Anonymous");
+    }
+  }, []);
 
   useEffect(() => {
-    if (bingo && isAuthor && state.id !== bingo.id) {
-      actions.setBingo(bingo);
-    }
+    const fetchData = async () => {
+      setMounted(true);
 
-    if (bingo) {
-      const orderedCells: BingoCell[] = Array(bingo.gridSize ** 2).fill(null);
-      bingo.cells.forEach((cell) => {
-        orderedCells[cell.position] = cell;
-      });
-      bingo.cells = orderedCells;
-
-      if (isAuthor) {
-        setAuthor("You");
+      if (bingo && isAuthor && state.id !== bingo.id) {
+        actions.setBingo(bingo);
       }
 
-      if (bingo.userId && !isAuthor) {
-        fetch(`/api/user/${bingo.userId}`)
-          .then((res) => res.json())
-          .then((userData) => {
-            setAuthor((userData.name as string) || "Anonymous");
-          })
-          .catch(() => setAuthor("Anonymous"));
-      }
-    }
-  }, [bingo, session, isAuthor, actions, state.id]);
+      if (bingo) {
+        const orderedCells: BingoCell[] = Array(bingo.gridSize ** 2).fill(null);
+        bingo.cells.forEach((cell) => {
+          orderedCells[cell.position] = cell;
+        });
+        bingo.cells = orderedCells;
 
-  if (isLoading) {
-    return (
+        if (isAuthor) {
+          setAuthor("You");
+        } else if (bingo.userId) {
+          await fetchUserData(bingo.userId);
+        }
+      }
+    };
+
+    void fetchData();
+  }, [bingo, session, isAuthor, actions, state.id, fetchUserData]);
+
+  const loadingComponent = useMemo(
+    () => (
       <div className="w-full h-screen flex items-center justify-center">
         <div className="animate-pulse text-foreground/50">Loading bingo...</div>
       </div>
-    );
+    ),
+    []
+  );
+
+  if (!mounted || isLoading) {
+    return loadingComponent;
   }
 
   if (error || !bingo) {

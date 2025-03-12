@@ -25,11 +25,14 @@ import { APIError } from "@/lib/errors";
 import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { uploadPendingImages } from "@/app/actions/uploadthing";
+import { useQueryClient } from "@tanstack/react-query";
+import { Bingo } from "@/types/types";
 
 const Controls = () => {
   const router = useRouter();
   const { actions, canRedo, canUndo, state } = useEditor();
   const { useSaveBingo, useUpdateBingo } = useBingoStorage();
+  const queryClient = useQueryClient();
   const { status: saveStatus } = useSaveBingo;
   const currentUrl = usePathname();
 
@@ -61,6 +64,19 @@ const Controls = () => {
         const uploadRedult = await uploadPendingImages(state);
         actions.setImageUrls(uploadRedult);
       }
+
+      const previousData = queryClient.getQueryData<Bingo>([
+        "bingo",
+        state.id!,
+      ]);
+
+      if (previousData) {
+        queryClient.setQueryData<Bingo>(["bingo", state.id!], {
+          ...previousData,
+          ...state,
+        });
+      }
+
       const updatedBingo = await useUpdateBingo.mutateAsync({
         bingoId: state.id!,
         updates: state,
@@ -73,6 +89,8 @@ const Controls = () => {
       } else {
         toast.error(`${error as string}`);
       }
+
+      await queryClient.invalidateQueries({ queryKey: ["bingo", state.id!] });
     }
   };
 
