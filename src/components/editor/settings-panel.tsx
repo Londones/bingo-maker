@@ -1,48 +1,57 @@
 "use client";
-import React from "react";
+import React, { memo } from "react";
 import BackgroundEditor from "@/components/editor/background/background-editor";
 import GridControls from "@/components/editor/grid/grid-controls";
 import CellsToolbar from "@/components/editor/cell/cells-controls";
 import StampControls from "@/components/editor/stamp/stamp-controls";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
+const AccordionSection = memo(
+  ({
+    value,
+    title,
+    children,
+  }: {
+    value: string;
+    title: string;
+    children: React.ReactNode;
+  }) => (
+    <AccordionItem value={value}>
+      <AccordionTrigger className={value === "cells" ? "pb-4" : "py-4"}>
+        <h1 className="text-lg font-bold">{title}</h1>
+      </AccordionTrigger>
+      <AccordionContent>{children}</AccordionContent>
+    </AccordionItem>
+  )
+);
+
+AccordionSection.displayName = "AccordionSection";
 
 const SettingsPanel = () => {
-    return (
-        <Accordion type='multiple' defaultValue={["cells", "stamp", "background", "grid"]}>
-            <AccordionItem value='cells'>
-                <AccordionTrigger className='pb-4'>
-                    <h1 className='text-lg font-bold'>Cells</h1>
-                </AccordionTrigger>
-                <AccordionContent>
-                    <CellsToolbar />
-                </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value='stamp'>
-                <AccordionTrigger className='py-4'>
-                    <h1 className='text-lg font-bold'>Stamp</h1>
-                </AccordionTrigger>
-                <AccordionContent>
-                    <StampControls />
-                </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value='background'>
-                <AccordionTrigger className='py-4'>
-                    <h1 className='text-lg font-bold'>Background</h1>
-                </AccordionTrigger>
-                <AccordionContent>
-                    <BackgroundEditor />
-                </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value='grid'>
-                <AccordionTrigger className='py-4'>
-                    <h1 className='text-lg font-bold'>Grid</h1>
-                </AccordionTrigger>
-                <AccordionContent>
-                    <GridControls />
-                </AccordionContent>
-            </AccordionItem>
-        </Accordion>
-    );
+  return (
+    <Accordion
+      type="multiple"
+      defaultValue={["cells", "stamp", "background", "grid"]}
+    >
+      <AccordionSection value="cells" title="Cells">
+        <CellsToolbar />
+      </AccordionSection>
+      <AccordionSection value="stamp" title="Stamp">
+        <StampControls />
+      </AccordionSection>
+      <AccordionSection value="background" title="Background">
+        <BackgroundEditor />
+      </AccordionSection>
+      <AccordionSection value="grid" title="Grid">
+        <GridControls />
+      </AccordionSection>
+    </Accordion>
+  );
 };
 
-export default SettingsPanel;
+export default memo(SettingsPanel);

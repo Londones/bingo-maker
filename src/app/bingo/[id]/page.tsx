@@ -1,5 +1,11 @@
 "use client";
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  Suspense,
+} from "react";
 import { useParams } from "next/navigation";
 import { useEditor } from "@/hooks/useEditor";
 import { useSession } from "next-auth/react";
@@ -8,8 +14,13 @@ import Editor from "@/components/editor/editor";
 import BingoPreview from "@/components/bingo-preview";
 import { BingoCell } from "@/types/types";
 
-const BingoPage = () => {
-  const { id } = useParams<{ id: string }>();
+const LoadingComponent = () => (
+  <div className="w-full h-screen flex items-center justify-center">
+    <div className="animate-pulse text-foreground/50">Loading bingo...</div>
+  </div>
+);
+
+const BingoContent = ({ id }: { id: string }) => {
   const { state, actions } = useEditor();
   const { data: session } = useSession();
   const { useGetBingo, useCheckOwnership, isClient } = useBingoStorage();
@@ -77,17 +88,8 @@ const BingoPage = () => {
     void fetchData();
   }, [bingo, session, isAuthor, actions, state.id, fetchUserData]);
 
-  const loadingComponent = useMemo(
-    () => (
-      <div className="w-full h-screen flex items-center justify-center">
-        <div className="animate-pulse text-foreground/50">Loading bingo...</div>
-      </div>
-    ),
-    []
-  );
-
   if (!mounted || isLoading) {
-    return loadingComponent;
+    return <LoadingComponent />;
   }
 
   if (error || !bingo) {
@@ -104,6 +106,16 @@ const BingoPage = () => {
       </div>
       {isAuthor ? <Editor /> : <BingoPreview bingo={bingo} />}
     </div>
+  );
+};
+
+const BingoPage = () => {
+  const { id } = useParams<{ id: string }>();
+
+  return (
+    <Suspense fallback={<LoadingComponent />}>
+      <BingoContent id={id} />
+    </Suspense>
   );
 };
 
