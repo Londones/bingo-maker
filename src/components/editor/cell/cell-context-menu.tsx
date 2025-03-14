@@ -494,7 +494,7 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
               <div className="flex flex-col gap-4 items-center justify-between w-full">
                 <div
                   ref={containerRef}
-                  className="relative w-full h-32 border rounded-lg overflow-hidden cursor-pointer"
+                  className="relative w-full h-56 border rounded-lg overflow-hidden cursor-pointer"
                   onClick={handleImageClick}
                 >
                   <div

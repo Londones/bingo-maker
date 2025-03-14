@@ -210,7 +210,7 @@ const ImageControls = () => {
         <div>
           <div
             ref={containerRef}
-            className="relative w-full h-32 border rounded-lg overflow-hidden cursor-pointer"
+            className="relative w-full h-48 border rounded-lg overflow-hidden cursor-pointer"
             onClick={handleImageClick}
           >
             <div className="w-full h-full" style={backgroundStyle} />
