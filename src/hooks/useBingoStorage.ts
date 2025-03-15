@@ -22,6 +22,15 @@ const safeLocalStorage = {
     if (typeof window === "undefined") return;
     localStorage.setItem(key, value);
   },
+  removeItem: (key: string): void => {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(key);
+  },
+  clear: (): void => {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem("ownedBingos");
+    // Don't remove authorToken as it might be needed for future sessions
+  },
 };
 
 export function useBingoStorage() {
@@ -208,9 +217,14 @@ export function useBingoStorage() {
     });
   };
 
+  const clearLocalStorage = () => {
+    safeLocalStorage.clear();
+  };
+
   return {
     authorToken,
     isClient,
+    userId: session?.user?.id,
     useGetBingo,
     useGetBingos,
     useSaveBingo,
@@ -218,5 +232,6 @@ export function useBingoStorage() {
     useDeleteBingo,
     useMigrateBingos,
     useCheckOwnership,
+    clearLocalStorage,
   };
 }

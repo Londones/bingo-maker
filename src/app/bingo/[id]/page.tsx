@@ -56,7 +56,7 @@ const BingoContent = ({ id }: { id: string }) => {
     try {
       const res = await fetch(`/api/bingo/user/${userId}`);
       const userData = await res.json();
-      setAuthor((userData.name as string) || "Anonymous");
+      setAuthor(userData.name as string);
     } catch {
       setAuthor("Anonymous");
     }

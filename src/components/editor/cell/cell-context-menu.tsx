@@ -201,7 +201,6 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
           size: file.size,
         },
       };
-
       actions.setLocalImage(localImage);
     },
     [actions, errorToast, index]

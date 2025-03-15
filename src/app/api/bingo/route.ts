@@ -67,12 +67,9 @@ export async function POST(req: Request): Promise<NextResponse> {
                     cellBackgroundImage: cell.cellStyle.cellBackgroundImage,
                     cellBackgroundColor: cell.cellStyle.cellBackgroundColor,
                     cellBackgroundOpacity: cell.cellStyle.cellBackgroundOpacity,
-                    cellBackgroundImageOpacity:
-                      cell.cellStyle.cellBackgroundImageOpacity,
-                    cellBackgroundImagePosition:
-                      cell.cellStyle.cellBackgroundImagePosition,
-                    cellBackgroundImageSize:
-                      cell.cellStyle.cellBackgroundImageSize,
+                    cellBackgroundImageOpacity: cell.cellStyle.cellBackgroundImageOpacity,
+                    cellBackgroundImagePosition: cell.cellStyle.cellBackgroundImagePosition,
+                    cellBackgroundImageSize: cell.cellStyle.cellBackgroundImageSize,
                   },
                 }
               : undefined,
@@ -89,15 +86,14 @@ export async function POST(req: Request): Promise<NextResponse> {
       },
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { authorToken, ...bingoWithoutToken } = bingo;
+
     if (!bingo) {
-      throw new APIError(
-        "Failed to create bingo!",
-        APIErrorCode.FAILED_TO_CREATE_BINGO,
-        557
-      );
+      throw new APIError("Failed to create bingo!", APIErrorCode.FAILED_TO_CREATE_BINGO, 557);
     }
 
-    return new NextResponse(JSON.stringify(bingo), {
+    return new NextResponse(JSON.stringify(bingoWithoutToken), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
@@ -126,11 +122,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       });
 
       if (!cursorExists) {
-        throw new APIError(
-          "Invalid cursor position",
-          APIErrorCode.INVALID_REQUEST,
-          400
-        );
+        throw new APIError("Invalid cursor position", APIErrorCode.INVALID_REQUEST, 400);
       }
     }
 
@@ -145,15 +137,17 @@ export async function GET(req: Request): Promise<NextResponse> {
     });
 
     if (!bingos?.length && totalCount > 0) {
-      throw new APIError(
-        "Failed to retrieve bingos",
-        APIErrorCode.FAILED_TO_GET_BINGOS,
-        500
-      );
+      throw new APIError("Failed to retrieve bingos", APIErrorCode.FAILED_TO_GET_BINGOS, 500);
     }
 
+    const bingosWithoutToken = bingos.map((bingo) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { authorToken, ...bingoWithoutToken } = bingo;
+      return bingoWithoutToken;
+    });
+
     const hasMore = bingos.length > limit;
-    const items = hasMore ? bingos.slice(0, limit) : bingos;
+    const items = hasMore ? bingosWithoutToken.slice(0, limit) : bingosWithoutToken;
     const nextCursor = hasMore ? items[items.length - 1]!.id : undefined;
 
     return NextResponse.json({

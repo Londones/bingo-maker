@@ -1,20 +1,8 @@
 import { ImageUploadResponse } from "./../../types/types";
 import { isCellLocalImage } from "@/lib/utils";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import type {
-  Bingo,
-  BingoCell,
-  Style,
-  Background,
-  Stamp,
-  EditorState,
-  LocalImage,
-} from "@/types/types";
-import {
-  DEFAULT_STYLE,
-  DEFAULT_STAMP,
-  DEFAULT_GRADIENT_CONFIG_STRING,
-} from "@/utils/constants";
+import type { Bingo, BingoCell, Style, Background, Stamp, EditorState, LocalImage } from "@/types/types";
+import { DEFAULT_STYLE, DEFAULT_STAMP, DEFAULT_GRADIENT_CONFIG_STRING } from "@/utils/constants";
 
 const initialBingoState: Bingo = {
   title: "New Bingo",
@@ -32,8 +20,7 @@ const initialBingoState: Bingo = {
         return {
           ...baseCell,
           cellStyle: {
-            cellBackgroundImage:
-              "https://r6kb2iiay0.ufs.sh/f/d7e4677c-12c2-44da-98a7-2b375749e276-jcyyig.png",
+            cellBackgroundImage: "https://r6kb2iiay0.ufs.sh/f/d7e4677c-12c2-44da-98a7-2b375749e276-jcyyig.png",
             cellBackgroundOpacity: 1,
             cellBackgroundImagePosition: "50% 50%",
             cellBackgroundImageSize: 100,
@@ -46,8 +33,7 @@ const initialBingoState: Bingo = {
   style: DEFAULT_STYLE,
   background: {
     value: DEFAULT_GRADIENT_CONFIG_STRING,
-    backgroundImage:
-      "https://r6kb2iiay0.ufs.sh/f/d7e4677c-12c2-44da-98a7-2b375749e276-jcyyig.png",
+    backgroundImage: "https://r6kb2iiay0.ufs.sh/f/d7e4677c-12c2-44da-98a7-2b375749e276-jcyyig.png",
     backgroundImageOpacity: 100,
     backgroundImagePosition: "50% 50%",
     backgroundImageSize: 100,
@@ -112,9 +98,7 @@ export const editorSlice = createSlice({
       state.canSave = state.canRedo || state.canUndo;
     },
     setBingo: (state, action: PayloadAction<Bingo>) => {
-      const sortedCells = action.payload.cells.sort(
-        (a, b) => a.position - b.position
-      );
+      const sortedCells = action.payload.cells.sort((a, b) => a.position - b.position);
       state.history.present = {
         ...action.payload,
         cells: sortedCells,
@@ -147,10 +131,7 @@ export const editorSlice = createSlice({
       state.history.present.gridSize = newGridSize;
       state.history.present.cells = newCells;
     },
-    updateCell: (
-      state,
-      action: PayloadAction<{ index: number; cell: Partial<BingoCell> }>
-    ) => {
+    updateCell: (state, action: PayloadAction<{ index: number; cell: Partial<BingoCell> }>) => {
       pushToHistory(state);
       state.history.present.cells[action.payload.index] = {
         ...state.history.present.cells[action.payload.index],
@@ -190,7 +171,7 @@ export const editorSlice = createSlice({
       if (!action.payload) {
         state.history.present.localImages = action.payload;
       } else if (action.payload) {
-        state.history.present.localImages?.push(action.payload);
+        state.history.present.localImages = [...(state.history.present.localImages || []), action.payload];
         const image = action.payload;
 
         if (isCellLocalImage(image)) {
@@ -238,10 +219,9 @@ export const editorSlice = createSlice({
         };
       }
 
-      state.history.present.localImages =
-        state.history.present.localImages?.filter(
-          (img) => !isCellLocalImage(img) || img.position !== action.payload
-        );
+      state.history.present.localImages = state.history.present.localImages?.filter(
+        (img) => !isCellLocalImage(img) || img.position !== action.payload
+      );
     },
     removeLocalBackgroundImage: (state) => {
       state.history.present.background = {
@@ -249,31 +229,29 @@ export const editorSlice = createSlice({
         backgroundImage: undefined,
         backgroundImageOpacity: undefined,
       };
-      state.history.present.localImages =
-        state.history.present.localImages?.filter(
-          (img) => img.type !== "background"
-        );
+      state.history.present.localImages = state.history.present.localImages?.filter((img) => img.type !== "background");
     },
     setImageUrls: (state, action: PayloadAction<ImageUploadResponse>) => {
       const { cellImages, backgroundImage, stampImage } = action.payload;
-      if (cellImages) {
+      console.log("cellImages", cellImages);
+      if (cellImages && cellImages.length > 0) {
         for (const image of cellImages) {
           const cell = state.history.present.cells[image.position];
           if (!cell) {
             console.error(`Cell at position ${image.position} does not exist`);
-            return;
-          } else {
-            cell.cellStyle = {
-              ...cell.cellStyle,
-              cellBackgroundImage: image.url,
-              cellBackgroundOpacity: 1,
-            };
+            continue;
           }
+
+          cell.cellStyle = {
+            ...cell.cellStyle,
+            cellBackgroundImage: image.url,
+            cellBackgroundOpacity: 1,
+          };
+          console.log(state.history.present.cells[image.position]);
         }
-        state.history.present.localImages =
-          state.history.present.localImages?.filter(
-            (img) => !isCellLocalImage(img)
-          );
+
+        // Filter out local cell images after processing
+        state.history.present.localImages = state.history.present.localImages?.filter((img) => !isCellLocalImage(img));
       }
 
       if (backgroundImage) {
@@ -282,10 +260,9 @@ export const editorSlice = createSlice({
           backgroundImage: backgroundImage,
           backgroundImageOpacity: 1,
         };
-        state.history.present.localImages =
-          state.history.present.localImages?.filter(
-            (img) => img.type !== "background"
-          );
+        state.history.present.localImages = state.history.present.localImages?.filter(
+          (img) => img.type !== "background"
+        );
       }
 
       if (stampImage) {
@@ -293,15 +270,15 @@ export const editorSlice = createSlice({
           ...state.history.present.stamp,
           value: stampImage,
         };
-        state.history.present.localImages =
-          state.history.present.localImages?.filter(
-            (img) => img.type !== "stamp"
-          );
+        state.history.present.localImages = state.history.present.localImages?.filter((img) => img.type !== "stamp");
       }
 
       if (state.history.present.localImages?.length === 0) {
         state.history.present.localImages = undefined;
       }
+
+      // Mark the state as saved so it doesn't show as having unsaved changes
+      state.canSave = false;
     },
     resetEditor: () => initialState,
   },

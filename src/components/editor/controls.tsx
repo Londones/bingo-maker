@@ -1,27 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { useEditor } from "@/hooks/useEditor";
 import { Button } from "@/components/ui/button";
 import { Undo, Redo, Save, Loader } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useBingoStorage } from "@/hooks/useBingoStorage";
 import { toast } from "sonner";
 import { APIError } from "@/lib/errors";
-// import {
-//     AlertDialog,
-//     AlertDialogAction,
-//     AlertDialogCancel,
-//     AlertDialogContent,
-//     AlertDialogDescription,
-//     AlertDialogFooter,
-//     AlertDialogHeader,
-//     AlertDialogTitle,
-//     AlertDialogTrigger,
-// } from "@/components/ui/alert-dialog";
 import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { uploadPendingImages } from "@/app/actions/uploadthing";
@@ -35,14 +19,38 @@ const Controls = () => {
   const queryClient = useQueryClient();
   const { status: saveStatus } = useSaveBingo;
   const currentUrl = usePathname();
+  const [isSaving, setIsSaving] = useState(false);
+
+  const prepareStateForSave = async (currentState: Bingo): Promise<Bingo> => {
+    if (!currentState.localImages?.length) {
+      return { ...currentState, localImages: undefined };
+    }
+
+    try {
+      const uploadResult = await uploadPendingImages(currentState);
+
+      // Apply image URLs to the state through the reducer
+      actions.setImageUrls(uploadResult);
+
+      // Return the current state from the store after updates
+      // This ensures we use the updated state with proper image URLs
+      return { ...state, localImages: undefined };
+    } catch (error) {
+      console.error("Error uploading images:", error);
+      toast.error("Failed to upload images");
+      throw error;
+    }
+  };
 
   const handleSaveNew = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+
     try {
-      if (state.localImages?.length && state.localImages?.length > 0) {
-        const uploadRedult = await uploadPendingImages(state);
-        actions.setImageUrls(uploadRedult);
-      }
-      const savedBingo = await useSaveBingo.mutateAsync(state);
+      const preparedState = await prepareStateForSave(state);
+
+      const savedBingo = await useSaveBingo.mutateAsync(preparedState);
+
       actions.setBingo(savedBingo);
       toast.success("Bingo saved successfully");
 
@@ -55,32 +63,34 @@ const Controls = () => {
       } else {
         toast.error(`${error as string}`);
       }
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleUpdate = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+
     try {
-      if (state.localImages?.length && state.localImages?.length > 0) {
-        const uploadRedult = await uploadPendingImages(state);
-        actions.setImageUrls(uploadRedult);
-      }
+      // Prepare state with uploaded images
+      const preparedState = await prepareStateForSave(state);
 
-      const previousData = queryClient.getQueryData<Bingo>([
-        "bingo",
-        state.id!,
-      ]);
-
+      // Optimistic update for the query cache
+      const previousData = queryClient.getQueryData<Bingo>(["bingo", state.id!]);
       if (previousData) {
         queryClient.setQueryData<Bingo>(["bingo", state.id!], {
           ...previousData,
-          ...state,
+          ...preparedState,
         });
       }
 
+      // Update in database
       const updatedBingo = await useUpdateBingo.mutateAsync({
         bingoId: state.id!,
-        updates: state,
+        updates: preparedState,
       });
+
       actions.setBingo(updatedBingo);
       toast.success("Bingo updated successfully");
     } catch (error) {
@@ -89,8 +99,9 @@ const Controls = () => {
       } else {
         toast.error(`${error as string}`);
       }
-
       await queryClient.invalidateQueries({ queryKey: ["bingo", state.id!] });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -100,11 +111,7 @@ const Controls = () => {
         <div className="flex gap-4">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                onClick={actions.undo}
-                disabled={!canUndo}
-              >
+              <Button variant="outline" onClick={actions.undo} disabled={!canUndo}>
                 <Undo className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
@@ -115,11 +122,7 @@ const Controls = () => {
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                onClick={actions.redo}
-                disabled={!canRedo}
-              >
+              <Button variant="outline" onClick={actions.redo} disabled={!canRedo}>
                 <Redo className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
@@ -134,14 +137,11 @@ const Controls = () => {
               onClick={() => {
                 void (state.id ? handleUpdate() : handleSaveNew());
               }}
-              disabled={saveStatus === "pending" || (!canUndo && !canRedo)}
+              disabled={saveStatus === "pending" || isSaving || (!canUndo && !canRedo)}
               variant="outline"
             >
-              {saveStatus === "pending" ? (
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, loop: Infinity, ease: "linear" }}
-                >
+              {saveStatus === "pending" || isSaving ? (
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, loop: Infinity, ease: "linear" }}>
                   <Loader className="h-4 w-4" />
                 </motion.div>
               ) : (
@@ -153,35 +153,6 @@ const Controls = () => {
             <p>Save</p>
           </TooltipContent>
         </Tooltip>
-
-        {/* 
-                <AlertDialog>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <AlertDialogTrigger asChild>
-                                <Button variant='destructive' disabled={!canUndo}>
-                                    <RotateCcw className='h-4 w-4' />
-                                </Button>
-                            </AlertDialogTrigger>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Reset Editor</p>
-                        </TooltipContent>
-                    </Tooltip>
-
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This action will reset all changes made. This action cannot be undone.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={actions.resetEditor}>Reset</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog> */}
       </div>
     </TooltipProvider>
   );
