@@ -1,115 +1,100 @@
 import { Bingo, BingoCell, Background, Stamp, Style } from "@/types/types";
 
 export const buildStyle = (style: Partial<Style>) => ({
-  ...(style.fontSize && { fontSize: style.fontSize }),
-  ...(style.fontFamily && { fontFamily: style.fontFamily }),
-  ...(style.fontWeight && { fontWeight: style.fontWeight }),
-  ...(style.fontStyle && { fontStyle: style.fontStyle }),
-  ...(style.cellBorderColor && { cellBorderColor: style.cellBorderColor }),
-  ...(style.cellBorderWidth && { cellBorderWidth: style.cellBorderWidth }),
-  ...(style.cellBackgroundColor && {
+  ...(style.fontSize !== undefined && { fontSize: style.fontSize }),
+  ...(style.fontFamily !== undefined && { fontFamily: style.fontFamily }),
+  ...(style.fontWeight !== undefined && { fontWeight: style.fontWeight }),
+  ...(style.fontStyle !== undefined && { fontStyle: style.fontStyle }),
+  ...(style.cellBorderColor !== undefined && { cellBorderColor: style.cellBorderColor }),
+  ...(style.cellBorderWidth !== undefined && { cellBorderWidth: style.cellBorderWidth }),
+  ...(style.cellBackgroundColor !== undefined && {
     cellBackgroundColor: style.cellBackgroundColor,
   }),
-  ...(style.color && { color: style.color }),
-  ...(style.cellSize && { cellSize: style.cellSize }),
-  ...(style.gap && { gap: style.gap }),
+  ...(style.color !== undefined && { color: style.color }),
+  ...(style.cellSize !== undefined && { cellSize: style.cellSize }),
+  ...(style.gap !== undefined && { gap: style.gap }),
 });
 
 export const buildCellUpdate = (cells: Partial<BingoCell>[]) =>
   cells.map((cell) => ({
     where: { id: cell.id },
     data: {
-      ...(cell.content && { content: cell.content }),
-      ...(cell.position && { position: cell.position }),
+      ...(cell.content !== undefined && { content: cell.content }),
+      ...(cell.position !== undefined && { position: cell.position }),
       ...(cell.validated !== undefined && { validated: cell.validated }),
-      ...(cell.cellStyle && {
-        cellStyle: {
-          upsert: {
-            create: {
-              color: cell.cellStyle.color,
-              fontSize: cell.cellStyle.fontSize,
-              fontFamily: cell.cellStyle.fontFamily,
-              fontWeight: cell.cellStyle.fontWeight,
-              fontStyle: cell.cellStyle.fontStyle,
-              cellBorderColor: cell.cellStyle.cellBorderColor,
-              cellBorderWidth: cell.cellStyle.cellBorderWidth,
-              cellBackgroundColor: cell.cellStyle.cellBackgroundColor,
-              cellBackgroundImage: cell.cellStyle.cellBackgroundImage,
-              cellBackgroundOpacity: cell.cellStyle.cellBackgroundOpacity,
-              cellBackgroundImageOpacity:
-                cell.cellStyle.cellBackgroundImageOpacity,
-              cellBackgroundImagePosition:
-                cell.cellStyle.cellBackgroundImagePosition,
-              cellBackgroundImageSize: cell.cellStyle.cellBackgroundImageSize,
-            },
-            update: {
-              ...(cell.cellStyle.color && { color: cell.cellStyle.color }),
-              ...(cell.cellStyle.fontSize && {
-                fontSize: cell.cellStyle.fontSize,
-              }),
-              ...(cell.cellStyle.fontFamily && {
-                fontFamily: cell.cellStyle.fontFamily,
-              }),
-              ...(cell.cellStyle.fontWeight && {
-                fontWeight: cell.cellStyle.fontWeight,
-              }),
-              ...(cell.cellStyle.fontStyle && {
-                fontStyle: cell.cellStyle.fontStyle,
-              }),
-              ...(cell.cellStyle.cellBorderColor && {
-                cellBorderColor: cell.cellStyle.cellBorderColor,
-              }),
-              ...(cell.cellStyle.cellBorderWidth && {
-                cellBorderWidth: cell.cellStyle.cellBorderWidth,
-              }),
-              ...(cell.cellStyle.cellBackgroundColor && {
-                cellBackgroundColor: cell.cellStyle.cellBackgroundColor,
-              }),
-              ...(cell.cellStyle.cellBackgroundImage && {
-                cellBackgroundImage: cell.cellStyle.cellBackgroundImage,
-              }),
-              ...(cell.cellStyle.cellBackgroundOpacity && {
-                cellBackgroundOpacity: cell.cellStyle.cellBackgroundOpacity,
-              }),
-              ...(cell.cellStyle.cellBackgroundImageOpacity && {
-                cellBackgroundImageOpacity:
-                  cell.cellStyle.cellBackgroundImageOpacity,
-              }),
-              ...(cell.cellStyle.cellBackgroundImagePosition && {
-                cellBackgroundImagePosition:
-                  cell.cellStyle.cellBackgroundImagePosition,
-              }),
-              ...(cell.cellStyle.cellBackgroundImageSize && {
-                cellBackgroundImageSize: cell.cellStyle.cellBackgroundImageSize,
-              }),
-            },
-          },
-        },
+      ...(cell.cellStyle !== undefined && {
+        cellStyle:
+          cell.cellStyle === null
+            ? { delete: true }
+            : {
+                upsert: {
+                  create: {
+                    color: cell.cellStyle.color,
+                    fontSize: cell.cellStyle.fontSize,
+                    fontFamily: cell.cellStyle.fontFamily,
+                    fontWeight: cell.cellStyle.fontWeight,
+                    fontStyle: cell.cellStyle.fontStyle,
+                    cellBorderColor: cell.cellStyle.cellBorderColor,
+                    cellBorderWidth: cell.cellStyle.cellBorderWidth,
+                    cellBackgroundColor: cell.cellStyle.cellBackgroundColor,
+                    cellBackgroundImage: cell.cellStyle.cellBackgroundImage,
+                    cellBackgroundOpacity: cell.cellStyle.cellBackgroundOpacity,
+                    cellBackgroundImageOpacity: cell.cellStyle.cellBackgroundImageOpacity,
+                    cellBackgroundImagePosition: cell.cellStyle.cellBackgroundImagePosition,
+                    cellBackgroundImageSize: cell.cellStyle.cellBackgroundImageSize,
+                  },
+                  update: {
+                    ...(cell.cellStyle.color !== undefined && { color: cell.cellStyle.color }),
+                    ...(cell.cellStyle.fontSize !== undefined && { fontSize: cell.cellStyle.fontSize }),
+                    ...(cell.cellStyle.fontFamily !== undefined && { fontFamily: cell.cellStyle.fontFamily }),
+                    ...(cell.cellStyle.fontWeight !== undefined && { fontWeight: cell.cellStyle.fontWeight }),
+                    ...(cell.cellStyle.fontStyle !== undefined && { fontStyle: cell.cellStyle.fontStyle }),
+                    ...(cell.cellStyle.cellBorderColor !== undefined && {
+                      cellBorderColor: cell.cellStyle.cellBorderColor,
+                    }),
+                    ...(cell.cellStyle.cellBorderWidth !== undefined && {
+                      cellBorderWidth: cell.cellStyle.cellBorderWidth,
+                    }),
+                    ...(cell.cellStyle.cellBackgroundColor !== undefined && {
+                      cellBackgroundColor: cell.cellStyle.cellBackgroundColor,
+                    }),
+                    ...(cell.cellStyle.cellBackgroundImage !== undefined && {
+                      cellBackgroundImage: cell.cellStyle.cellBackgroundImage,
+                    }),
+                    ...(cell.cellStyle.cellBackgroundOpacity !== undefined && {
+                      cellBackgroundOpacity: cell.cellStyle.cellBackgroundOpacity,
+                    }),
+                    ...(cell.cellStyle.cellBackgroundImageOpacity !== undefined && {
+                      cellBackgroundImageOpacity: cell.cellStyle.cellBackgroundImageOpacity,
+                    }),
+                    ...(cell.cellStyle.cellBackgroundImagePosition !== undefined && {
+                      cellBackgroundImagePosition: cell.cellStyle.cellBackgroundImagePosition,
+                    }),
+                    ...(cell.cellStyle.cellBackgroundImageSize !== undefined && {
+                      cellBackgroundImageSize: cell.cellStyle.cellBackgroundImageSize,
+                    }),
+                  },
+                },
+              },
       }),
     },
   }));
 
 export const buildBackground = (background: Partial<Background>) => ({
-  ...(background.value && { value: background.value }),
-  ...(background.backgroundImage && {
-    backgroundImage: background.backgroundImage,
-  }),
-  ...(background.backgroundImageOpacity && {
-    backgroundImageOpacity: background.backgroundImageOpacity,
-  }),
-  ...(background.backgroundImagePosition && {
+  ...(background.value !== undefined && { value: background.value }),
+  ...(background.backgroundImage !== undefined && { backgroundImage: background.backgroundImage }),
+  ...(background.backgroundImageOpacity !== undefined && { backgroundImageOpacity: background.backgroundImageOpacity }),
+  ...(background.backgroundImagePosition !== undefined && {
     backgroundImagePosition: background.backgroundImagePosition,
   }),
-  ...(background.backgroundImageSize && {
-    backgroundImageSize: background.backgroundImageSize,
-  }),
+  ...(background.backgroundImageSize !== undefined && { backgroundImageSize: background.backgroundImageSize }),
 });
 
 export const buildStamp = (stamp: Partial<Stamp>) => ({
-  ...(stamp.type && { type: stamp.type }),
-  ...(stamp.value && { value: stamp.value }),
-  ...(stamp.size && { size: stamp.size }),
-  ...(stamp.opacity && { opacity: stamp.opacity }),
+  ...(stamp.type !== undefined && { type: stamp.type }),
+  ...(stamp.value !== undefined && { value: stamp.value }),
+  ...(stamp.size !== undefined && { size: stamp.size }),
+  ...(stamp.opacity !== undefined && { opacity: stamp.opacity }),
 });
 
 export const buildCellCreate = (cells: BingoCell[]) =>
@@ -130,10 +115,8 @@ export const buildCellCreate = (cells: BingoCell[]) =>
             cellBackgroundType: cell.cellStyle.cellBackgroundColor,
             cellBackgroundValue: cell.cellStyle.cellBackgroundImage,
             cellBackgroundOpacity: cell.cellStyle.cellBackgroundOpacity,
-            cellBackgroundImageOpacity:
-              cell.cellStyle.cellBackgroundImageOpacity,
-            cellBackgroundImagePosition:
-              cell.cellStyle.cellBackgroundImagePosition,
+            cellBackgroundImageOpacity: cell.cellStyle.cellBackgroundImageOpacity,
+            cellBackgroundImagePosition: cell.cellStyle.cellBackgroundImagePosition,
             cellBackgroundImageSize: cell.cellStyle.cellBackgroundImageSize,
           },
         }

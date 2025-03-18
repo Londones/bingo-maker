@@ -1,30 +1,11 @@
 import React, { useCallback } from "react";
 import { useEditor } from "@/hooks/useEditor";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import {
-  Bold,
-  Italic,
-  Type,
-  Square,
-  Maximize2,
-  Grid,
-  Palette,
-  Blend,
-} from "lucide-react";
+import { Bold, Italic, Type, Square, Maximize2, Grid, Palette, Blend } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { HexColorPicker } from "react-colorful";
 import { PopoverType } from "@/types/types";
 import { FONT_SIZES, FONT_FAMILIES } from "@/utils/constants";
@@ -143,10 +124,7 @@ const CellsToolbar = React.memo(() => {
     <div className="flex flex-col items-center gap-1 p-2">
       <div className="flex items-center justify-between w-full">
         <span>Font Family</span>
-        <Select
-          value={state.style.fontFamily}
-          onValueChange={handleFontFamilyChange}
-        >
+        <Select value={state.style.fontFamily} onValueChange={handleFontFamilyChange}>
           <SelectTrigger className="w-auto">
             <Type className="h-4 w-4 mr-2" />
             <SelectValue />
@@ -163,10 +141,7 @@ const CellsToolbar = React.memo(() => {
 
       <div className="flex items-center justify-between w-full">
         <span>Font Size</span>
-        <Select
-          value={state.style.fontSize.toString()}
-          onValueChange={handleFontSizeChange}
-        >
+        <Select value={state.style.fontSize.toString()} onValueChange={handleFontSizeChange}>
           <SelectTrigger className="w-[80px]">
             <SelectValue />
           </SelectTrigger>
@@ -208,9 +183,7 @@ const CellsToolbar = React.memo(() => {
         <span>Text Color</span>
         <Popover
           open={activePopover === "textColor"}
-          onOpenChange={(isOpen) =>
-            setActivePopover(isOpen ? "textColor" : null)
-          }
+          onOpenChange={(isOpen) => setActivePopover(isOpen ? "textColor" : null)}
         >
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon">
@@ -218,10 +191,7 @@ const CellsToolbar = React.memo(() => {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="p-0">
-            <HexColorPicker
-              color={state.style.color}
-              onChange={handleTextColorChange}
-            />
+            <HexColorPicker color={state.style.color} onChange={handleTextColorChange} />
           </PopoverContent>
         </Popover>
       </div>
@@ -262,14 +232,7 @@ const CellsToolbar = React.memo(() => {
         <span>Cell Gap</span>
         <div className="flex items-center gap-2">
           <Grid className="h-4 w-4" />
-          <Input
-            type="number"
-            value={state.style.gap}
-            onChange={handleGapChange}
-            min={0}
-            step={1}
-            className="w-20"
-          />
+          <Input type="number" value={state.style.gap} onChange={handleGapChange} min={0} step={1} className="w-20" />
         </div>
       </div>
 
@@ -277,9 +240,7 @@ const CellsToolbar = React.memo(() => {
         <span>Cell Background Color</span>
         <Popover
           open={activePopover === "cellBackgroundColor"}
-          onOpenChange={(isOpen) =>
-            setActivePopover(isOpen ? "cellBackgroundColor" : null)
-          }
+          onOpenChange={(isOpen) => setActivePopover(isOpen ? "cellBackgroundColor" : null)}
         >
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon">
@@ -287,10 +248,7 @@ const CellsToolbar = React.memo(() => {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="p-0 w-auto">
-            <HexColorPicker
-              color={state.style.cellBackgroundColor}
-              onChange={handleCellBackgroundColorChange}
-            />
+            <HexColorPicker color={state.style.cellBackgroundColor} onChange={handleCellBackgroundColorChange} />
           </PopoverContent>
         </Popover>
       </div>
@@ -299,9 +257,7 @@ const CellsToolbar = React.memo(() => {
         <span>Border Color</span>
         <Popover
           open={activePopover === "borderColor"}
-          onOpenChange={(isOpen) =>
-            setActivePopover(isOpen ? "borderColor" : null)
-          }
+          onOpenChange={(isOpen) => setActivePopover(isOpen ? "borderColor" : null)}
         >
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon">
@@ -309,10 +265,7 @@ const CellsToolbar = React.memo(() => {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="p-0">
-            <HexColorPicker
-              color={state.style.cellBorderColor}
-              onChange={handleBorderColorChange}
-            />
+            <HexColorPicker color={state.style.cellBorderColor} onChange={handleBorderColorChange} />
           </PopoverContent>
         </Popover>
       </div>

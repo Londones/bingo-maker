@@ -1,21 +1,8 @@
 "use client";
-import React, {
-  ChangeEvent,
-  useRef,
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { ChangeEvent, useRef, useState, useEffect, useCallback, useMemo } from "react";
 import { useEditor } from "@/hooks/useEditor";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Bold, Italic, Type, Square, Palette, RotateCcw } from "lucide-react";
 import { cn, convertFileToBase64 } from "@/lib/utils";
@@ -25,11 +12,7 @@ import { FONT_SIZES, FONT_FAMILIES } from "@/utils/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 //import { UploadButton } from "@/utils/uploadthing";
 import { toast } from "sonner";
-import {
-  ContextMenuSub,
-  ContextMenuSubContent,
-  ContextMenuSubTrigger,
-} from "@/components/ui/context-menu";
+import { ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from "@/components/ui/context-menu";
 //import Image from "next/image";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -41,10 +24,7 @@ type CellContextMenuProps = {
 const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
   const { state, actions } = useEditor();
   const [activePopover, setActivePopover] = useState<PopoverType>(null);
-  const cellStyle = useMemo(
-    () => state.cells[index]?.cellStyle ?? undefined,
-    [state.cells, index]
-  );
+  const cellStyle = useMemo(() => state.cells[index]?.cellStyle ?? undefined, [state.cells, index]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState(() => {
@@ -79,20 +59,8 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
       const deltaX = e.clientX - initialMouseRef.current.x;
       const deltaY = e.clientY - initialMouseRef.current.y;
 
-      const newX = Math.max(
-        0,
-        Math.min(
-          100,
-          initialPositionRef.current.x + (deltaX / rect.width) * 100
-        )
-      );
-      const newY = Math.max(
-        0,
-        Math.min(
-          100,
-          initialPositionRef.current.y + (deltaY / rect.height) * 100
-        )
-      );
+      const newX = Math.max(0, Math.min(100, initialPositionRef.current.x + (deltaX / rect.width) * 100));
+      const newY = Math.max(0, Math.min(100, initialPositionRef.current.y + (deltaY / rect.height) * 100));
 
       setPosition({ x: newX, y: newY });
     };
@@ -134,14 +102,8 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
     (e: React.MouseEvent) => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
-      const x = Math.max(
-        0,
-        Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)
-      );
-      const y = Math.max(
-        0,
-        Math.min(100, ((e.clientY - rect.top) / rect.height) * 100)
-      );
+      const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+      const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
 
       setPosition({ x, y });
       actions.updateCell(index, {
@@ -161,14 +123,13 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
   }, []);
 
   const handleRemoveStyling = useCallback(() => {
-    const localCellImage = state.localImages?.find(
-      (image) => image.position === index
-    );
+    const localCellImage = state.localImages?.find((image) => image.position === index);
     if (localCellImage) {
       actions.removeCellLocalImage(index);
     }
+    // Set cellStyle to null explicitly to indicate deletion
     actions.updateCell(index, {
-      cellStyle: undefined,
+      cellStyle: null,
     });
   }, [state.localImages, actions, index]);
 
@@ -211,13 +172,13 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
       actions.updateCell(index, {
         cellStyle: {
           ...cellStyle,
-          cellBackgroundImage: undefined,
-          cellBackgroundImageOpacity: undefined,
+          cellBackgroundImage: null, // Use null instead of undefined
+          cellBackgroundImageOpacity: null,
+          cellBackgroundImagePosition: null,
+          cellBackgroundImageSize: null,
         },
       });
-      const localCellImage = state.localImages?.find(
-        (image) => image.position === index
-      );
+      const localCellImage = state.localImages?.find((image) => image.position === index);
       if (localCellImage) {
         actions.removeCellLocalImage(index);
       }
@@ -263,10 +224,7 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
             <div className="flex items-center justify-between w-full">
               <span>Font Size</span>
               <Select
-                value={
-                  cellStyle?.fontSize?.toString() ??
-                  state.style.fontSize.toString()
-                }
+                value={cellStyle?.fontSize?.toString() ?? state.style.fontSize.toString()}
                 onValueChange={(value) =>
                   actions.updateCell(index, {
                     cellStyle: {
@@ -302,8 +260,7 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
                   actions.updateCell(index, {
                     cellStyle: {
                       ...cellStyle,
-                      fontWeight:
-                        cellStyle?.fontWeight === "bold" ? "normal" : "bold",
+                      fontWeight: cellStyle?.fontWeight === "bold" ? "normal" : "bold",
                     },
                   })
                 }
@@ -325,8 +282,7 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
                   actions.updateCell(index, {
                     cellStyle: {
                       ...cellStyle,
-                      fontStyle:
-                        cellStyle?.fontStyle === "italic" ? "normal" : "italic",
+                      fontStyle: cellStyle?.fontStyle === "italic" ? "normal" : "italic",
                     },
                   })
                 }
@@ -338,9 +294,7 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
               <span>Text Color</span>
               <ContextMenuSub
                 open={activePopover === "textColor"}
-                onOpenChange={(isOpen) =>
-                  setActivePopover(isOpen ? "textColor" : null)
-                }
+                onOpenChange={(isOpen) => setActivePopover(isOpen ? "textColor" : null)}
               >
                 <ContextMenuSubTrigger>
                   <Button variant="ghost" size="icon">
@@ -368,15 +322,12 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
               <div className="flex items-center ml-2 gap-2">
                 <Input
                   type="number"
-                  value={
-                    (cellStyle?.cellBackgroundOpacity ??
-                      state.style.cellBackgroundOpacity) * 100
-                  }
+                  value={cellStyle?.cellBackgroundOpacity ?? state.style.cellBackgroundOpacity}
                   onChange={(e) =>
                     actions.updateCell(index, {
                       cellStyle: {
                         ...cellStyle,
-                        cellBackgroundOpacity: parseInt(e.target.value) / 100,
+                        cellBackgroundOpacity: parseInt(e.target.value),
                       },
                     })
                   }
@@ -392,9 +343,7 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
               <span>Cell Background Color</span>
               <ContextMenuSub
                 open={activePopover === "cellBackgroundColor"}
-                onOpenChange={(isOpen) =>
-                  setActivePopover(isOpen ? "cellBackgroundColor" : null)
-                }
+                onOpenChange={(isOpen) => setActivePopover(isOpen ? "cellBackgroundColor" : null)}
               >
                 <ContextMenuSubTrigger>
                   <Button variant="ghost" size="icon">
@@ -403,10 +352,7 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
                 </ContextMenuSubTrigger>
                 <ContextMenuSubContent className="p-0 w-auto">
                   <HexColorPicker
-                    color={
-                      cellStyle?.cellBackgroundColor ??
-                      state.style.cellBackgroundColor
-                    }
+                    color={cellStyle?.cellBackgroundColor ?? state.style.cellBackgroundColor}
                     onChange={(color) => {
                       actions.updateCell(index, {
                         cellStyle: {
@@ -424,9 +370,7 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
               <span>Border Color</span>
               <ContextMenuSub
                 open={activePopover === "borderColor"}
-                onOpenChange={(isOpen) =>
-                  setActivePopover(isOpen ? "borderColor" : null)
-                }
+                onOpenChange={(isOpen) => setActivePopover(isOpen ? "borderColor" : null)}
               >
                 <ContextMenuSubTrigger>
                   <Button variant="ghost" size="icon">
@@ -435,9 +379,7 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
                 </ContextMenuSubTrigger>
                 <ContextMenuSubContent className="p-0">
                   <HexColorPicker
-                    color={
-                      cellStyle?.cellBorderColor ?? state.style.cellBorderColor
-                    }
+                    color={cellStyle?.cellBorderColor ?? state.style.cellBorderColor}
                     onChange={(color) => {
                       actions.updateCell(index, {
                         cellStyle: {
@@ -456,9 +398,7 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
-                  value={
-                    cellStyle?.cellBorderWidth ?? state.style.cellBorderWidth
-                  }
+                  value={cellStyle?.cellBorderWidth ?? state.style.cellBorderWidth}
                   onChange={(e) =>
                     actions.updateCell(index, {
                       cellStyle: {
@@ -500,9 +440,7 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
                     className="w-full h-full"
                     style={{
                       backgroundImage: `url(${cellStyle.cellBackgroundImage})`,
-                      backgroundSize: `${
-                        cellStyle.cellBackgroundImageSize || 100
-                      }%`,
+                      backgroundSize: `${cellStyle.cellBackgroundImageSize || 100}%`,
                       backgroundPosition: `${position.x}% ${position.y}%`,
                       backgroundRepeat: "no-repeat",
                     }}

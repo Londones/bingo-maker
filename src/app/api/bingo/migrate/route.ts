@@ -11,8 +11,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     throw new APIError("Unauthorized", APIErrorCode.UNAUTHORIZED, 401);
   }
 
-  const { bingoIds, authorToken, userId } =
-    (await req.json()) as MigrateRequest;
+  const { bingoIds, authorToken, userId } = (await req.json()) as MigrateRequest;
 
   try {
     // First check if there are any bingos matching these criteria
@@ -25,11 +24,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
 
     if (bingoCount === 0) {
-      return NextResponse.json({
-        success: true,
-        migratedCount: 0,
-        message: "No bingos found to migrate",
-      });
+      throw new APIError("No bingos found to migrate", APIErrorCode.BINGO_NOT_FOUND, 444);
     }
 
     const updated = await prisma.bingo.updateMany({

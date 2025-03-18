@@ -21,7 +21,7 @@ const initialBingoState: Bingo = {
           ...baseCell,
           cellStyle: {
             cellBackgroundImage: "https://r6kb2iiay0.ufs.sh/f/d7e4677c-12c2-44da-98a7-2b375749e276-jcyyig.png",
-            cellBackgroundOpacity: 1,
+            cellBackgroundOpacity: 100,
             cellBackgroundImagePosition: "50% 50%",
             cellBackgroundImageSize: 100,
           },
@@ -183,14 +183,18 @@ export const editorSlice = createSlice({
             cell.cellStyle = {
               ...cell.cellStyle,
               cellBackgroundImage: image.url,
-              cellBackgroundOpacity: 1,
+              cellBackgroundOpacity: state.history.present.background.backgroundImageOpacity
+                ? state.history.present.background.backgroundImageOpacity / 100
+                : 1,
             };
           }
         } else if (image.type === "background") {
           state.history.present.background = {
             ...state.history.present.background,
             backgroundImage: image.url,
-            backgroundImageOpacity: 1,
+            backgroundImageOpacity: state.history.present.background.backgroundImageOpacity
+              ? state.history.present.background.backgroundImageOpacity / 100
+              : 1,
           };
         } else if (image.type === "stamp") {
           state.history.present.stamp = {
@@ -202,20 +206,11 @@ export const editorSlice = createSlice({
     },
     removeCellLocalImage: (state, action: PayloadAction<number>) => {
       const cell = state.history.present.cells[action.payload];
-      if (!cell) {
-        console.error(`Cell at position ${action.payload} does not exist`);
-        return;
-      } else {
-        const img = state.history.present.localImages?.find(
-          (img) => isCellLocalImage(img) && img.position === action.payload
-        );
-        if (img) {
-          URL.revokeObjectURL(img.url);
-        }
+      if (cell && cell.cellStyle) {
         cell.cellStyle = {
           ...cell.cellStyle,
-          cellBackgroundImage: "",
-          cellBackgroundOpacity: 1,
+          cellBackgroundImage: undefined,
+          cellBackgroundImageOpacity: undefined,
         };
       }
 
@@ -224,6 +219,7 @@ export const editorSlice = createSlice({
       );
     },
     removeLocalBackgroundImage: (state) => {
+      pushToHistory(state);
       state.history.present.background = {
         ...state.history.present.background,
         backgroundImage: undefined,
@@ -233,7 +229,8 @@ export const editorSlice = createSlice({
     },
     setImageUrls: (state, action: PayloadAction<ImageUploadResponse>) => {
       const { cellImages, backgroundImage, stampImage } = action.payload;
-      console.log("cellImages", cellImages);
+      console.log("Setting image URLs in reducer:", action.payload);
+      pushToHistory(state);
       if (cellImages && cellImages.length > 0) {
         for (const image of cellImages) {
           const cell = state.history.present.cells[image.position];
@@ -242,12 +239,18 @@ export const editorSlice = createSlice({
             continue;
           }
 
+          if (!cell.cellStyle) {
+            cell.cellStyle = {};
+          }
+
+          console.log(`Setting cell ${image.position} background image to ${image.url}`);
           cell.cellStyle = {
             ...cell.cellStyle,
             cellBackgroundImage: image.url,
-            cellBackgroundOpacity: 1,
+            cellBackgroundOpacity: cell.cellStyle.cellBackgroundOpacity || 1,
           };
-          console.log(state.history.present.cells[image.position]);
+
+          console.log(cell.cellStyle);
         }
 
         // Filter out local cell images after processing
@@ -255,10 +258,11 @@ export const editorSlice = createSlice({
       }
 
       if (backgroundImage) {
+        console.log(`Setting background image to ${backgroundImage}`);
         state.history.present.background = {
           ...state.history.present.background,
           backgroundImage: backgroundImage,
-          backgroundImageOpacity: 1,
+          backgroundImageOpacity: state.history.present.background.backgroundImageOpacity || 1,
         };
         state.history.present.localImages = state.history.present.localImages?.filter(
           (img) => img.type !== "background"
@@ -266,6 +270,7 @@ export const editorSlice = createSlice({
       }
 
       if (stampImage) {
+        console.log(`Setting stamp image to ${stampImage}`);
         state.history.present.stamp = {
           ...state.history.present.stamp,
           value: stampImage,
@@ -277,8 +282,10 @@ export const editorSlice = createSlice({
         state.history.present.localImages = undefined;
       }
 
-      // Mark the state as saved so it doesn't show as having unsaved changes
+      // We want to mark this as a change needing to be saved
       state.canSave = false;
+
+      console.log("Finished setting image URLs in reducer", state.history.present.localImages);
     },
     resetEditor: () => initialState,
   },

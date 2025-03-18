@@ -86,12 +86,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       },
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { authorToken, ...bingoWithoutToken } = bingo;
-
     if (!bingo) {
       throw new APIError("Failed to create bingo!", APIErrorCode.FAILED_TO_CREATE_BINGO, 557);
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { authorToken, ...bingoWithoutToken } = bingo;
 
     return new NextResponse(JSON.stringify(bingoWithoutToken), {
       status: 200,
@@ -100,10 +100,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       },
     });
   } catch (error) {
-    if (error instanceof Error) {
-      console.log(error.stack);
-      console.error(error);
-    }
     return handleAPIError(error);
   }
 }

@@ -1,9 +1,4 @@
-import {
-  buildBackground,
-  buildStamp,
-  buildCellUpdate,
-  buildStyle,
-} from "@/lib/builders";
+import { buildBackground, buildStamp, buildCellUpdate, buildStyle } from "@/lib/builders";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
@@ -18,11 +13,7 @@ export async function GET(req: Request, { params }: { params: ParamsType }) {
   const session = await auth();
 
   if (!id) {
-    throw new APIError(
-      "Missing ID",
-      APIErrorCode.MISSING_ID_OR_SHARE_TOKEN,
-      445
-    );
+    throw new APIError("Missing ID", APIErrorCode.MISSING_ID_OR_SHARE_TOKEN, 445);
   }
 
   try {
@@ -77,8 +68,7 @@ export async function PATCH(req: Request, { params }: { params: ParamsType }) {
     }
 
     const isOwner =
-      (session?.user?.id && bingo.userId === session.user.id) ||
-      (clientToken && bingo.authorToken === clientToken);
+      (session?.user?.id && bingo.userId === session.user.id) || (clientToken && bingo.authorToken === clientToken);
 
     if (!isOwner) {
       throw new APIError("Unauthorized", APIErrorCode.UNAUTHORIZED, 401);
@@ -87,14 +77,14 @@ export async function PATCH(req: Request, { params }: { params: ParamsType }) {
     const updated = await prisma.bingo.update({
       where: { id },
       data: {
-        ...(data.title && { title: data.title }),
-        ...(data.style && { style: { update: buildStyle(data.style) } }),
-        ...(data.background && {
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.style !== undefined && { style: { update: buildStyle(data.style) } }),
+        ...(data.background !== undefined && {
           background: { update: buildBackground(data.background) },
         }),
-        ...(data.stamp && { stamp: { update: buildStamp(data.stamp) } }),
-        ...(data.cells && { cells: { update: buildCellUpdate(data.cells) } }),
-        ...(data.status && { status: data.status }),
+        ...(data.stamp !== undefined && { stamp: { update: buildStamp(data.stamp) } }),
+        ...(data.cells !== undefined && { cells: { update: buildCellUpdate(data.cells) } }),
+        ...(data.status !== undefined && { status: data.status }),
       },
       include: {
         cells: {

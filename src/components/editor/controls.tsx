@@ -23,18 +23,37 @@ const Controls = () => {
 
   const prepareStateForSave = async (currentState: Bingo): Promise<Bingo> => {
     if (!currentState.localImages?.length) {
-      return { ...currentState, localImages: undefined };
+      console.log("No local images to upload");
+      return currentState;
     }
 
     try {
+      console.log("Starting image upload process");
+      // Upload all images to S3
       const uploadResult = await uploadPendingImages(currentState);
+      console.log("Upload results:", uploadResult);
 
-      // Apply image URLs to the state through the reducer
+      // Process image URLs through the Redux reducer
       actions.setImageUrls(uploadResult);
 
-      // Return the current state from the store after updates
-      // This ensures we use the updated state with proper image URLs
-      return { ...state, localImages: undefined };
+      // Wait for state update using a promise
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Get the updated state after changes
+      const updatedState = { ...state };
+      console.log("State after image uploads:", {
+        hasLocalImages: !!updatedState.localImages?.length,
+        backgroundImage: updatedState.background.backgroundImage,
+        cellImages: updatedState.cells
+          .map((cell) =>
+            cell.cellStyle?.cellBackgroundImage
+              ? { position: cell.position, url: cell.cellStyle.cellBackgroundImage }
+              : null
+          )
+          .filter(Boolean),
+      });
+
+      return updatedState;
     } catch (error) {
       console.error("Error uploading images:", error);
       toast.error("Failed to upload images");
@@ -48,6 +67,10 @@ const Controls = () => {
 
     try {
       const preparedState = await prepareStateForSave(state);
+      console.log("State prepared for saving:", {
+        hasLocalImages: !!preparedState.localImages,
+        backgroundImage: preparedState.background.backgroundImage?.substring(0, 50) + "...",
+      });
 
       const savedBingo = await useSaveBingo.mutateAsync(preparedState);
 
@@ -73,23 +96,45 @@ const Controls = () => {
     setIsSaving(true);
 
     try {
+      console.log("Starting update process HELLO!!!!");
       // Prepare state with uploaded images
       const preparedState = await prepareStateForSave(state);
+      console.log("State prepared for update:", {
+        hasLocalImages: !!preparedState.localImages,
+        backgroundImage: preparedState.background.backgroundImage?.substring(0, 50) + "...",
+        cellImage: preparedState.cells.map((cell) =>
+          cell.cellStyle?.cellBackgroundImage
+            ? { position: cell.position, url: cell.cellStyle.cellBackgroundImage }
+            : null
+        ),
+      });
+
+      // Make sure to preserve null values that were explicitly set
+      const cleanedState = {
+        ...preparedState,
+        background: { ...preparedState.background },
+        cells: preparedState.cells.map((cell) => ({
+          ...cell,
+          cellStyle: cell.cellStyle === undefined ? null : { ...cell.cellStyle },
+        })),
+      };
 
       // Optimistic update for the query cache
       const previousData = queryClient.getQueryData<Bingo>(["bingo", state.id!]);
       if (previousData) {
         queryClient.setQueryData<Bingo>(["bingo", state.id!], {
           ...previousData,
-          ...preparedState,
+          ...cleanedState,
         });
       }
 
       // Update in database
       const updatedBingo = await useUpdateBingo.mutateAsync({
         bingoId: state.id!,
-        updates: preparedState,
+        updates: cleanedState,
       });
+
+      console.log("Bingo updated successfully:", updatedBingo);
 
       actions.setBingo(updatedBingo);
       toast.success("Bingo updated successfully");
