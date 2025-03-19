@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useEditor } from "@/hooks/useEditor";
 import { Button } from "@/components/ui/button";
 import { Undo, Redo, Save, Loader } from "lucide-react";
@@ -14,44 +14,58 @@ import { Bingo } from "@/types/types";
 
 const Controls = () => {
   const router = useRouter();
-  const { actions, canRedo, canUndo, state } = useEditor();
+  const { actions, canRedo, canUndo, canSave, state } = useEditor();
   const { useSaveBingo, useUpdateBingo } = useBingoStorage();
   const queryClient = useQueryClient();
   const { status: saveStatus } = useSaveBingo;
   const currentUrl = usePathname();
   const [isSaving, setIsSaving] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
+
+  // Reset justSaved when editor state changes (through undo/redo)
+  useEffect(() => {
+    if (canSave && justSaved) {
+      setJustSaved(false);
+    }
+  }, [canSave, justSaved]);
 
   const prepareStateForSave = async (currentState: Bingo): Promise<Bingo> => {
     if (!currentState.localImages?.length) {
-      console.log("No local images to upload");
       return currentState;
     }
 
     try {
-      console.log("Starting image upload process");
-      // Upload all images to S3
       const uploadResult = await uploadPendingImages(currentState);
-      console.log("Upload results:", uploadResult);
 
-      // Process image URLs through the Redux reducer
       actions.setImageUrls(uploadResult);
 
-      // Wait for state update using a promise
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      // Get the updated state after changes
-      const updatedState = { ...state };
-      console.log("State after image uploads:", {
-        hasLocalImages: !!updatedState.localImages?.length,
-        backgroundImage: updatedState.background.backgroundImage,
-        cellImages: updatedState.cells
-          .map((cell) =>
-            cell.cellStyle?.cellBackgroundImage
-              ? { position: cell.position, url: cell.cellStyle.cellBackgroundImage }
-              : null
-          )
-          .filter(Boolean),
-      });
+      const updatedState = {
+        ...currentState,
+        background: {
+          ...currentState.background,
+          backgroundImage: uploadResult.backgroundImage || currentState.background.backgroundImage,
+        },
+        cells: currentState.cells.map((cell) => {
+          const uploadedImage = uploadResult.cellImages?.find((img) => img.position === cell.position);
+          if (uploadedImage) {
+            return {
+              ...cell,
+              cellStyle: {
+                ...cell.cellStyle,
+                cellBackgroundImage: uploadedImage.url,
+              },
+            };
+          }
+          return cell;
+        }),
+        stamp: uploadResult.stampImage
+          ? {
+              ...currentState.stamp,
+              value: uploadResult.stampImage,
+            }
+          : currentState.stamp,
+        localImages: undefined,
+      };
 
       return updatedState;
     } catch (error) {
@@ -63,19 +77,27 @@ const Controls = () => {
 
   const handleSaveNew = async () => {
     if (isSaving) return;
+
+    // Prevent saving if there are no changes
+    if (!canSave && !state.localImages?.length) {
+      toast.info("No changes to save");
+      return;
+    }
+
     setIsSaving(true);
 
     try {
       const preparedState = await prepareStateForSave(state);
-      console.log("State prepared for saving:", {
-        hasLocalImages: !!preparedState.localImages,
-        backgroundImage: preparedState.background.backgroundImage?.substring(0, 50) + "...",
-      });
+
+      // Clear future history when saving
+      actions.clearFutureHistory();
 
       const savedBingo = await useSaveBingo.mutateAsync(preparedState);
 
       actions.setBingo(savedBingo);
       toast.success("Bingo saved successfully");
+
+      setJustSaved(true);
 
       if (currentUrl === "/") {
         router.push(`/bingo/${savedBingo.id}`);
@@ -93,23 +115,21 @@ const Controls = () => {
 
   const handleUpdate = async () => {
     if (isSaving) return;
+
+    // Prevent updating if there are no changes
+    if (!canSave && !state.localImages?.length) {
+      toast.info("No changes to update");
+      return;
+    }
+
     setIsSaving(true);
 
     try {
-      console.log("Starting update process HELLO!!!!");
-      // Prepare state with uploaded images
       const preparedState = await prepareStateForSave(state);
-      console.log("State prepared for update:", {
-        hasLocalImages: !!preparedState.localImages,
-        backgroundImage: preparedState.background.backgroundImage?.substring(0, 50) + "...",
-        cellImage: preparedState.cells.map((cell) =>
-          cell.cellStyle?.cellBackgroundImage
-            ? { position: cell.position, url: cell.cellStyle.cellBackgroundImage }
-            : null
-        ),
-      });
 
-      // Make sure to preserve null values that were explicitly set
+      // Clear future history when saving
+      actions.clearFutureHistory();
+
       const cleanedState = {
         ...preparedState,
         background: { ...preparedState.background },
@@ -119,7 +139,6 @@ const Controls = () => {
         })),
       };
 
-      // Optimistic update for the query cache
       const previousData = queryClient.getQueryData<Bingo>(["bingo", state.id!]);
       if (previousData) {
         queryClient.setQueryData<Bingo>(["bingo", state.id!], {
@@ -128,13 +147,12 @@ const Controls = () => {
         });
       }
 
-      // Update in database
       const updatedBingo = await useUpdateBingo.mutateAsync({
         bingoId: state.id!,
         updates: cleanedState,
       });
 
-      console.log("Bingo updated successfully:", updatedBingo);
+      setJustSaved(true);
 
       actions.setBingo(updatedBingo);
       toast.success("Bingo updated successfully");
@@ -182,7 +200,7 @@ const Controls = () => {
               onClick={() => {
                 void (state.id ? handleUpdate() : handleSaveNew());
               }}
-              disabled={saveStatus === "pending" || isSaving || (!canUndo && !canRedo)}
+              disabled={saveStatus === "pending" || isSaving || (!canSave && !state.localImages?.length) || justSaved}
               variant="outline"
             >
               {saveStatus === "pending" || isSaving ? (

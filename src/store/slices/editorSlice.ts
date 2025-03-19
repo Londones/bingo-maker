@@ -97,6 +97,11 @@ export const editorSlice = createSlice({
       state.canRedo = newFuture.length > 0;
       state.canSave = state.canRedo || state.canUndo;
     },
+    clearFutureHistory: (state) => {
+      state.history.future = [];
+      state.canRedo = false;
+      state.canSave = false;
+    },
     setBingo: (state, action: PayloadAction<Bingo>) => {
       const sortedCells = action.payload.cells.sort((a, b) => a.position - b.position);
       state.history.present = {
@@ -104,6 +109,8 @@ export const editorSlice = createSlice({
         cells: sortedCells,
       };
       state.canSave = false;
+      state.history.future = []; // Also clear future history here
+      state.canRedo = false;
     },
     setTitle: (state, action: PayloadAction<string>) => {
       pushToHistory(state);
@@ -184,8 +191,10 @@ export const editorSlice = createSlice({
               ...cell.cellStyle,
               cellBackgroundImage: image.url,
               cellBackgroundOpacity: state.history.present.background.backgroundImageOpacity
-                ? state.history.present.background.backgroundImageOpacity / 100
-                : 1,
+                ? state.history.present.background.backgroundImageOpacity
+                : 100,
+              cellBackgroundImageSize: 100,
+              cellBackgroundImagePosition: "50% 50%",
             };
           }
         } else if (image.type === "background") {
@@ -193,8 +202,10 @@ export const editorSlice = createSlice({
             ...state.history.present.background,
             backgroundImage: image.url,
             backgroundImageOpacity: state.history.present.background.backgroundImageOpacity
-              ? state.history.present.background.backgroundImageOpacity / 100
-              : 1,
+              ? state.history.present.background.backgroundImageOpacity
+              : 100,
+            backgroundImageSize: 100,
+            backgroundImagePosition: "50% 50%",
           };
         } else if (image.type === "stamp") {
           state.history.present.stamp = {
@@ -229,8 +240,6 @@ export const editorSlice = createSlice({
     },
     setImageUrls: (state, action: PayloadAction<ImageUploadResponse>) => {
       const { cellImages, backgroundImage, stampImage } = action.payload;
-      console.log("Setting image URLs in reducer:", action.payload);
-      pushToHistory(state);
       if (cellImages && cellImages.length > 0) {
         for (const image of cellImages) {
           const cell = state.history.present.cells[image.position];
@@ -243,22 +252,17 @@ export const editorSlice = createSlice({
             cell.cellStyle = {};
           }
 
-          console.log(`Setting cell ${image.position} background image to ${image.url}`);
           cell.cellStyle = {
             ...cell.cellStyle,
             cellBackgroundImage: image.url,
             cellBackgroundOpacity: cell.cellStyle.cellBackgroundOpacity || 1,
           };
-
-          console.log(cell.cellStyle);
         }
 
-        // Filter out local cell images after processing
         state.history.present.localImages = state.history.present.localImages?.filter((img) => !isCellLocalImage(img));
       }
 
       if (backgroundImage) {
-        console.log(`Setting background image to ${backgroundImage}`);
         state.history.present.background = {
           ...state.history.present.background,
           backgroundImage: backgroundImage,
@@ -270,7 +274,6 @@ export const editorSlice = createSlice({
       }
 
       if (stampImage) {
-        console.log(`Setting stamp image to ${stampImage}`);
         state.history.present.stamp = {
           ...state.history.present.stamp,
           value: stampImage,
@@ -281,11 +284,6 @@ export const editorSlice = createSlice({
       if (state.history.present.localImages?.length === 0) {
         state.history.present.localImages = undefined;
       }
-
-      // We want to mark this as a change needing to be saved
-      state.canSave = false;
-
-      console.log("Finished setting image URLs in reducer", state.history.present.localImages);
     },
     resetEditor: () => initialState,
   },
@@ -307,6 +305,7 @@ export const {
   removeLocalBackgroundImage,
   setImageUrls,
   resetEditor,
+  clearFutureHistory,
 } = editorSlice.actions;
 
 export default editorSlice.reducer;
