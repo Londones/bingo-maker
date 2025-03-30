@@ -1,8 +1,17 @@
-import { ImageUploadResponse } from "./../../types/types";
+import { ImageUploadResponse, BingoPatch } from "./../../types/types";
 import { isCellLocalImage } from "@/lib/utils";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { Bingo, BingoCell, Style, Background, Stamp, EditorState, LocalImage } from "@/types/types";
 import { DEFAULT_STYLE, DEFAULT_STAMP, DEFAULT_GRADIENT_CONFIG_STRING } from "@/utils/constants";
+
+interface ChangeTracker {
+  title?: boolean;
+  style?: Partial<Style>;
+  background?: Partial<Background>;
+  stamp?: Partial<Stamp>;
+  cells?: { [id: string]: Partial<BingoCell> };
+  status?: boolean;
+}
 
 const initialBingoState: Bingo = {
   title: "New Bingo",
@@ -51,6 +60,7 @@ const initialState: EditorState = {
   canUndo: false,
   canRedo: false,
   canSave: false,
+  changes: {} as ChangeTracker, // Track changes for partial updates
 };
 
 const pushToHistory = (state: EditorState) => {
@@ -111,10 +121,12 @@ export const editorSlice = createSlice({
       state.canSave = false;
       state.history.future = []; // Also clear future history here
       state.canRedo = false;
+      state.changes = {} as ChangeTracker; // Reset change tracking
     },
     setTitle: (state, action: PayloadAction<string>) => {
       pushToHistory(state);
       state.history.present.title = action.payload;
+      if (state.changes) state.changes.title = true; // Track that title changed
     },
     setGridSize: (state, action: PayloadAction<number>) => {
       pushToHistory(state);
@@ -144,6 +156,27 @@ export const editorSlice = createSlice({
         ...state.history.present.cells[action.payload.index],
         ...action.payload.cell,
       } as BingoCell;
+      // Track cell changes
+      if (state.changes) {
+        // Get the actual cell we're updating
+        const currentCell = state.history.present.cells[action.payload.index];
+
+        // Initialize cells object if needed
+        if (!state.changes.cells) {
+          state.changes.cells = {};
+        }
+
+        // Use cell ID if available, otherwise position as fallback
+        const cellId = currentCell?.id || action.payload.index.toString();
+
+        // Update the change tracker
+        state.changes.cells[cellId] = {
+          ...state.changes.cells[cellId],
+          ...action.payload.cell,
+          // Always include position for reference
+          position: action.payload.index,
+        };
+      }
     },
     updateStyle: (state, action: PayloadAction<Partial<Style>>) => {
       pushToHistory(state);
@@ -151,6 +184,12 @@ export const editorSlice = createSlice({
         ...state.history.present.style,
         ...action.payload,
       };
+      // Track style changes
+      if (state.changes)
+        state.changes.style = {
+          ...state.changes?.style,
+          ...action.payload,
+        };
     },
     updateBackground: (state, action: PayloadAction<Partial<Background>>) => {
       pushToHistory(state);
@@ -158,6 +197,12 @@ export const editorSlice = createSlice({
         ...state.history.present.background,
         ...(action.payload as Background),
       };
+      // Track background changes
+      if (state.changes)
+        state.changes.background = {
+          ...state.changes?.background,
+          ...action.payload,
+        };
     },
     updateStamp: (state, action: PayloadAction<Partial<Stamp>>) => {
       pushToHistory(state);
@@ -165,12 +210,28 @@ export const editorSlice = createSlice({
         ...state.history.present.stamp,
         ...(action.payload as Stamp),
       };
+      // Track stamp changes
+      if (state.changes)
+        state.changes.stamp = {
+          ...state.changes?.stamp,
+          ...action.payload,
+        };
     },
     toggleStamp: (state, action: PayloadAction<number>) => {
       pushToHistory(state);
       const cell = state.history.present.cells[action.payload];
       if (cell) {
         cell.validated = !cell.validated;
+      }
+      // Track cell changes
+      if (state.changes) {
+        state.changes.cells = {
+          ...state.changes?.cells,
+          [cell!.id!]: {
+            ...state.changes?.cells?.[action.payload],
+            validated: !cell?.validated,
+          },
+        };
       }
     },
     setLocalImage: (state, action: PayloadAction<LocalImage | undefined>) => {
@@ -285,9 +346,56 @@ export const editorSlice = createSlice({
         state.history.present.localImages = undefined;
       }
     },
+    extractChanges: {
+      reducer: (state) => {
+        // Reset change tracking after extraction
+        state.changes = {} as ChangeTracker;
+        return state;
+      },
+      prepare: () => {
+        return { payload: undefined };
+      },
+    },
     resetEditor: () => initialState,
   },
 });
+
+// Create a selector function outside the slice to extract changes
+export const selectChanges = (state: EditorState): BingoPatch => {
+  const changes: BingoPatch = {};
+
+  console.log("Extracting changes:", state.changes);
+
+  if (state.changes?.title) {
+    changes.title = state.history.present.title;
+  }
+
+  if (state.changes?.status) {
+    changes.status = state.history.present.status;
+  }
+
+  if (state.changes?.style && Object.keys(state.changes.style).length > 0) {
+    changes.style = state.changes.style;
+  }
+
+  if (state.changes?.background && Object.keys(state.changes.background).length > 0) {
+    changes.background = state.changes.background;
+  }
+
+  if (state.changes?.stamp && Object.keys(state.changes.stamp).length > 0) {
+    changes.stamp = state.changes.stamp;
+  }
+
+  if (state.changes?.cells) {
+    console.log("Extracting cell changes:", state.changes.cells);
+    changes.cells = Object.entries(state.changes.cells).map(([id, cellChanges]) => ({
+      id: id,
+      ...cellChanges,
+    }));
+  }
+
+  return changes;
+};
 
 export const {
   undo,
@@ -306,6 +414,7 @@ export const {
   setImageUrls,
   resetEditor,
   clearFutureHistory,
+  extractChanges,
 } = editorSlice.actions;
 
 export default editorSlice.reducer;

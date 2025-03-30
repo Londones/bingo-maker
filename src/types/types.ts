@@ -65,6 +65,16 @@ export interface Bingo {
   localImages?: LocalImage[];
 }
 
+export interface BingoPatch {
+  title?: string;
+  status?: "draft" | "published";
+  style?: Partial<Style>;
+  background?: Partial<Background>;
+  stamp?: Partial<Stamp>;
+  cells?: Partial<BingoCell>[];
+  authorToken?: string;
+}
+
 export interface RadialGradientStop {
   position: {
     x: number;
@@ -121,11 +131,21 @@ export interface EditorHistory {
   future: Bingo[];
 }
 
+export interface ChangeTracker {
+  title?: boolean;
+  style?: Partial<Style>;
+  background?: Partial<Background>;
+  stamp?: Partial<Stamp>;
+  cells?: { [id: string]: Partial<BingoCell> };
+  status?: boolean;
+}
+
 export interface EditorState {
   history: EditorHistory;
   canUndo: boolean;
   canRedo: boolean;
   canSave: boolean;
+  changes?: ChangeTracker;
 }
 
 export interface BaseLocalImage {
@@ -155,4 +175,28 @@ export interface ImageUploadResponse {
   cellImages?: { position: number; url: string }[];
   backgroundImage?: string;
   stampImage?: string;
+}
+
+// Type for Prisma update operations on Bingo
+export interface PrismaUpdateData {
+  title?: string;
+  status?: "draft" | "published";
+  style?: {
+    update: Record<string, unknown>;
+  };
+  background?: {
+    update: Record<string, unknown>;
+  };
+  stamp?: {
+    update: Record<string, unknown>;
+  };
+  cells?: {
+    update: Array<{
+      where: {
+        id?: string;
+        position: number;
+      };
+      data: Record<string, unknown>;
+    }>;
+  };
 }

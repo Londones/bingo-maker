@@ -64,7 +64,7 @@ const CellsToolbar = React.memo(() => {
   const handleBackgroundOpacityChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       actions.updateStyle({
-        cellBackgroundOpacity: parseInt(e.target.value) / 100,
+        cellBackgroundOpacity: parseInt(e.target.value),
       });
     },
     [actions]
@@ -202,7 +202,7 @@ const CellsToolbar = React.memo(() => {
           <Blend className="h-4 w-4" />
           <Input
             type="number"
-            value={state.style.cellBackgroundOpacity * 100}
+            value={state.style.cellBackgroundOpacity}
             onChange={handleBackgroundOpacityChange}
             min={0}
             max={100}

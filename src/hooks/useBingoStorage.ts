@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { generateAuthorToken } from "@/lib/utils";
-import type { Bingo, MigrateRequest } from "@/types/types";
+import type { Bingo, MigrateRequest, BingoPatch } from "@/types/types";
 import { APIError } from "@/lib/errors";
 
 interface PaginatedBingos {
@@ -101,20 +101,14 @@ export function useBingoStorage() {
       return response.json() as Promise<Bingo>;
     },
     onMutate: () => {
-      const previousBingos =
-        queryClient.getQueryData<Bingo[]>(["bingos"]) ?? [];
+      const previousBingos = queryClient.getQueryData<Bingo[]>(["bingos"]) ?? [];
       return { previousBingos };
     },
     onSuccess: async (data: Bingo) => {
       await queryClient.invalidateQueries({ queryKey: ["bingos"] });
       if (!session?.user) {
-        const stored = JSON.parse(
-          safeLocalStorage.getItem("ownedBingos") || "[]"
-        ) as Bingo[];
-        safeLocalStorage.setItem(
-          "ownedBingos",
-          JSON.stringify([...stored, data.id])
-        );
+        const stored = JSON.parse(safeLocalStorage.getItem("ownedBingos") || "[]") as Bingo[];
+        safeLocalStorage.setItem("ownedBingos", JSON.stringify([...stored, data.id]));
       }
     },
     onError: (_, __, context) => {
@@ -130,23 +124,45 @@ export function useBingoStorage() {
       updates,
     }: {
       bingoId: string;
-      updates: Partial<Bingo>;
+      updates: Partial<Bingo> | BingoPatch;
     }): Promise<Bingo> => {
       const authorToken = safeLocalStorage.getItem("bingoAuthorToken");
 
+      // Extract only the fields that have actually changed
+      const patchData: BingoPatch = {};
+
+      if (updates.title !== undefined) patchData.title = updates.title;
+      if (updates.status !== undefined) patchData.status = updates.status;
+
+      // Only include non-empty objects
+      if (updates.style && Object.keys(updates.style).length > 0) patchData.style = updates.style;
+
+      if (updates.background && Object.keys(updates.background).length > 0) patchData.background = updates.background;
+
+      if (updates.stamp && Object.keys(updates.stamp).length > 0) patchData.stamp = updates.stamp;
+
+      if (updates.cells && updates.cells.length > 0) patchData.cells = updates.cells;
+
       const response = await fetch(`/api/bingo/${bingoId}`, {
         method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          ...updates,
+          ...patchData,
           authorToken,
         }),
       });
 
       if (!response.ok) {
-        throw new Error((await response.json()).message as string);
+        const errorData = await response.json();
+        throw new Error((errorData.message as string) || "Failed to update bingo");
       }
 
       return response.json() as Promise<Bingo>;
+    },
+    onSuccess: async (data: Bingo) => {
+      await queryClient.invalidateQueries({ queryKey: ["bingo", data.id] });
     },
   });
 
@@ -161,13 +177,8 @@ export function useBingoStorage() {
     onSuccess: async (_, bingoId) => {
       await queryClient.invalidateQueries({ queryKey: ["bingos"] });
       if (!session?.user) {
-        const stored = JSON.parse(
-          safeLocalStorage.getItem("ownedBingos") || "[]"
-        ) as Bingo[];
-        safeLocalStorage.setItem(
-          "ownedBingos",
-          JSON.stringify(stored.filter((bingo: Bingo) => bingo.id !== bingoId))
-        );
+        const stored = JSON.parse(safeLocalStorage.getItem("ownedBingos") || "[]") as Bingo[];
+        safeLocalStorage.setItem("ownedBingos", JSON.stringify(stored.filter((bingo: Bingo) => bingo.id !== bingoId)));
       }
     },
   });

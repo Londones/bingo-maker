@@ -10,7 +10,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { uploadPendingImages } from "@/app/actions/uploadthing";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bingo } from "@/types/types";
+import { Bingo, BingoPatch } from "@/types/types";
 
 const Controls = () => {
   const router = useRouter();
@@ -118,7 +118,7 @@ const Controls = () => {
 
     // Prevent updating if there are no changes
     if (!canSave && !state.localImages?.length) {
-      toast.info("No changes to update");
+      toast.info("No images to update");
       return;
     }
 
@@ -127,29 +127,81 @@ const Controls = () => {
     try {
       const preparedState = await prepareStateForSave(state);
 
-      // Clear future history when saving
       actions.clearFutureHistory();
 
-      const cleanedState = {
-        ...preparedState,
-        background: { ...preparedState.background },
-        cells: preparedState.cells.map((cell) => ({
-          ...cell,
-          cellStyle: cell.cellStyle === undefined ? null : { ...cell.cellStyle },
-        })),
+      const changes = actions.extractChanges();
+
+      const updateData: BingoPatch = {
+        ...changes,
       };
+
+      if (state.localImages?.length) {
+        if (preparedState.background.backgroundImage !== state.background.backgroundImage) {
+          updateData.background = {
+            ...updateData.background,
+            backgroundImage: preparedState.background.backgroundImage,
+            backgroundImageOpacity: preparedState.background.backgroundImageOpacity,
+          };
+        }
+
+        if (preparedState.stamp.value !== state.stamp.value) {
+          updateData.stamp = {
+            ...updateData.stamp,
+            value: preparedState.stamp.value,
+          };
+        }
+
+        if (
+          preparedState.cells.some(
+            (cell, i) => cell.cellStyle?.cellBackgroundImage !== state.cells[i]?.cellStyle?.cellBackgroundImage
+          )
+        ) {
+          updateData.cells = preparedState.cells
+            .filter((cell, i) => cell.cellStyle?.cellBackgroundImage !== state.cells[i]?.cellStyle?.cellBackgroundImage)
+            .map((cell) => ({
+              ...cell,
+            }));
+        }
+      }
+
+      // Only perform update if we have actual changes
+      if (Object.keys(updateData).length === 0) {
+        toast.info("No changes to update");
+        setIsSaving(false);
+        return;
+      }
 
       const previousData = queryClient.getQueryData<Bingo>(["bingo", state.id!]);
       if (previousData) {
-        queryClient.setQueryData<Bingo>(["bingo", state.id!], {
-          ...previousData,
-          ...cleanedState,
+        // Optimistically update the cache
+        queryClient.setQueryData<Bingo>(["bingo", state.id!], (old) => {
+          if (!old) return previousData;
+
+          const updated = { ...old };
+
+          if (updateData.title) updated.title = updateData.title;
+          if (updateData.status) updated.status = updateData.status;
+          if (updateData.style) updated.style = { ...updated.style, ...updateData.style };
+          if (updateData.background) updated.background = { ...updated.background, ...updateData.background };
+          if (updateData.stamp) updated.stamp = { ...updated.stamp, ...updateData.stamp };
+
+          if (updateData.cells) {
+            updated.cells = updated.cells.map((cell) => {
+              const updatedCell = updateData.cells?.find((c) => c.position === cell.position);
+              if (updatedCell) {
+                return { ...cell, ...updatedCell };
+              }
+              return cell;
+            });
+          }
+
+          return updated;
         });
       }
 
       const updatedBingo = await useUpdateBingo.mutateAsync({
         bingoId: state.id!,
-        updates: cleanedState,
+        updates: updateData,
       });
 
       setJustSaved(true);

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { APIError, APIErrorCode } from "@/lib/errors";
 import { handleAPIError } from "@/lib/api-utils";
-import { Bingo } from "@/types/types";
+import { BingoPatch } from "@/types/types";
 
 type ParamsType = Promise<{ id: string }>;
 
@@ -47,7 +47,7 @@ export async function GET(req: Request, { params }: { params: ParamsType }) {
 
 export async function PATCH(req: Request, { params }: { params: ParamsType }) {
   const session = await auth();
-  const data = (await req.json()) as Partial<Bingo>;
+  const data = (await req.json()) as BingoPatch;
   const { id } = await params;
   const clientToken = data.authorToken;
 
@@ -74,18 +74,20 @@ export async function PATCH(req: Request, { params }: { params: ParamsType }) {
       throw new APIError("Unauthorized", APIErrorCode.UNAUTHORIZED, 401);
     }
 
+    const updateData = {
+      ...(data.title !== undefined && { title: data.title }),
+      ...(data.style !== undefined && { style: { update: buildStyle(data.style) } }),
+      ...(data.background !== undefined && {
+        background: { update: buildBackground(data.background) },
+      }),
+      ...(data.stamp !== undefined && { stamp: { update: buildStamp(data.stamp) } }),
+      ...(data.cells !== undefined && { cells: { update: buildCellUpdate(data.cells) } }),
+      ...(data.status !== undefined && { status: data.status }),
+    };
+
     const updated = await prisma.bingo.update({
       where: { id },
-      data: {
-        ...(data.title !== undefined && { title: data.title }),
-        ...(data.style !== undefined && { style: { update: buildStyle(data.style) } }),
-        ...(data.background !== undefined && {
-          background: { update: buildBackground(data.background) },
-        }),
-        ...(data.stamp !== undefined && { stamp: { update: buildStamp(data.stamp) } }),
-        ...(data.cells !== undefined && { cells: { update: buildCellUpdate(data.cells) } }),
-        ...(data.status !== undefined && { status: data.status }),
-      },
+      data: updateData,
       include: {
         cells: {
           include: { cellStyle: true },
@@ -98,7 +100,8 @@ export async function PATCH(req: Request, { params }: { params: ParamsType }) {
 
     return NextResponse.json(updated);
   } catch (error) {
-    return handleAPIError(error);
+    console.error("Error updating bingo:", error instanceof Error ? error.stack : "Unknown error");
+    return handleAPIError(error instanceof Error ? error : new Error("Unknown error occurred"));
   }
 }
 

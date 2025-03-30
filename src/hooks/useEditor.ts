@@ -14,11 +14,13 @@ import {
   resetEditor,
   setLocalImage,
   setImageUrls,
+  extractChanges,
   removeCellLocalImage,
   removeLocalBackgroundImage,
   clearFutureHistory,
+  selectChanges,
 } from "@/store/slices/editorSlice";
-import { Bingo, BingoCell, Style, Background, Stamp, LocalImage, ImageUploadResponse } from "@/types/types";
+import { Bingo, BingoCell, Style, Background, Stamp, LocalImage, ImageUploadResponse, BingoPatch } from "@/types/types";
 
 export const useEditor = () => {
   const dispatch = useDispatch();
@@ -45,6 +47,11 @@ export const useEditor = () => {
       removeCellLocalImage: (index: number) => dispatch(removeCellLocalImage(index)),
       removeLocalBackgroundImage: () => dispatch(removeLocalBackgroundImage()),
       setImageUrls: (urls: ImageUploadResponse) => dispatch(setImageUrls(urls)),
+      extractChanges: (): BingoPatch => {
+        const changes = selectChanges(editorState);
+        dispatch(extractChanges());
+        return changes;
+      },
       resetEditor: () => dispatch(resetEditor()),
     },
   };

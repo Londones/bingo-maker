@@ -1,22 +1,11 @@
-import React, { useState, useEffect, useCallback, memo } from "react";
+import React, { useState, useEffect } from "react";
 import { useEditor } from "@/hooks/useEditor";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import EmojiPicker, { type EmojiClickData, Theme } from "emoji-picker-react";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Image from "next/image";
-
 enum EmojiStyle {
   NATIVE = "native",
   APPLE = "apple",
@@ -25,26 +14,17 @@ enum EmojiStyle {
   FACEBOOK = "facebook",
 }
 
-const StampDisplay = memo(
-  ({ type, value }: { type: string; value: string }) => {
-    if (type === "text") {
-      return value;
-    }
-    return <Image src={value} alt="Stamp" width={24} height={24} />;
-  }
-);
-
-StampDisplay.displayName = "StampDisplay";
-
 const StampControls = () => {
   const { state, actions } = useEditor();
   const [emojiStyle, setEmojiStyle] = useState<EmojiStyle>(EmojiStyle.NATIVE);
-  const [currentEmoji, setCurrentEmoji] = useState<EmojiClickData | undefined>(
-    undefined
-  );
+  const [currentEmoji, setCurrentEmoji] = useState<EmojiClickData | undefined>(undefined);
+
+  const lastEmojiRef = React.useRef<{ emoji?: EmojiClickData; style?: EmojiStyle }>({});
 
   useEffect(() => {
-    if (currentEmoji) {
+    if (currentEmoji && (currentEmoji !== lastEmojiRef.current.emoji || emojiStyle !== lastEmojiRef.current.style)) {
+      lastEmojiRef.current = { emoji: currentEmoji, style: emojiStyle };
+
       actions.updateStamp({
         ...state.stamp,
         type: emojiStyle === EmojiStyle.NATIVE ? "text" : "image",
@@ -55,24 +35,6 @@ const StampControls = () => {
       });
     }
   }, [currentEmoji, emojiStyle, actions, state.stamp]);
-
-  const handleEmojiClick = useCallback((emoji: EmojiClickData) => {
-    setCurrentEmoji(emoji);
-  }, []);
-
-  const handleEmojiStyleChange = useCallback((value: string) => {
-    setEmojiStyle(value.toLowerCase() as EmojiStyle);
-  }, []);
-
-  const handleOpacityChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      actions.updateStamp({
-        ...state.stamp,
-        opacity: Number(e.target.value) / 100,
-      });
-    },
-    [actions, state.stamp]
-  );
 
   return (
     <div className="flex flex-col p-2 gap-4">
@@ -85,7 +47,11 @@ const StampControls = () => {
               role="button"
               tabIndex={0}
             >
-              <StampDisplay type={state.stamp.type} value={state.stamp.value} />
+              {state.stamp.type === "text" ? (
+                state.stamp.value
+              ) : (
+                <Image src={state.stamp.value} alt="Stamp" width={24} height={24} />
+              )}
             </div>
           </PopoverTrigger>
           <PopoverContent>
@@ -93,19 +59,21 @@ const StampControls = () => {
               lazyLoadEmojis
               theme={Theme.AUTO}
               emojiStyle={emojiStyle}
-              onEmojiClick={handleEmojiClick}
+              onEmojiClick={(emoji) => {
+                setCurrentEmoji(emoji);
+              }}
             />
           </PopoverContent>
         </Popover>
         <Select
           disabled={!currentEmoji}
           value={emojiStyle}
-          onValueChange={handleEmojiStyleChange}
+          onValueChange={(value) => {
+            setEmojiStyle(value.toLowerCase() as EmojiStyle);
+          }}
         >
           <SelectTrigger className="w-auto">
-            <SelectValue>
-              {emojiStyle.charAt(0).toUpperCase() + emojiStyle.slice(1)}
-            </SelectValue>
+            <SelectValue>{emojiStyle.charAt(0).toUpperCase() + emojiStyle.slice(1)}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {Object.values(EmojiStyle).map((style) => (
@@ -121,7 +89,12 @@ const StampControls = () => {
         <Input
           type="number"
           defaultValue={state.stamp.opacity * 100}
-          onChange={handleOpacityChange}
+          onChange={(e) =>
+            actions.updateStamp({
+              ...state.stamp,
+              opacity: Number(e.target.value) / 100,
+            })
+          }
           min={0}
           max={100}
           id="Stamp opacity"
@@ -132,4 +105,4 @@ const StampControls = () => {
   );
 };
 
-export default memo(StampControls);
+export default StampControls;

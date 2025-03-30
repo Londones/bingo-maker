@@ -10,6 +10,9 @@ export const buildStyle = (style: Partial<Style>) => ({
   ...(style.cellBackgroundColor !== undefined && {
     cellBackgroundColor: style.cellBackgroundColor,
   }),
+  ...(style.cellBackgroundOpacity !== undefined && {
+    cellBackgroundOpacity: style.cellBackgroundOpacity,
+  }),
   ...(style.color !== undefined && { color: style.color }),
   ...(style.cellSize !== undefined && { cellSize: style.cellSize }),
   ...(style.gap !== undefined && { gap: style.gap }),
@@ -17,7 +20,9 @@ export const buildStyle = (style: Partial<Style>) => ({
 
 export const buildCellUpdate = (cells: Partial<BingoCell>[]) =>
   cells.map((cell) => ({
-    where: { id: cell.id },
+    where: {
+      id: cell.id,
+    },
     data: {
       ...(cell.content !== undefined && { content: cell.content }),
       ...(cell.position !== undefined && { position: cell.position }),
