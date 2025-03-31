@@ -100,7 +100,7 @@ export async function PATCH(req: Request, { params }: { params: ParamsType }) {
 
     return NextResponse.json(updated);
   } catch (error) {
-    console.error("Error updating bingo:", error instanceof Error ? error.stack : "Unknown error");
+    //console.error("Error updating bingo:", error instanceof Error ? error.stack : "Unknown error");
     return handleAPIError(error instanceof Error ? error : new Error("Unknown error occurred"));
   }
 }

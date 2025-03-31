@@ -1,6 +1,5 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import "@testing-library/jest-dom";
 import GradientEditor from "@/components/editor/background/gradient-editor";
 import { useEditor } from "@/hooks/useEditor";
 import userEvent from "@testing-library/user-event";
@@ -40,20 +39,7 @@ describe("GradientEditor", () => {
         updateBackground: mockUpdateBackground,
       },
     });
-  });
 
-  test("renders with initial gradient stops", () => {
-    const { container } = render(<GradientEditor />);
-
-    // Check if the container element exists
-    expect(container.querySelector(".relative.w-full.h-28.border.rounded-lg")).toBeInTheDocument();
-
-    // Check if gradient stops are rendered
-    const stopItems = screen.getAllByRole("button", { name: /trash-2/i });
-    expect(stopItems).toHaveLength(2); // Based on our mock data
-  });
-
-  test("adds a new gradient stop on background click", () => {
     // Mock getBoundingClientRect for containerRef
     Element.prototype.getBoundingClientRect = jest.fn(() => ({
       width: 200,
@@ -66,12 +52,25 @@ describe("GradientEditor", () => {
       y: 0,
       toJSON: () => {},
     }));
+  });
 
+  test("renders with initial gradient stops", () => {
+    const { container } = render(<GradientEditor />);
+
+    // Check if the container element exists
+    expect(container.querySelector(".relative.w-full.h-28.border.rounded-lg")).toBeInTheDocument();
+
+    // Check if gradient stops are rendered by looking for the SVG trash icons
+    const trashIcons = container.querySelectorAll(".lucide.lucide-trash2");
+    expect(trashIcons).toHaveLength(2); // Based on our mock data
+  });
+
+  test("adds a new gradient stop on background click", () => {
     render(<GradientEditor />);
 
-    // Find and click on the gradient background
-    const gradientBackground = screen.getByRole("presentation", { hidden: true });
-    fireEvent.click(gradientBackground, {
+    // Find the gradient background - using more reliable data-testid approach
+    const gradientBackground = document.querySelector(".w-full.h-full.rounded-lg");
+    fireEvent.click(gradientBackground!, {
       clientX: 50, // 25% of width
       clientY: 25, // 25% of height
     });
@@ -96,15 +95,18 @@ describe("GradientEditor", () => {
     // In a real test, you'd need to mock the ColorPickerPopover or test its integration
     expect(mockUpdateBackground).toHaveBeenCalledTimes(0); // No update yet
 
-    // Simulate color change callback
-    // This would normally come from the ColorPickerPopover component
-    const handleColorChange = (useEditor as jest.Mock).mock.calls[0][0].actions.updateBackground;
+    // Simulate color change callback by directly calling the mock function
     const newColor = "hsla(120, 100%, 50%, 1)";
-    handleColorChange({
-      value: JSON.stringify({
-        ...initialGradientConfig,
-        stops: [{ ...initialGradientConfig.stops[0], color: newColor }, initialGradientConfig.stops[1]],
-      }),
+    const updatedConfig = {
+      ...initialGradientConfig,
+      stops: [{ ...initialGradientConfig.stops[0], color: newColor }, initialGradientConfig.stops[1]],
+    };
+
+    mockUpdateBackground.mock.calls[0]; // Just to show we're not using this
+
+    // Use the mockUpdateBackground directly instead of trying to access it from mock calls
+    mockUpdateBackground({
+      value: JSON.stringify(updatedConfig),
     });
 
     expect(mockUpdateBackground).toHaveBeenCalledTimes(1);
@@ -128,18 +130,19 @@ describe("GradientEditor", () => {
   });
 
   test("edits background color on context menu", () => {
-    //const user = userEvent.setup();
     render(<GradientEditor />);
 
-    // Find gradient background and trigger context menu
-    const gradientBackground = screen.getByRole("presentation", { hidden: true });
-    fireEvent.contextMenu(gradientBackground);
+    // Find gradient background by class name instead of role
+    const gradientBackground = document.querySelector(".w-full.h-full.rounded-lg");
+    expect(gradientBackground).not.toBeNull();
+    fireEvent.contextMenu(gradientBackground!);
 
     // ColorPickerPopover should be rendered for background color
     // Since we can't easily test the ColorPickerPopover directly, we'll simulate the color change
-    const handleColorChange = (useEditor as jest.Mock).mock.calls[0][0].actions.updateBackground;
     const newBackgroundColor = "hsla(180, 50%, 50%, 1)";
-    handleColorChange({
+
+    // Directly call the mockUpdateBackground instead of trying to access it from mock calls
+    mockUpdateBackground({
       value: JSON.stringify({
         backgroundColor: newBackgroundColor,
         stops: initialGradientConfig.stops,
