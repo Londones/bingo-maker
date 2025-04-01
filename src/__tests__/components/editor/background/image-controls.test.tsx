@@ -4,10 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { useEditor } from "@/hooks/useEditor";
 import { convertFileToBase64 } from "@/lib/utils";
 import ImageControls from "@/components/editor/background/image-controls";
-import { Button } from "@/__mocks__/components/ui-components";
-import { Input } from "@/__mocks__/components/ui-components";
-import { Label } from "@/__mocks__/components/ui-components";
-import { Slider } from "@/__mocks__/components/ui-components";
+import { Button, Input, Label, Slider } from "@/__mocks__/components/ui-components";
 
 // Use mocks
 jest.mock("@/hooks/useEditor");
@@ -24,16 +21,10 @@ jest.mock("sonner", () => ({
 jest.mock("@/components/ui/button", () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Button: (props: any) => <Button {...props} />,
-}));
-jest.mock("@/components/ui/input", () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Input: (props: any) => <Input {...props} />,
-}));
-jest.mock("@/components/ui/label", () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Label: (props: any) => <Label {...props} />,
-}));
-jest.mock("@/components/ui/slider", () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Slider: (props: any) => <Slider {...props} />,
 }));
