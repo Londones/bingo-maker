@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useEditor } from "@/hooks/useEditor";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -21,20 +21,35 @@ const StampControls = () => {
 
   const lastEmojiRef = React.useRef<{ emoji?: EmojiClickData; style?: EmojiStyle }>({});
 
-  useEffect(() => {
-    if (currentEmoji && (currentEmoji !== lastEmojiRef.current.emoji || emojiStyle !== lastEmojiRef.current.style)) {
-      lastEmojiRef.current = { emoji: currentEmoji, style: emojiStyle };
+  // Process emoji updates when either the emoji or style changes
+  const updateStampWithEmoji = useCallback(
+    (emoji: EmojiClickData, style: EmojiStyle) => {
+      //console.log("Updating stamp with emoji:", emoji, "and style:", style);
 
       actions.updateStamp({
         ...state.stamp,
-        type: emojiStyle === EmojiStyle.NATIVE ? "text" : "image",
-        value:
-          emojiStyle === EmojiStyle.NATIVE
-            ? currentEmoji.emoji
-            : currentEmoji.getImageUrl?.(emojiStyle) ?? currentEmoji.imageUrl,
+        type: style === EmojiStyle.NATIVE ? "text" : "image",
+        value: style === EmojiStyle.NATIVE ? emoji.emoji : emoji.getImageUrl?.(style) ?? emoji.imageUrl,
       });
+    },
+    [state.stamp, actions]
+  );
+
+  // Handle style changes
+  useEffect(() => {
+    if (currentEmoji && lastEmojiRef.current.emoji) {
+      updateStampWithEmoji(currentEmoji, emojiStyle);
+      lastEmojiRef.current.style = emojiStyle;
     }
-  }, [currentEmoji, emojiStyle, actions, state.stamp]);
+  }, [emojiStyle, currentEmoji, updateStampWithEmoji]);
+
+  // Handle emoji changes
+  useEffect(() => {
+    if (currentEmoji && currentEmoji !== lastEmojiRef.current.emoji) {
+      lastEmojiRef.current.emoji = currentEmoji;
+      updateStampWithEmoji(currentEmoji, emojiStyle);
+    }
+  }, [currentEmoji, emojiStyle, updateStampWithEmoji]);
 
   return (
     <div className="flex flex-col p-2 gap-4">

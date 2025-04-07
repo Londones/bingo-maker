@@ -200,3 +200,22 @@ export interface PrismaUpdateData {
     }>;
   };
 }
+
+export interface BingoPreview {
+  id: string;
+  title: string;
+  background: {
+    value: string;
+    backgroundImage: string | null;
+    backgroundImageOpacity: number | null;
+    backgroundImagePosition: string | null;
+    backgroundImageSize: number | null;
+  } | null;
+  createdAt: Date;
+}
+
+export interface BingoPreviewResponse {
+  bingos: BingoPreview[];
+  totalPages: number;
+  hasMore: boolean;
+}

@@ -382,10 +382,10 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
     [editingCell, editContent, getCellStyles, getBackgroundCellImage, handleBlur, handleCellClick, pxToRem, state.stamp]
   );
 
-  // Cleanup the timers on unmount
   React.useEffect(() => {
+    const currentTimers = fontSizeDebounceTimerRef.current;
     return () => {
-      Object.values(fontSizeDebounceTimerRef.current).forEach((timer) => clearTimeout(timer));
+      Object.values(currentTimers).forEach((timer) => clearTimeout(timer));
     };
   }, []);
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { generateAuthorToken } from "@/lib/utils";
-import type { Bingo, MigrateRequest, BingoPatch } from "@/types/types";
+import { type Bingo, type MigrateRequest, type BingoPatch, BingoPreviewResponse } from "@/types/types";
 import { APIError } from "@/lib/errors";
 
 interface PaginatedBingos {
@@ -228,6 +228,22 @@ export function useBingoStorage() {
     });
   };
 
+  const useGetUserBingos = (enabled: boolean, options?: { page?: number; userId: string }) =>
+    useQuery<BingoPreviewResponse>({
+      queryKey: ["userBingos", options?.page, options?.userId],
+      queryFn: async () => {
+        const params = new URLSearchParams();
+        if (options?.page) params.append("page", options.page.toString());
+        if (options?.userId) params.append("userId", options.userId);
+
+        const res = await fetch(`/api/bingo/user?${params.toString()}`);
+        if (!res.ok) throw new Error("Failed to fetch user bingos");
+        return res.json();
+      },
+      staleTime: 1000 * 60 * 5,
+      enabled: enabled,
+    });
+
   const clearLocalStorage = () => {
     safeLocalStorage.clear();
   };
@@ -243,6 +259,7 @@ export function useBingoStorage() {
     useDeleteBingo,
     useMigrateBingos,
     useCheckOwnership,
+    useGetUserBingos,
     clearLocalStorage,
   };
 }

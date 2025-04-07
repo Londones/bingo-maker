@@ -1,11 +1,5 @@
 "use client";
-import React, {
-  useEffect,
-  useState,
-  useMemo,
-  useCallback,
-  Suspense,
-} from "react";
+import React, { useEffect, useState, useMemo, useCallback, Suspense } from "react";
 import { useParams } from "next/navigation";
 import { useEditor } from "@/hooks/useEditor";
 import { useSession } from "next-auth/react";
@@ -29,32 +23,25 @@ const BingoContent = ({ id }: { id: string }) => {
 
   const { data: bingo, isLoading: isBingoLoading, error } = useGetBingo(id);
 
-  const skipOwnershipCheck = useMemo(
-    () => !!state.id && state.id === id,
-    [state.id, id]
-  );
+  const skipOwnershipCheck = useMemo(() => !!state.id && state.id === id, [state.id, id]);
 
-  const { data: ownershipData, isLoading: isOwnershipLoading } =
-    useCheckOwnership(id, { enabled: !skipOwnershipCheck });
+  const { data: ownershipData, isLoading: isOwnershipLoading } = useCheckOwnership(id, {
+    enabled: !skipOwnershipCheck,
+  });
 
   const isAuthor = useMemo(
-    () =>
-      (!!session?.user?.id && bingo?.userId === session.user.id) ||
-      !!ownershipData?.isOwner,
+    () => (!!session?.user?.id && bingo?.userId === session.user.id) || !!ownershipData?.isOwner,
     [session?.user?.id, bingo?.userId, ownershipData?.isOwner]
   );
 
   const isLoading = useMemo(
-    () =>
-      isBingoLoading ||
-      (!mounted && isClient) ||
-      (isClient && isOwnershipLoading),
+    () => isBingoLoading || (!mounted && isClient) || (isClient && isOwnershipLoading),
     [isBingoLoading, mounted, isClient, isOwnershipLoading]
   );
 
   const fetchUserData = useCallback(async (userId: string) => {
     try {
-      const res = await fetch(`/api/bingo/user/${userId}`);
+      const res = await fetch(`/api/bingo/user-check/${userId}`);
       const userData = await res.json();
       setAuthor(userData.name as string);
     } catch {
@@ -99,9 +86,7 @@ const BingoContent = ({ id }: { id: string }) => {
   return (
     <div className="w-full">
       <div className="text-foreground/50 mb-4">
-        <h1 className="text-5xl font-bold">
-          {isAuthor ? state.title : bingo.title}
-        </h1>
+        <h1 className="text-5xl font-bold">{isAuthor ? state.title : bingo.title}</h1>
         <p className="text-xs">By: {author}</p>
       </div>
       {isAuthor ? <Editor /> : <BingoPreview bingo={bingo} />}

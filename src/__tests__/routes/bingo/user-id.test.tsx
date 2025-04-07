@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { GET } from "@/app/api/bingo/user/[id]/route";
+import { GET } from "@/app/api/bingo/user-check/[id]/route";
 import { prisma } from "@/lib/prisma";
 
 const TEST_URL = "http://localhost:3000";
@@ -23,13 +23,13 @@ describe("User API Route", () => {
     jest.clearAllMocks();
   });
 
-  describe("GET /api/bingo/user/[id]", () => {
+  describe("GET /api/bingo/user-check/[id]", () => {
     it("should return user when found", async () => {
       // Arrange
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
 
       // Act
-      const response = await GET(new NextRequest(`${TEST_URL}/api/bingo/user/1`), { params: { id: "1" } });
+      const response = await GET(new NextRequest(`${TEST_URL}/api/bingo/user-check/1`), { params: { id: "1" } });
 
       // Assert
       expect(response.status).toBe(200);
@@ -42,7 +42,7 @@ describe("User API Route", () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
 
       // Act
-      const response = await GET(new NextRequest(`${TEST_URL}/api/bingo/user/999`), { params: { id: "999" } });
+      const response = await GET(new NextRequest(`${TEST_URL}/api/bingo/user-check/999`), { params: { id: "999" } });
 
       // Assert
       expect(response.status).toBe(200);
@@ -55,7 +55,7 @@ describe("User API Route", () => {
       (prisma.user.findUnique as jest.Mock).mockRejectedValue(new Error("Database error"));
 
       // Act
-      const response = await GET(new NextRequest(`${TEST_URL}/api/bingo/user/1`), { params: { id: "1" } });
+      const response = await GET(new NextRequest(`${TEST_URL}/api/bingo/user-check/1`), { params: { id: "1" } });
 
       // Assert
       expect(response.status).toBe(500);
