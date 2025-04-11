@@ -1,12 +1,11 @@
 "use server";
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { signout } from "@/app/actions/auth";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ITEMS_PER_PAGE } from "@/utils/constants";
 import UserBingoList from "@/components/user-bingo-list";
+import SignOutButton from "@/components/sign-out-button";
 
 const getUserPreviewBingos = async (userId: string, page: number = 1) => {
   const skip = (page - 1) * ITEMS_PER_PAGE;
@@ -46,25 +45,25 @@ const getUserPreviewBingos = async (userId: string, page: number = 1) => {
 const MePage = async ({ searchParams }: { searchParams: { page?: string } }) => {
   const session = await auth();
   const user = session?.user;
+  // eslint-disable-next-line @typescript-eslint/await-thenable
+  const { page } = await searchParams;
 
   if (!user) {
+    console.log("User not authenticated, redirecting to sign-in page.");
     redirect("/signin");
   }
 
-  const initialPage = searchParams.page ? parseInt(searchParams.page) : 1;
+  const initialPage = page ? parseInt(page) : 1;
   const { bingos, hasMore } = await getUserPreviewBingos(user.id, initialPage);
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-8">My Bingos</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">My Bingos</h1>
+        <SignOutButton />
+      </div>
 
       <UserBingoList initialBingos={bingos} initialPage={initialPage} hasMore={hasMore} userId={user.id} />
-
-      <div className="mt-8">
-        <Button variant="destructive" onClick={() => void signout()}>
-          Sign Out
-        </Button>
-      </div>
     </div>
   );
 };

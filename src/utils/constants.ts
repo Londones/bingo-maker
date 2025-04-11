@@ -98,4 +98,4 @@ export const FONT_FAMILIES = [
   { value: "MS Sans Serif", label: "MS Sans Serif" },
 ];
 
-export const ITEMS_PER_PAGE = 10;
+export const ITEMS_PER_PAGE = 6;

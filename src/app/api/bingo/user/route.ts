@@ -17,6 +17,15 @@ export async function GET(req: Request): Promise<NextResponse> {
     throw new APIError("User ID is required", APIErrorCode.INVALID_REQUEST, 400);
   }
 
+  // check if userId is valid
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new APIError("User not found", APIErrorCode.INVALID_REQUEST, 404);
+  }
+
   try {
     const bingos: BingoPreview[] = await prisma.bingo.findMany({
       where: {

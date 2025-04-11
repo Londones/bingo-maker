@@ -36,7 +36,6 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
       backgroundImage: backgroundImage,
     };
   }, [state.background.value]);
-
   const getBackgroundImage = useMemo(() => {
     const { background } = state;
     return {
@@ -45,6 +44,8 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
       backgroundPosition: background.backgroundImagePosition || "center",
       opacity: (background.backgroundImageOpacity ?? 100) / 100,
       backgroundRepeat: "no-repeat",
+      // Fix background positioning to prevent resizing with window
+      backgroundAttachment: "local",
     };
   }, [
     state.background.backgroundImage,
@@ -270,7 +271,7 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
       if (!state.id) {
         e.preventDefault();
         // display a confirmation dialog
-        alert("You have unsaved changes. Are you sure you want to leave?");
+        // alert("You have unsaved changes. Are you sure you want to leave?");
       }
     };
 
@@ -388,32 +389,37 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
       Object.values(currentTimers).forEach((timer) => clearTimeout(timer));
     };
   }, []);
-
   return (
-    <div ref={ref} className="flex flex-col items-center space-y-4">
+    <div ref={ref} className="flex flex-col items-center h-full w-full">
       <div
-        className="w-full min-h-[40rem] mx-auto h-full flex items-center flex-col justify-center p-8 rounded-lg relative"
+        className=" h-full flex items-center flex-col justify-center p-8 rounded-lg relative overflow-auto custom-scrollbar"
         style={getBackground}
       >
         <div className="absolute inset-0 pointer-events-none" style={getBackgroundImage} />
-        {editingTitle ? (
-          <textarea
-            ref={titleRef}
-            className="text-center w-full z-10 resize-none overflow-hidden text-4xl text-wrap bg-transparent font-bold rounded-lg"
-            value={state.title}
-            style={titleStyle}
-            onChange={handleTitleChange}
-            onFocus={calculateRows}
-            onBlur={() => setEditingTitle(false)}
-            rows={rows}
-          />
-        ) : (
-          <h1 className="text-center z-10 text-4xl font-bold" style={titleStyle} onClick={() => setEditingTitle(true)}>
-            {state.title}
-          </h1>
-        )}
-        <div className="grid mt-8 mx-auto" style={gridStyle}>
-          {state.cells.map((cell, index) => renderCell(cell, index))}
+        <div className="relative z-10 max-w-full">
+          {editingTitle ? (
+            <textarea
+              ref={titleRef}
+              className="text-center w-full z-10 resize-none overflow-hidden text-4xl text-wrap bg-transparent font-bold rounded-lg"
+              value={state.title}
+              style={titleStyle}
+              onChange={handleTitleChange}
+              onFocus={calculateRows}
+              onBlur={() => setEditingTitle(false)}
+              rows={rows}
+            />
+          ) : (
+            <h1
+              className="text-center z-10 text-4xl font-bold"
+              style={titleStyle}
+              onClick={() => setEditingTitle(true)}
+            >
+              {state.title}
+            </h1>
+          )}
+          <div className="grid mt-8 mx-auto" style={gridStyle}>
+            {state.cells.map((cell, index) => renderCell(cell, index))}
+          </div>
         </div>
       </div>
     </div>

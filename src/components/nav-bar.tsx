@@ -20,13 +20,13 @@ const NavBar = () => {
   };
 
   return (
-    <div className="w-full flex justify-between items-center pt-8">
+    <div className="w-full flex justify-between items-center pt-4 ">
       <div className="flex items-center">
-        <Link href={"/"} className="font-extrabold italic">
+        <Link href={"/"} className="font-extrabold italic z-[60]">
           Starfire
         </Link>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 z-[60]">
         <ProfileOrLoginButton />
         <ModeToggle />
       </div>

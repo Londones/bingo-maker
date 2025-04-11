@@ -11,17 +11,17 @@ import { useSession } from "next-auth/react";
 import { useBingoStorage } from "@/hooks/useBingoStorage";
 import { MigrateRequest } from "@/types/types";
 import { APIError } from "@/lib/errors";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 const Page = () => {
-  const [errorMessage, formAction, isPending] = useActionState(
-    authenticate,
-    undefined
-  );
+  const [errorMessage, formAction, isPending] = useActionState(authenticate, undefined);
   const [, , isGooglePending] = useActionState(authenticateGoogle, undefined);
   const { data: session } = useSession();
   const { authorToken, useMigrateBingos, isClient } = useBingoStorage();
   const [migrationAttempted, setMigrationAttempted] = useState(false);
+  const router = useRouter();
+
+  console.log("Session data:", session);
 
   const handleGoogleSignIn = () => {
     void authenticateGoogle();
@@ -31,9 +31,7 @@ const Page = () => {
     async function migrateBingos() {
       if (session?.user?.id && isClient && authorToken && !migrationAttempted) {
         setMigrationAttempted(true);
-        const bingoIds = JSON.parse(
-          localStorage.getItem("ownedBingos") || "[]"
-        );
+        const bingoIds = JSON.parse(localStorage.getItem("ownedBingos") || "[]");
         if (bingoIds.length > 0) {
           try {
             const migrationResult = await useMigrateBingos.mutateAsync({
@@ -45,7 +43,7 @@ const Page = () => {
             if (migrationResult.migratedCount > 0) {
               toast.success(`Migrated ${migrationResult.migratedCount} bingos`);
               localStorage.removeItem("ownedBingos");
-              redirect("/me");
+              router.push("/me");
             }
           } catch (error) {
             if (error instanceof APIError) {
@@ -61,13 +59,7 @@ const Page = () => {
     if (!migrationAttempted && session?.user?.id) {
       void migrateBingos();
     }
-  }, [
-    session?.user?.id,
-    isClient,
-    authorToken,
-    useMigrateBingos,
-    migrationAttempted,
-  ]);
+  }, [session?.user?.id, isClient, authorToken, useMigrateBingos, migrationAttempted, router]);
 
   if (errorMessage) {
     toast.error(errorMessage);
@@ -82,13 +74,7 @@ const Page = () => {
             <Label htmlFor="email" className="">
               Email
             </Label>
-            <Input
-              id="email"
-              className="w-full rounded-md"
-              type="email"
-              name="email"
-              required
-            />
+            <Input id="email" className="w-full rounded-md" type="email" name="email" required />
           </div>
 
           <div className="relative h-fit">
@@ -112,9 +98,7 @@ const Page = () => {
               <span className="border-t w-full" />
             </div>
             <div className="flex justify-center text-nowrap text-xs w-full uppercase">
-              <span className=" px-2 text-muted-foreground">
-                Or continue with
-              </span>
+              <span className=" px-2 text-muted-foreground">Or continue with</span>
             </div>
             <div className="flex w-full items-center">
               <span className="border-t w-full" />

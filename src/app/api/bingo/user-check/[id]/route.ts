@@ -2,12 +2,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { handleAPIError } from "@/lib/api-utils";
 
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+type ParamsType = Promise<{ id: string }>;
+
+export async function GET(req: Request, { params }: { params: ParamsType }) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const user = await prisma.user.findUnique({
       where: { id },

@@ -12,10 +12,7 @@ export async function signout() {
   await signOut();
 }
 
-export async function authenticate(
-  prevState: string | undefined,
-  formData: FormData
-) {
+export async function authenticate(prevState: string | undefined, formData: FormData) {
   try {
     await signIn("credentials", formData);
   } catch (error) {
@@ -34,13 +31,10 @@ export async function authenticate(
 }
 
 export async function authenticateGoogle() {
-  await signIn("google", { callbackUrl: "/me" });
+  await signIn("google", { callbackUrl: "/me", redirectTo: "/me" });
 }
 
-export async function register(
-  prevState: string | undefined,
-  formData: FormData
-) {
+export async function register(prevState: string | undefined, formData: FormData) {
   try {
     const {
       email,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useEditor } from "@/hooks/useEditor";
 import { Button } from "@/components/ui/button";
-import { Undo, Redo, Save, Loader } from "lucide-react";
+import { Undo, Redo, Save, Loader, ChevronLeft, ChevronRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useBingoStorage } from "@/hooks/useBingoStorage";
 import { toast } from "sonner";
@@ -12,7 +12,13 @@ import { uploadPendingImages } from "@/app/actions/uploadthing";
 import { useQueryClient } from "@tanstack/react-query";
 import { Bingo, BingoPatch } from "@/types/types";
 
-const Controls = () => {
+const Controls = ({
+  isPanelOpen,
+  setIsPanelOpen,
+}: {
+  isPanelOpen?: boolean;
+  setIsPanelOpen?: (open: boolean) => void;
+}) => {
   const router = useRouter();
   const { actions, canRedo, canUndo, canSave, state } = useEditor();
   const { useSaveBingo, useUpdateBingo } = useBingoStorage();
@@ -222,7 +228,19 @@ const Controls = () => {
 
   return (
     <TooltipProvider>
-      <div className="flex w-full justify-between mb-4">
+      <div className="flex w-full justify-center gap-6">
+        {setIsPanelOpen && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button onClick={() => setIsPanelOpen(!isPanelOpen)} variant="outline" className="ml-2">
+                {isPanelOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{isPanelOpen ? "Hide panel" : "Show panel"}</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
         <div className="flex gap-4">
           <Tooltip>
             <TooltipTrigger asChild>
