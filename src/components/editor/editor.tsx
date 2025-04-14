@@ -24,13 +24,13 @@ const Editor = () => {
           <Controls isPanelOpen={isPanelOpen} setIsPanelOpen={setIsPanelOpen} />
         </div>
         {/* Main Editor Area */}
-        <div className="flex-1 flex overflow-hidden relative">
+        <div className=" flex overflow-hidden relative">
           {/* Settings Panel - slides in/out on mobile */}
           <div
-            className={`w-80 h-full border-r bg-background/80 backdrop-blur-sm overflow-y-auto
+            className={`h-full border-r backdrop-blur-sm [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden overflow-y-auto
                       custom-scrollbar transition-all duration-300 ease-in-out z-30
-                      lg:relative lg:translate-x-0
-                      ${isPanelOpen ? "translate-x-0" : "-translate-x-full lg:w-0 lg:opacity-0 lg:border-r-0"}`}
+                      relative translate-x-0
+                      ${isPanelOpen ? "translate-x-0 min-w-96" : "-translate-x-full w-0 opacity-0 lg:border-r-0"}`}
           >
             <div className="p-4">
               <SettingsPanel />
@@ -38,9 +38,12 @@ const Editor = () => {
           </div>
 
           {/* Preview Area - Takes remaining space and scrolls independently */}
-          <div className="flex-1 h-full overflow-auto custom-scrollbar bg-background/50">
-            <div className="p-4 h-full min-h-0">
-              <PreviewPanel ref={previewRef} />
+          <div className="w-full h-full bg-background/50 flex-1 relative">
+            {/* Add a larger minimum padding around the preview content to ensure it's fully visible */}
+            <div className="absolute inset-0 overflow-auto p-8 md:p-12 custom-scrollbar">
+              <div className="min-w-full min-h-full flex items-center justify-center">
+                <PreviewPanel ref={previewRef} />
+              </div>
             </div>
           </div>
         </div>

@@ -44,7 +44,6 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
       backgroundPosition: background.backgroundImagePosition || "center",
       opacity: (background.backgroundImageOpacity ?? 100) / 100,
       backgroundRepeat: "no-repeat",
-      // Fix background positioning to prevent resizing with window
       backgroundAttachment: "local",
     };
   }, [
@@ -390,11 +389,8 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
     };
   }, []);
   return (
-    <div ref={ref} className="flex flex-col items-center h-full w-full">
-      <div
-        className=" h-full flex items-center flex-col justify-center p-8 rounded-lg relative overflow-auto custom-scrollbar"
-        style={getBackground}
-      >
+    <div ref={ref} className="flex flex-col items-center overflow-visible justify-center h-full w-full">
+      <div className="h-fit flex flex-col p-8 rounded-lg relative custom-scrollbar" style={getBackground}>
         <div className="absolute inset-0 pointer-events-none" style={getBackgroundImage} />
         <div className="relative z-10 max-w-full">
           {editingTitle ? (
