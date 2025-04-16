@@ -229,7 +229,7 @@ export const editorSlice = createSlice({
           ...state.changes?.cells,
           [cell!.id!]: {
             ...state.changes?.cells?.[action.payload],
-            validated: !cell?.validated,
+            validated: cell?.validated,
           },
         };
       }

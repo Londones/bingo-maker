@@ -13,7 +13,7 @@ type PreviewPanelProps = {
 };
 
 const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
-  const { state, actions } = useEditor();
+  const { state, actions, canSave } = useEditor();
   const [editingCell, setEditingCell] = React.useState<number | null>(null);
   const [editContent, setEditContent] = React.useState<string>("");
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
@@ -23,10 +23,18 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
   const [rows, setRows] = React.useState(1);
   const [prevFontSizes, setPrevFontSizes] = React.useState<Record<number, number>>({});
   const fontSizeDebounceTimerRef = React.useRef<Record<number, NodeJS.Timeout>>({});
+  const titleDebounceTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const [localTitle, setLocalTitle] = React.useState(state.title);
 
+  // Set local title when state changes
+  React.useEffect(() => {
+    setLocalTitle(state.title);
+  }, [state.title]);
+
+  // Optimize the getBackground function with specific dependencies
   const getBackground = useMemo(() => {
-    const { background } = state;
-    const config = deserializeGradientConfig(background.value);
+    const { value } = state.background;
+    const config = deserializeGradientConfig(value);
     const stopToGradient = (stop: RadialGradientStop) => {
       return `radial-gradient(at ${stop.position.x}% ${stop.position.y}%, ${stop.color} 0px, transparent 50%)`;
     };
@@ -36,13 +44,16 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
       backgroundImage: backgroundImage,
     };
   }, [state.background.value]);
+
+  // Optimize the getBackgroundImage function with specific dependencies
   const getBackgroundImage = useMemo(() => {
-    const { background } = state;
+    const { backgroundImage, backgroundImageSize, backgroundImagePosition, backgroundImageOpacity } = state.background;
+
     return {
-      backgroundImage: `url(${background.backgroundImage})`,
-      backgroundSize: `${background.backgroundImageSize}%` || "100%",
-      backgroundPosition: background.backgroundImagePosition || "center",
-      opacity: (background.backgroundImageOpacity ?? 100) / 100,
+      backgroundImage: `url(${backgroundImage})`,
+      backgroundSize: `${backgroundImageSize}%` || "100%",
+      backgroundPosition: backgroundImagePosition || "center",
+      opacity: (backgroundImageOpacity ?? 100) / 100,
       backgroundRepeat: "no-repeat",
       backgroundAttachment: "local",
     };
@@ -235,10 +246,16 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
 
   const handleTitleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      actions.setTitle(e.target.value);
-      calculateRows();
+      setLocalTitle(e.target.value);
+      // Debounce the title change action
+      if (titleDebounceTimerRef.current) {
+        clearTimeout(titleDebounceTimerRef.current);
+      }
+      titleDebounceTimerRef.current = setTimeout(() => {
+        actions.setTitle(e.target.value);
+      }, 300); // 300ms debounce
     },
-    [actions, calculateRows]
+    [actions]
   );
 
   React.useEffect(() => {
@@ -267,7 +284,7 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
     }
 
     window.onbeforeunload = (e: BeforeUnloadEvent) => {
-      if (!state.id) {
+      if (canSave) {
         e.preventDefault();
         // display a confirmation dialog
         // alert("You have unsaved changes. Are you sure you want to leave?");
@@ -281,7 +298,7 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
       inputObserver?.disconnect();
       window.removeEventListener("resize", calculateRows);
     };
-  }, [state.cells, checkOverflow, editingCell, state.id, calculateRows]);
+  }, [state.cells, checkOverflow, editingCell, state.id, calculateRows, canSave]);
 
   // Memoize the grid style for performance
   const gridStyle = useMemo(
@@ -397,7 +414,7 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
             <textarea
               ref={titleRef}
               className="text-center w-full z-10 resize-none overflow-hidden text-4xl text-wrap bg-transparent font-bold rounded-lg"
-              value={state.title}
+              value={localTitle}
               style={titleStyle}
               onChange={handleTitleChange}
               onFocus={calculateRows}
@@ -410,7 +427,7 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
               style={titleStyle}
               onClick={() => setEditingTitle(true)}
             >
-              {state.title}
+              {localTitle}
             </h1>
           )}
           <div className="grid mt-8 mx-auto" style={gridStyle}>
