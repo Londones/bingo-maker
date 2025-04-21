@@ -1,7 +1,7 @@
 "use client";
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import { deserializeGradientConfig } from "@/lib/utils";
-import { RadialGradientStop, Bingo, BingoCell } from "@/types/types";
+import { RadialGradientStop, Bingo } from "@/types/types";
 import Image from "next/image";
 import { motion } from "framer-motion";
 
@@ -10,7 +10,13 @@ type BingoPreviewProps = {
 };
 
 const BingoPreview = ({ bingo }: BingoPreviewProps) => {
-    const getBackground = () => {
+    // Function to convert px to rem for better responsiveness
+    const pxToRem = useCallback((px: number): string => {
+        // Assuming base font size of 16px (browser default)
+        return `${px / 16}rem`;
+    }, []);
+
+    const getBackground = useMemo(() => {
         const { background } = bingo;
         const config = deserializeGradientConfig(background.value);
         const stopToGradient = (stop: RadialGradientStop) => {
@@ -21,124 +27,130 @@ const BingoPreview = ({ bingo }: BingoPreviewProps) => {
             backgroundColor: config.backgroundColor,
             backgroundImage: backgroundImage,
         };
-    };
+    }, [bingo]);
 
-    const getBackgroundImage = () => {
+    const getBackgroundImage = useMemo(() => {
         const { background } = bingo;
         return {
             backgroundImage: `url(${background.backgroundImage})`,
-            backgroundSize: "cover",
+            backgroundSize: background.backgroundImageSize ? `${background.backgroundImageSize}%` : "cover",
             backgroundPosition: background.backgroundImagePosition || "center",
             opacity: (background?.backgroundImageOpacity ?? 100) / 100,
+            backgroundRepeat: "no-repeat",
+            backgroundAttachment: "local",
         };
-    };
+    }, [bingo]);
 
-    const orderCells = () => {
-        const orderedCells: BingoCell[] = Array(bingo.gridSize ** 2).fill(null);
-        bingo.cells.forEach((cell) => {
-            orderedCells[cell.position] = cell;
-        });
-        return orderedCells;
-    };
-
-    const getCellStyles = (index: number) => {
-        const baseStyles = {
-            width: bingo.style.cellSize,
-            height: bingo.style.cellSize,
-            color: bingo.cells[index]?.cellStyle?.color ?? bingo.style.color,
-            fontSize: bingo.cells[index]?.cellStyle?.fontSize ?? bingo.style.fontSize,
-            fontFamily: bingo.cells[index]?.cellStyle?.fontFamily ?? bingo.style.fontFamily,
-            fontWeight: bingo.cells[index]?.cellStyle?.fontWeight ?? bingo.style.fontWeight,
-            fontStyle: bingo.cells[index]?.cellStyle?.fontStyle ?? bingo.style.fontStyle,
-            backgroundColor: getBgColorWithOpacity(
-                bingo.cells[index]?.cellStyle?.cellBackgroundColor ?? bingo.style.cellBackgroundColor,
-                bingo.cells[index]?.cellStyle?.cellBackgroundOpacity ?? bingo.style.cellBackgroundOpacity
-            ),
-        };
-
-        const backgroundStyles = {
-            borderColor: bingo.cells[index]?.cellStyle?.cellBorderColor ?? bingo.style.cellBorderColor,
-            borderWidth: bingo.cells[index]?.cellStyle?.cellBorderWidth ?? bingo.style.cellBorderWidth,
-
-            ...(bingo.cells[index]?.cellStyle?.cellBackgroundImage
-                ? getBackgroundImageWithOpacity(
-                      bingo.cells[index]?.cellStyle?.cellBackgroundImage,
-                      bingo.cells[index]?.cellStyle?.cellBackgroundImageOpacity ?? bingo.style.cellBackgroundOpacity
-                  )
-                : {}),
-        };
-
-        return { baseStyles, backgroundStyles };
-    };
-
-    const getBgColorWithOpacity = (color: string, opacity: number) => {
+    const getBgColorWithOpacity = useCallback((color: string, opacity: number) => {
         if (color.startsWith("hsla")) {
-            return color.replace(/[\d.]+\)$/g, `${opacity})`);
+            return color.replace(/[\d.]+\)$/g, `${opacity / 100})`);
         }
 
         if (color.startsWith("#")) {
             const r = parseInt(color.slice(1, 3), 16);
             const g = parseInt(color.slice(3, 5), 16);
             const b = parseInt(color.slice(5, 7), 16);
-            return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+            return `rgba(${r}, ${g}, ${b}, ${opacity / 100})`;
         }
         return color;
-    };
+    }, []);
 
-    const getBackgroundImageWithOpacity = (imageUrl: string | undefined, opacity: number) => {
-        if (!imageUrl) return undefined;
-        return {
-            backgroundImage: `linear-gradient(rgba(255, 255, 255, ${1 - opacity}), rgba(255, 255, 255, ${
-                1 - opacity
-            })), url(${imageUrl})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-        };
-    };
+    const getCellStyles = useCallback(
+        (index: number) => {
+            const baseStyles = {
+                width: pxToRem(bingo.style.cellSize),
+                height: pxToRem(bingo.style.cellSize),
+                color: bingo.cells[index]?.cellStyle?.color ?? bingo.style.color,
+                fontSize: pxToRem(bingo.cells[index]?.cellStyle?.fontSize ?? bingo.style.fontSize),
+                fontFamily: bingo.cells[index]?.cellStyle?.fontFamily ?? bingo.style.fontFamily,
+                fontWeight: bingo.cells[index]?.cellStyle?.fontWeight ?? bingo.style.fontWeight,
+                fontStyle: bingo.cells[index]?.cellStyle?.fontStyle ?? bingo.style.fontStyle,
+                backgroundColor: getBgColorWithOpacity(
+                    bingo.cells[index]?.cellStyle?.cellBackgroundColor ?? bingo.style.cellBackgroundColor,
+                    bingo.cells[index]?.cellStyle?.cellBackgroundOpacity ?? bingo.style.cellBackgroundOpacity
+                ),
+            };
+
+            const backgroundStyles = {
+                borderColor: bingo.cells[index]?.cellStyle?.cellBorderColor ?? bingo.style.cellBorderColor,
+                borderWidth: bingo.cells[index]?.cellStyle?.cellBorderWidth ?? bingo.style.cellBorderWidth,
+            };
+
+            return { baseStyles, backgroundStyles };
+        },
+        [bingo.style, bingo.cells, pxToRem, getBgColorWithOpacity]
+    );
+
+    const gridStyle = useMemo(
+        () => ({
+            gridTemplateColumns: `repeat(${bingo.gridSize}, ${pxToRem(bingo.style.cellSize)})`,
+            gap: pxToRem(bingo.style.gap),
+            width: "fit-content",
+        }),
+        [bingo.gridSize, bingo.style.cellSize, bingo.style.gap, pxToRem]
+    );
+
+    const titleStyle = useMemo(
+        () => ({
+            color: bingo.style.color,
+            fontFamily: bingo.style.fontFamily,
+            fontStyle: bingo.style.fontStyle,
+            width: bingo.titleWidth,
+        }),
+        [bingo.style.color, bingo.style.fontFamily, bingo.style.fontStyle, bingo.titleWidth]
+    );
 
     return (
         <div className='flex flex-col items-center space-y-4'>
             <div
-                className=' mx-auto h-full flex items-center flex-col justify-center p-8 rounded-lg  shadow-lg'
-                style={getBackground()}
+                className='mx-auto h-fit flex items-center flex-col justify-center p-8 rounded-lg shadow-lg relative'
+                style={getBackground}
             >
-                <div className='relative w-full h-full' style={getBackgroundImage()}>
+                <div className='absolute inset-0 pointer-events-none' style={getBackgroundImage} />
+                <div className='relative z-10 max-w-full'>
                     <h1
                         className='text-center text-4xl font-bold'
                         style={{
-                            color: bingo.style.color,
-                            fontFamily: bingo.style.fontFamily,
-                            fontStyle: bingo.style.fontStyle,
+                            ...titleStyle,
                         }}
                     >
                         {bingo.title}
                     </h1>
-                    <div
-                        className='grid mt-8 mx-auto'
-                        style={{
-                            gridTemplateColumns: `repeat(${bingo.gridSize}, ${bingo.style.cellSize}px)`,
-                            gap: bingo.style.gap,
-                            width: "fit-content",
-                        }}
-                    >
-                        {orderCells().map((cell) => (
+                    <div className='grid mt-8 mx-auto' style={gridStyle}>
+                        {bingo.cells.map((cell, index) => (
                             <div
                                 key={cell.position}
                                 className='relative items-center justify-center rounded-md backdrop-blur-sm transition-all'
                                 style={{
-                                    ...getCellStyles(cell.position).baseStyles,
-                                    ...getCellStyles(cell.position).backgroundStyles,
+                                    ...getCellStyles(index).baseStyles,
+                                    ...getCellStyles(index).backgroundStyles,
                                 }}
                             >
-                                <div className='p-1 w-full h-full text-center whitespace-pre-wrap content-center break-words overflow-auto'>
-                                    {cell.content}
+                                <div className='p-1 w-full h-full text-center whitespace-pre-wrap content-center break-words overflow-auto relative'>
+                                    {/* Add the cell background image as an absolute positioned div */}
+                                    {cell.cellStyle?.cellBackgroundImage && (
+                                        <div
+                                            className='absolute inset-0 pointer-events-none'
+                                            style={{
+                                                backgroundImage: `url(${cell.cellStyle.cellBackgroundImage})`,
+                                                backgroundSize: cell.cellStyle.cellBackgroundImageSize
+                                                    ? `${cell.cellStyle.cellBackgroundImageSize}%`
+                                                    : "cover",
+                                                backgroundPosition:
+                                                    cell.cellStyle.cellBackgroundImagePosition || "center",
+                                                backgroundRepeat: "no-repeat",
+                                                opacity: (cell.cellStyle.cellBackgroundImageOpacity ?? 100) / 100,
+                                            }}
+                                        />
+                                    )}
+                                    <div className='relative'>{cell.content}</div>
                                 </div>
                                 {cell.validated && (
                                     <motion.div
                                         className='absolute inset-0 flex items-center justify-center pointer-events-none'
                                         style={{
-                                            fontSize: bingo.stamp.size,
-                                            opacity: bingo.stamp.opacity,
+                                            fontSize: pxToRem(bingo.stamp.size || 24),
+                                            opacity: bingo.stamp.opacity || 0.8,
                                             fontStyle: "normal",
                                         }}
                                         initial={{ scale: 0 }}
@@ -152,11 +164,11 @@ const BingoPreview = ({ bingo }: BingoPreviewProps) => {
                                                 src={bingo.stamp.value}
                                                 alt='stamp'
                                                 className='w-full h-full object-contain'
-                                                width={bingo.stamp.size}
-                                                height={bingo.stamp.size}
+                                                width={bingo.stamp.size || 24}
+                                                height={bingo.stamp.size || 24}
                                                 style={{
-                                                    maxWidth: bingo.stamp.size,
-                                                    maxHeight: bingo.stamp.size,
+                                                    maxWidth: bingo.stamp.size || 24,
+                                                    maxHeight: bingo.stamp.size || 24,
                                                 }}
                                             />
                                         )}

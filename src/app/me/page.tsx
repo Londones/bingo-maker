@@ -8,64 +8,139 @@ import UserBingoList from "@/components/user-bingo-list";
 import SignOutButton from "@/components/sign-out-button";
 
 const getUserPreviewBingos = async (userId: string, page: number = 1) => {
-  const skip = (page - 1) * ITEMS_PER_PAGE;
+    const skip = (page - 1) * ITEMS_PER_PAGE;
 
-  const bingos = await prisma.bingo.findMany({
-    where: { userId },
-    select: {
-      id: true,
-      title: true,
-      background: {
+    const bingos = await prisma.bingo.findMany({
+        where: { userId },
         select: {
-          value: true,
-          backgroundImage: true,
-          backgroundImageOpacity: true,
-          backgroundImagePosition: true,
-          backgroundImageSize: true,
+            id: true,
+            title: true,
+            background: {
+                select: {
+                    value: true,
+                    backgroundImage: true,
+                    backgroundImageOpacity: true,
+                    backgroundImagePosition: true,
+                    backgroundImageSize: true,
+                },
+            },
+            createdAt: true,
         },
-      },
-      createdAt: true,
-    },
-    orderBy: { createdAt: "desc" },
-    skip,
-    take: ITEMS_PER_PAGE,
-  });
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: ITEMS_PER_PAGE,
+    });
 
-  const totalCount = await prisma.bingo.count({
-    where: { userId },
-  });
+    const totalCount = await prisma.bingo.count({
+        where: { userId },
+    });
 
-  return {
-    bingos,
-    totalPages: Math.ceil(totalCount / ITEMS_PER_PAGE),
-    hasMore: skip + bingos.length < totalCount,
-  };
+    return {
+        bingos,
+        totalPages: Math.ceil(totalCount / ITEMS_PER_PAGE),
+        hasMore: skip + bingos.length < totalCount,
+    };
 };
 
-const MePage = async ({ searchParams }: { searchParams: { page?: string } }) => {
-  const session = await auth();
-  const user = session?.user;
-  // eslint-disable-next-line @typescript-eslint/await-thenable
-  const { page } = await searchParams;
+/**
+ * Migrate bingos from anonymous author token to a logged-in user
+ */
+const migrateBingos = async (bingoIds: string[], authorToken: string, userId: string) => {
+    // Check if there are any bingos matching these criteria
+    const bingoCount = await prisma.bingo.count({
+        where: {
+            id: { in: bingoIds },
+            authorToken: authorToken,
+            userId: null,
+        },
+    });
 
-  if (!user) {
-    console.log("User not authenticated, redirecting to sign-in page.");
-    redirect("/signin");
-  }
+    if (bingoCount === 0) {
+        return {
+            success: false,
+            migratedCount: 0,
+            message: "No bingos found to migrate",
+        };
+    }
 
-  const initialPage = page ? parseInt(page) : 1;
-  const { bingos, hasMore } = await getUserPreviewBingos(user.id, initialPage);
+    const updated = await prisma.bingo.updateMany({
+        where: {
+            id: { in: bingoIds },
+            authorToken: authorToken,
+            userId: null,
+        },
+        data: {
+            userId: userId,
+            authorToken: null,
+        },
+    });
 
-  return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">My Bingos</h1>
-        <SignOutButton />
-      </div>
+    return {
+        success: true,
+        migratedCount: updated.count,
+    };
+};
 
-      <UserBingoList initialBingos={bingos} initialPage={initialPage} hasMore={hasMore} userId={user.id} />
-    </div>
-  );
+const MePage = async ({
+    searchParams,
+}: {
+    searchParams: { page?: string; bingoIds?: string; authorToken?: string; migrated?: string };
+}) => {
+    const session = await auth();
+    const user = session?.user;
+
+    if (!user) {
+        console.log("User not authenticated, redirecting to sign-in page.");
+        redirect("/signin");
+    }
+    // Handle migration if bingoIds and authorToken are provided
+    // eslint-disable-next-line @typescript-eslint/await-thenable
+    const { bingoIds, authorToken, page, migrated } = await searchParams;
+
+    let migrationResult = null;
+
+    if (bingoIds && authorToken) {
+        try {
+            const bingoIdsArray = JSON.parse(bingoIds) as string[];
+            if (bingoIdsArray.length > 0) {
+                migrationResult = await migrateBingos(bingoIdsArray, authorToken, user.id);
+
+                // If we have migrated any bingos, we'll add a success parameter to the redirect
+                if (migrationResult.success && migrationResult.migratedCount > 0) {
+                    const redirectParams = new URLSearchParams();
+                    if (page) {
+                        redirectParams.append("page", page);
+                    }
+                    redirectParams.append("migrated", migrationResult.migratedCount.toString());
+                    redirect(`/me?${redirectParams.toString()}`);
+                }
+            }
+        } catch (error) {
+            console.error("Error migrating bingos:", error);
+        }
+    }
+    // Show the migration success message if we have the 'migrated' parameter
+    const migratedCount = migrated ? parseInt(migrated) : 0;
+
+    const initialPage = page ? parseInt(page) : 1;
+    const { bingos, hasMore } = await getUserPreviewBingos(user.id, initialPage);
+    return (
+        <div className='container mx-auto p-6'>
+            <div className='flex justify-between items-center mb-6'>
+                <h1 className='text-2xl font-bold'>My Bingos</h1>
+                <SignOutButton />
+            </div>
+
+            {(migratedCount > 0 || (migrationResult && migrationResult.migratedCount > 0)) && (
+                <div className='bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4'>
+                    Successfully migrated {migratedCount || migrationResult?.migratedCount} bingo
+                    {(migratedCount || migrationResult?.migratedCount) !== 1 ? "s" : ""}!
+                </div>
+            )}
+
+            <UserBingoList initialBingos={bingos} initialPage={initialPage} hasMore={hasMore} userId={user.id} />
+        </div>
+    );
 };
 
 export default MePage;

@@ -59,6 +59,7 @@ model VerificationToken {
 model Bingo {
     id          String       @id @default(cuid())
     title       String
+    titleWidth  Int? // Optional field for storing the title width
     gridSize    Int
     cells       BingoCell[]
     style       Style?
