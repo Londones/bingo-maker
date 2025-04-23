@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useEditor } from "@/hooks/useEditor";
 import { Button } from "@/components/ui/button";
-import { Undo, Redo, Save, Loader, ChevronLeft, ChevronRight } from "lucide-react";
+import { Undo, Redo, Save, Loader, ChevronLeft, ChevronRight, Share, RotateCcw } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useBingoStorage } from "@/hooks/useBingoStorage";
 import { toast } from "sonner";
@@ -124,7 +124,6 @@ const Controls = ({
 
     // Prevent updating if there are no changes
     if (!canSave && !state.localImages?.length) {
-      toast.info("No images to update");
       return;
     }
 
@@ -226,6 +225,20 @@ const Controls = ({
     }
   };
 
+  const handleShare = async () => {
+    if (canSave) {
+      if (state.id) {
+        await handleUpdate();
+      } else {
+        await handleSaveNew();
+      }
+    }
+    const shareLink = `${window.location.origin}/bingo/${state.id}`;
+    await navigator.clipboard.writeText(shareLink).then(() => {
+      toast.success("Share link copied to clipboard");
+    });
+  };
+
   return (
     <TooltipProvider>
       <div className="flex w-full justify-center gap-6">
@@ -241,6 +254,16 @@ const Controls = ({
             </TooltipContent>
           </Tooltip>
         )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="outline" onClick={() => actions.resetEditor()}>
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Reset</p>
+          </TooltipContent>
+        </Tooltip>
         <div className="flex gap-4">
           <Tooltip>
             <TooltipTrigger asChild>
@@ -284,6 +307,21 @@ const Controls = ({
           </TooltipTrigger>
           <TooltipContent>
             <p>Save</p>
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              onClick={() => {
+                void handleShare();
+              }}
+            >
+              <Share className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Share</p>
           </TooltipContent>
         </Tooltip>
       </div>

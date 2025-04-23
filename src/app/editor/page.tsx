@@ -11,7 +11,7 @@ export default function EditorPage() {
   useEffect(() => {
     if (isMainEditorPage) {
       const savedState = loadEditorState();
-      if (savedState) {
+      if (savedState && !savedState.id) {
         try {
           actions.setBingo(savedState);
         } catch (e) {
