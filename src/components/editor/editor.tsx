@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import PreviewPanel from "@/components/editor/preview-panel";
 import SettingsPanel from "@/components/editor/settings-panel";
-import Controls from "./controls";
+import Controls from "@/components/editor/controls";
 
 const Editor = () => {
   const previewRef = useRef<HTMLDivElement>(null);

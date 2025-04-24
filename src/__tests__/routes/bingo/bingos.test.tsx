@@ -31,6 +31,7 @@ describe("Bingos API Routes", () => {
   const mockBingo = {
     id: "1",
     title: "Test Bingo",
+    gridSize: 3,
     cells: [
       {
         id: "1",
@@ -45,19 +46,24 @@ describe("Bingos API Routes", () => {
       color: "#000000",
       cellSize: 100,
       gap: 8,
+      fontWeight: "normal",
+      fontStyle: "normal",
+      cellBorderColor: "#000000",
+      cellBorderWidth: 1,
+      cellBackgroundColor: "#ffffff",
+      cellBackgroundOpacity: 100,
     },
     background: {
-      type: "color",
       value: "#ffffff",
     },
     stamp: {
-      type: "emoji",
+      type: "text",
       value: "✓",
       size: 24,
       opacity: 1,
     },
     status: "draft",
-  } as Bingo;
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -83,7 +89,6 @@ describe("Bingos API Routes", () => {
       const data = (await response.json()) as Bingo;
       expect(data).toEqual(mockBingo);
     });
-
     it("should return 557 when failed to create bingo", async () => {
       // Arrange
       (auth as jest.Mock).mockResolvedValue({ user: { id: "1" } });
@@ -93,6 +98,7 @@ describe("Bingos API Routes", () => {
       const response = await POST(
         new NextRequest(`${API_URL}/api/bingo`, {
           method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(mockBingo),
         })
       );
@@ -101,6 +107,34 @@ describe("Bingos API Routes", () => {
       expect(response.status).toBe(557);
       const data = (await response.json()) as Error;
       expect(data.code).toBe("FAILED_TO_CREATE_BINGO");
+    });
+
+    it("should return 400 when validation fails", async () => {
+      // Arrange
+      (auth as jest.Mock).mockResolvedValue({ user: { id: "1" } });
+
+      const invalidBingo = {
+        ...mockBingo,
+        // Missing required fields to trigger Zod validation error
+        style: {
+          fontSize: -1, // Invalid fontSize (must be positive)
+        },
+      };
+
+      // Act
+      const response = await POST(
+        new NextRequest(`${API_URL}/api/bingo`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(invalidBingo),
+        })
+      );
+
+      // Assert
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toBe("Validation error");
+      expect(data.details).toBeDefined();
     });
   });
 

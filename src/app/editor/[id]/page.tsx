@@ -8,9 +8,70 @@ import Editor from "@/components/editor/editor";
 import { useRouter } from "next/navigation";
 import { BingoCell } from "@/types/types";
 
+import { Skeleton } from "@/components/ui/skeleton";
+
 const LoadingComponent = () => (
-  <div className="w-full h-screen flex items-center justify-center">
-    <div className="animate-pulse text-foreground/50">Loading bingo...</div>
+  <div className="fixed inset-0 w-screen h-screen bg-background/40 backdrop-blur-sm overflow-hidden z-40">
+    <div className="h-full flex flex-col text-foreground/50">
+      {/* Header area */}
+      <div className="p-4 border-b flex items-center justify-center bg-background/40 backdrop-blur-sm">
+        <div className="flex items-center gap-4 w-full">
+          <Skeleton className="h-9 w-24" />
+          <div className="ml-auto flex gap-4">
+            <Skeleton className="h-9 w-9 rounded-md" />
+            <Skeleton className="h-9 w-9 rounded-md" />
+            <Skeleton className="h-9 w-9 rounded-md" />
+          </div>
+        </div>
+      </div>
+
+      {/* Main content area */}
+      <div className="flex overflow-hidden relative flex-1">
+        {/* Settings panel */}
+        <div className="h-full border-r backdrop-blur-sm overflow-y-auto min-w-96">
+          <div className="p-4">
+            <Skeleton className="h-8 w-full mb-4" />
+            <div className="space-y-6">
+              {Array(4)
+                .fill(null)
+                .map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <Skeleton className="h-6 w-32" />
+                    <Skeleton className="h-24 w-full" />
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Preview panel */}
+        <div className="w-full overflow-auto bg-background/50 flex-1 relative">
+          <div className="inset-0 custom-scrollbar">
+            <div className="min-h-full py-12">
+              <div className="flex lg:justify-center">
+                <div className="mx-12 pr-12 lg:pr-0">
+                  <div className="flex flex-col items-center overflow-visible justify-center h-full w-full">
+                    <div className="h-fit flex flex-col p-8 rounded-lg relative custom-scrollbar">
+                      {/* Title */}
+                      <Skeleton className="h-10 w-64 mx-auto mb-8" />
+
+                      {/* Bingo grid */}
+                      <div className="grid grid-cols-5 gap-2 mx-auto">
+                        {Array(25)
+                          .fill(null)
+                          .map((_, i) => (
+                            <Skeleton key={i} className="w-24 h-24 rounded-md" />
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 );
 

@@ -24,10 +24,12 @@ export const uploadFile = async (file: File, key: string) => {
     // Convert File to Buffer before sending to S3
     const fileBuffer = await fileToBuffer(file);
 
+    const uniqueKey = `${Date.now()}-${key}`;
+
     const sendRes = await s3Client.send(
       new PutObjectCommand({
         Bucket: process.env.NEXT_PUBLIC_AWS_S3_BUCKET!,
-        Key: key,
+        Key: uniqueKey,
         Body: fileBuffer,
         ContentType: file.type,
       })
@@ -39,7 +41,7 @@ export const uploadFile = async (file: File, key: string) => {
       throw new Error(`Error uploading file, with status: ${meta.httpStatusCode}`);
     }
 
-    const url = `https://${process.env.NEXT_PUBLIC_AWS_S3_BUCKET}.s3.${process.env.NEXT_PUBLIC_AWS_S3_REGION}.amazonaws.com/${key}`;
+    const url = `https://${process.env.NEXT_PUBLIC_AWS_S3_BUCKET}.s3.${process.env.NEXT_PUBLIC_AWS_S3_REGION}.amazonaws.com/${uniqueKey}`;
     return url;
   } catch (error) {
     console.error("Error uploading file", error);

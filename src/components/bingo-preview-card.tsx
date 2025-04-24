@@ -8,10 +8,12 @@ import { motion } from "framer-motion";
 
 type BingoPreviewCardProps = {
   bingo: BingoPreview;
+  type: "preview" | "user";
 };
 
-const BingoPreviewCard = ({ bingo }: BingoPreviewCardProps) => {
-  // Handle background gradient if available
+const BingoPreviewCard = ({ bingo, type }: BingoPreviewCardProps) => {
+  const link = type === "preview" ? `/bingo/${bingo.id}` : `/editor/${bingo.id}`;
+
   const getGradientBackground = () => {
     if (!bingo.background?.value) return {};
 
@@ -42,7 +44,7 @@ const BingoPreviewCard = ({ bingo }: BingoPreviewCardProps) => {
     : {};
 
   return (
-    <Link href={`/editor/${bingo.id}`} className="w-full block group">
+    <Link href={link} className="w-full block group">
       <Card className="overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.03] border border-gray-200/20">
         <div className="h-48 relative overflow-hidden">
           {/* Gradient background layer */}

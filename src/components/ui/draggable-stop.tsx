@@ -1,64 +1,107 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { RadialGradientStop } from "@/types/types";
 
-type DraggableStopProps = {
-    stop: RadialGradientStop;
-    index: number;
-    onDragEnd: (index: number, x: number, y: number) => void;
-    containerRef: React.RefObject<HTMLDivElement>;
-    isHovered: boolean;
-};
+interface DraggableStopProps {
+  stop: RadialGradientStop;
+  index: number;
+  onDragEnd: (index: number, x: number, y: number) => void;
+  isHovered?: boolean;
+  containerRef: React.RefObject<HTMLDivElement>;
+}
 
-const DraggableStop = ({ stop, index, onDragEnd, containerRef, isHovered }: DraggableStopProps) => {
-    const [isContainerReady, setIsContainerReady] = useState(false);
+const DraggableStop: React.FC<DraggableStopProps> = ({ stop, index, onDragEnd, isHovered = false, containerRef }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const stopRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        if (containerRef.current) {
-            setIsContainerReady(true);
-        }
-    }, [containerRef]);
+  const calculatePosition = useCallback(
+    (clientX: number, clientY: number) => {
+      if (!containerRef.current) return { x: 0, y: 0 };
 
-    if (!isContainerReady) return null;
+      const rect = containerRef.current.getBoundingClientRect();
 
-    const pixelX = containerRef.current!.clientWidth * (stop.position.x / 100) - 10;
-    const pixelY = containerRef.current!.clientHeight * (stop.position.y / 100) - 10;
+      // Calculate position relative to container
+      const relativeX = clientX - rect.left;
+      const relativeY = clientY - rect.top;
 
-    return (
-        <motion.div
-            key={index}
-            drag
-            dragMomentum={false}
-            dragElastic={0}
-            dragSnapToOrigin={false}
-            dragConstraints={{
-                left: -10,
-                right: containerRef.current!.clientWidth - 10,
-                top: -10,
-                bottom: containerRef.current!.clientHeight - 10,
-            }}
-            initial={{ x: pixelX, y: pixelY }}
-            layout={false}
-            animate={{ x: pixelX, y: pixelY }}
-            dragTransition={{ power: 0, timeConstant: 0 }}
-            onDragEnd={(_, info) => onDragEnd(index, info.point.x, info.point.y)}
-            style={{
-                position: "absolute",
-                backgroundColor: stop.color,
-                width: "20px",
-                height: "20px",
-                borderRadius: "50%",
-                border: isHovered ? "2px solid rgba(255,255,255,0.8)" : "1px solid rgba(255,255,255,0.8)",
-                boxShadow: isHovered
-                    ? "0 0 0 1px rgba(0,0,0,0.3), 0 0 0 3px rgba(255,255,255,0.5)"
-                    : "0 0 0 1px rgba(0,0,0,0.3)",
-                transform: `scale(${isHovered ? 1.2 : 1})`,
-                transition: "transform 0.2s, border 0.2s, box-shadow 0.2s",
-                cursor: "pointer",
-            }}
-        />
-    );
+      // Constrain to container boundaries
+      const constrainedX = Math.max(0, Math.min(relativeX, rect.width));
+      const constrainedY = Math.max(0, Math.min(relativeY, rect.height));
+
+      return { x: constrainedX, y: constrainedY };
+    },
+    [containerRef]
+  );
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !containerRef.current || !stopRef.current) return;
+
+      const { x, y } = calculatePosition(e.clientX, e.clientY);
+
+      // Update visual position immediately during drag
+      stopRef.current.style.left = `${x}px`;
+      stopRef.current.style.top = `${y}px`;
+    };
+
+    const handleMouseUp = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+
+      // Important: Stop event propagation to prevent creating new stops
+      e.stopPropagation();
+
+      const { x, y } = calculatePosition(e.clientX, e.clientY);
+      onDragEnd(index, x, y);
+      setIsDragging(false);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging, index, onDragEnd, containerRef, calculatePosition]);
+
+  // Calculate initial position in pixels
+  const getInitialPosition = () => {
+    if (!containerRef.current) return { left: 0, top: 0 };
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const left = (stop.position.x / 100) * rect.width;
+    const top = (stop.position.y / 100) * rect.height;
+
+    return { left, top };
+  };
+
+  const { left, top } = getInitialPosition();
+
+  return (
+    <div
+      ref={stopRef}
+      data-drag-stop="true"
+      className={`absolute w-5 h-5 rounded-full cursor-grab ${isDragging ? "cursor-grabbing" : ""}`}
+      style={{
+        backgroundColor: stop.color,
+        left: `${left}px`,
+        top: `${top}px`,
+        transform: "translate(-50%, -50%)",
+        zIndex: isDragging ? 10 : 1,
+        border: "1px solid white",
+        boxShadow: isHovered || isDragging ? "0 0 0 2px rgba(0,0,0,0.5)" : "0 0 0 1px rgba(0,0,0,0.2)",
+        transition: isDragging ? "none" : "box-shadow 0.2s ease",
+      }}
+      onMouseDown={handleMouseDown}
+    />
+  );
 };
 
 export default DraggableStop;

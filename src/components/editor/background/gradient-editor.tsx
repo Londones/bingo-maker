@@ -50,9 +50,7 @@ const GradientEditor = () => {
   const [hoveredStopIndex, setHoveredStopIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { backgroundColor, stops } = deserializeGradientConfig(
-    state.background.value
-  );
+  const { backgroundColor, stops } = deserializeGradientConfig(state.background.value);
 
   const updateGradient = useCallback(
     (newBackground: string, newStops: RadialGradientStop[]) => {
@@ -72,8 +70,10 @@ const GradientEditor = () => {
 
       const rect = containerRef.current.getBoundingClientRect();
 
-      const relativeX = Math.max(0, Math.min(x - rect.left, rect.width));
-      const relativeY = Math.max(0, Math.min(y - rect.top, rect.height));
+      // Calculate position relative to container boundaries
+      // and constrain within container
+      const relativeX = Math.max(0, Math.min(x, rect.width));
+      const relativeY = Math.max(0, Math.min(y, rect.height));
 
       const percentageX = Math.round((relativeX / rect.width) * 100);
       const percentageY = Math.round((relativeY / rect.height) * 100);
@@ -111,6 +111,11 @@ const GradientEditor = () => {
 
   const handleClickBackground = useCallback(
     (e: React.MouseEvent) => {
+      // Check if this is the result of a drag operation ending
+      if ((e.target as HTMLElement).closest('[data-drag-stop="true"]')) {
+        return;
+      }
+
       if (!containerRef.current) return;
 
       const rect = containerRef.current.getBoundingClientRect();
@@ -166,19 +171,13 @@ const GradientEditor = () => {
   const backgroundStyle = {
     backgroundColor,
     backgroundImage: stops
-      .map(
-        (stop) =>
-          `radial-gradient(at ${stop.position.x}% ${stop.position.y}%, ${stop.color} 0px, transparent 50%)`
-      )
+      .map((stop) => `radial-gradient(at ${stop.position.x}% ${stop.position.y}%, ${stop.color} 0px, transparent 50%)`)
       .join(", "),
   };
 
   return (
     <div>
-      <div
-        ref={containerRef}
-        className="relative w-full h-28 border rounded-lg"
-      >
+      <div ref={containerRef} className="relative w-full h-28 border rounded-lg">
         <div
           className="w-full h-full rounded-lg"
           style={backgroundStyle}
@@ -213,11 +212,7 @@ const GradientEditor = () => {
       </div>
       {showColorPicker && (
         <ColorPickerPopover
-          color={
-            editingBackground
-              ? backgroundColor
-              : stops[selectedStop!]?.color || "hsla(0, 0%, 100%, 1)"
-          }
+          color={editingBackground ? backgroundColor : stops[selectedStop!]?.color || "hsla(0, 0%, 100%, 1)"}
           onChange={handleColorChange}
           onClose={() => setShowColorPicker(false)}
         />

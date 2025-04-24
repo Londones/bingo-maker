@@ -162,9 +162,16 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
           size: file.size,
         },
       };
+
+      actions.updateCell(index, {
+        cellStyle: {
+          ...cellStyle,
+        },
+      });
+
       actions.setLocalImage(localImage);
     },
-    [actions, errorToast, index]
+    [actions, errorToast, index, cellStyle]
   );
 
   const handleRemoveImage = useCallback(() => {

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useEditor } from "@/hooks/useEditor";
 import { Button } from "@/components/ui/button";
-import { Undo, Redo, Save, Loader, ChevronLeft, ChevronRight, Share, RotateCcw } from "lucide-react";
+import { Undo, Redo, Save, Loader, ChevronLeft, ChevronRight, Share } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Switch } from "@/components/ui/switch";
 import { useBingoStorage } from "@/hooks/useBingoStorage";
 import { toast } from "sonner";
 import { APIError } from "@/lib/errors";
-import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { uploadPendingImages } from "@/app/actions/uploadthing";
 import { useQueryClient } from "@tanstack/react-query";
@@ -19,12 +19,10 @@ const Controls = ({
   isPanelOpen?: boolean;
   setIsPanelOpen?: (open: boolean) => void;
 }) => {
-  const router = useRouter();
   const { actions, canRedo, canUndo, canSave, state } = useEditor();
   const { useSaveBingo, useUpdateBingo } = useBingoStorage();
   const queryClient = useQueryClient();
   const { status: saveStatus } = useSaveBingo;
-  const currentUrl = usePathname();
   const [isSaving, setIsSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
 
@@ -75,8 +73,6 @@ const Controls = ({
 
       return updatedState;
     } catch (error) {
-      console.error("Error uploading images:", error);
-      toast.error("Failed to upload images");
       throw error;
     }
   };
@@ -104,10 +100,6 @@ const Controls = ({
       toast.success("Bingo saved successfully");
 
       setJustSaved(true);
-
-      if (currentUrl === "/") {
-        router.push(`/bingo/${savedBingo.id}`);
-      }
     } catch (error) {
       if (error instanceof APIError) {
         toast.error(error.message);
@@ -169,7 +161,6 @@ const Controls = ({
         }
       }
 
-      // Only perform update if we have actual changes
       if (Object.keys(updateData).length === 0) {
         toast.info("No changes to update");
         setIsSaving(false);
@@ -254,7 +245,7 @@ const Controls = ({
             </TooltipContent>
           </Tooltip>
         )}
-        <Tooltip>
+        {/* <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="outline" onClick={() => actions.resetEditor()}>
               <RotateCcw className="h-4 w-4" />
@@ -263,8 +254,19 @@ const Controls = ({
           <TooltipContent>
             <p>Reset</p>
           </TooltipContent>
-        </Tooltip>
-        <div className="flex gap-4">
+        </Tooltip> */}
+        <div className="flex gap-4 items-center">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Switch
+                checked={state.status === "published"}
+                onCheckedChange={(checked) => actions.switchStatus(checked ? "published" : "draft")}
+              />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{state.status === "published" ? "Published" : "Draft"}</p>
+            </TooltipContent>
+          </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="outline" onClick={actions.undo} disabled={!canUndo}>

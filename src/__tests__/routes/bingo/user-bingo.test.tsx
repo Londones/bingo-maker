@@ -130,7 +130,7 @@ describe("User Bingo API Route", () => {
     });
 
     // Add 18 more bingos for pagination testing
-    for (let i = 0; i < 18; i++) {
+    for (let i = 0; i < 10; i++) {
       mockBingos.push({
         id: `${i + 3}`,
         title: `Test Bingo ${i + 3}`,
@@ -146,7 +146,7 @@ describe("User Bingo API Route", () => {
     }
 
     // Mock that findMany returns only the items for page 2 (items 10-19)
-    const page2Items = mockBingos.slice(10, 20);
+    const page2Items = mockBingos.slice(7, 13);
     (prisma.bingo.findMany as jest.Mock).mockResolvedValue(page2Items);
 
     const totalCount = mockBingos.length;
@@ -154,12 +154,12 @@ describe("User Bingo API Route", () => {
 
     const newPage = 2;
     // Fix the hasMore calculation to match what the actual route is doing
-    const page2Skip = (newPage - 1) * 10;
+    const page2Skip = (newPage - 1) * 6;
     const hasMore = page2Skip + page2Items.length < totalCount;
 
     const newResponse = {
       bingos: JSON.parse(JSON.stringify(page2Items)),
-      totalPages: Math.ceil(totalCount / 10),
+      totalPages: Math.ceil(totalCount / 6),
       hasMore: hasMore, // This will be true if there are more items after page 2
     };
 
