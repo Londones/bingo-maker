@@ -294,7 +294,9 @@ export default function Home() {
                 <div className="h-1 w-10 bg-gradient-to-l from-purple-500 to-transparent rounded-full"></div>
               </div>
 
-              <p className="text-center text-foreground/70 mb-8 max-w-2xl mx-auto">Check out what others have made!</p>
+              <p className="text-center text-foreground/70 mb-8 max-w-2xl mx-auto">
+                Check out what others have made and published!
+              </p>
 
               <LatestBingosSection />
 

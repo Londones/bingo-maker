@@ -55,12 +55,15 @@ const Controls = ({
             return {
               ...cell,
               cellStyle: {
-                ...cell.cellStyle,
+                ...(cell.cellStyle || {}),
                 cellBackgroundImage: uploadedImage.url,
               },
             };
           }
-          return cell;
+          return {
+            ...cell,
+            cellStyle: cell.cellStyle ? { ...cell.cellStyle } : undefined,
+          };
         }),
         stamp: uploadResult.stampImage
           ? {
@@ -131,7 +134,6 @@ const Controls = ({
       const updateData: BingoPatch = {
         ...changes,
       };
-
       if (state.localImages?.length) {
         if (preparedState.background.backgroundImage !== state.background.backgroundImage) {
           updateData.background = {
@@ -148,16 +150,27 @@ const Controls = ({
           };
         }
 
-        if (
-          preparedState.cells.some(
-            (cell, i) => cell.cellStyle?.cellBackgroundImage !== state.cells[i]?.cellStyle?.cellBackgroundImage
-          )
-        ) {
-          updateData.cells = preparedState.cells
-            .filter((cell, i) => cell.cellStyle?.cellBackgroundImage !== state.cells[i]?.cellStyle?.cellBackgroundImage)
-            .map((cell) => ({
-              ...cell,
-            }));
+        const cellsWithImageChanges = preparedState.cells
+          .filter((cell, i) => cell.cellStyle?.cellBackgroundImage !== state.cells[i]?.cellStyle?.cellBackgroundImage)
+          .map((cell) => ({
+            ...cell,
+          }));
+
+        if (cellsWithImageChanges.length > 0) {
+          if (updateData.cells) {
+            const existingCellUpdates = new Map(updateData.cells.map((cell) => [cell.position, cell]));
+
+            cellsWithImageChanges.forEach((cell) => {
+              existingCellUpdates.set(cell.position, {
+                ...existingCellUpdates.get(cell.position),
+                ...cell,
+              });
+            });
+
+            updateData.cells = Array.from(existingCellUpdates.values());
+          } else {
+            updateData.cells = cellsWithImageChanges;
+          }
         }
       }
 

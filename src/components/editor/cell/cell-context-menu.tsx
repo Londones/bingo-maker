@@ -35,43 +35,73 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
       y: isNaN(y!) ? 50 : y,
     };
   });
-
   const [isDragging, setIsDragging] = useState(false);
   const initialPositionRef = useRef({ x: 0, y: 0 });
   const initialMouseRef = useRef({ x: 0, y: 0 });
+  // Use a mutable ref to track current position during drag operations
+  const currentPositionRef = useRef(position);
+  // This ref will store the animation frame ID
+  const animationFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!cellStyle?.cellBackgroundImagePosition) return;
 
     const posStr = cellStyle.cellBackgroundImagePosition;
     const [x, y] = posStr.split(" ").map((val) => parseInt(val));
-    setPosition({
+    const newPosition = {
       x: isNaN(x!) ? 50 : x,
       y: isNaN(y!) ? 50 : y,
-    });
+    };
+
+    setPosition(newPosition);
+    currentPositionRef.current = newPosition;
   }, [cellStyle?.cellBackgroundImagePosition]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging || !containerRef.current) return;
 
-      const rect = containerRef.current.getBoundingClientRect();
-      const deltaX = e.clientX - initialMouseRef.current.x;
-      const deltaY = e.clientY - initialMouseRef.current.y;
+      // Cancel any pending animation frame
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
 
-      const newX = Math.max(0, Math.min(100, initialPositionRef.current.x + (deltaX / rect.width) * 100));
-      const newY = Math.max(0, Math.min(100, initialPositionRef.current.y + (deltaY / rect.height) * 100));
+      // Schedule a new frame
+      animationFrameRef.current = requestAnimationFrame(() => {
+        if (!containerRef.current) return;
 
-      setPosition({ x: newX, y: newY });
+        const rect = containerRef.current.getBoundingClientRect();
+        const deltaX = e.clientX - initialMouseRef.current.x;
+        const deltaY = e.clientY - initialMouseRef.current.y;
+
+        const newX = Math.max(0, Math.min(100, initialPositionRef.current.x + (deltaX / rect.width) * 100));
+        const newY = Math.max(0, Math.min(100, initialPositionRef.current.y + (deltaY / rect.height) * 100));
+
+        // Update the mutable ref
+        currentPositionRef.current = { x: newX, y: newY };
+
+        // Update the state (this triggers a render)
+        setPosition(currentPositionRef.current);
+
+        animationFrameRef.current = null;
+      });
     };
 
     const handleMouseUp = () => {
       if (isDragging) {
         setIsDragging(false);
+
+        // Clean up any pending animation frame
+        if (animationFrameRef.current !== null) {
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
+        }
+
+        // Use the current position from ref for the final update
         actions.updateCell(index, {
           cellStyle: {
             ...cellStyle,
-            cellBackgroundImagePosition: `${position.x}% ${position.y}%`,
+            cellBackgroundImagePosition: `${currentPositionRef.current.x}% ${currentPositionRef.current.y}%`,
           },
         });
       }
@@ -85,8 +115,14 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
+
+      // Clean up any pending animation frame on unmount
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
     };
-  }, [isDragging, actions, position, cellStyle, index]);
+  }, [isDragging, actions, cellStyle, index]);
 
   const startDrag = useCallback(
     (e: React.MouseEvent) => {
@@ -461,18 +497,20 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
                     }}
                   />
                 </div>
-
                 <Label htmlFor="opacity" className="text-foreground/50">
                   Image Opacity
-                </Label>
+                </Label>{" "}
                 <Slider
                   defaultValue={[cellStyle?.cellBackgroundImageOpacity ?? 100]}
                   onValueChange={(value: number[]) => {
-                    actions.updateCell(index, {
-                      cellStyle: {
-                        ...cellStyle,
-                        cellBackgroundImageOpacity: value[0]!,
-                      },
+                    // Use requestAnimationFrame for better performance on opacity changes
+                    requestAnimationFrame(() => {
+                      actions.updateCell(index, {
+                        cellStyle: {
+                          ...cellStyle,
+                          cellBackgroundImageOpacity: value[0]!,
+                        },
+                      });
                     });
                   }}
                   step={1}
@@ -480,18 +518,20 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
                   max={100}
                   id="opacity"
                 />
-
                 <Label htmlFor="zoom" className="text-foreground/50">
                   Zoom
-                </Label>
+                </Label>{" "}
                 <Slider
                   defaultValue={[cellStyle?.cellBackgroundImageSize ?? 100]}
                   onValueChange={(value: number[]) => {
-                    actions.updateCell(index, {
-                      cellStyle: {
-                        ...cellStyle,
-                        cellBackgroundImageSize: value[0]!,
-                      },
+                    // Use requestAnimationFrame for better performance on zoom changes
+                    requestAnimationFrame(() => {
+                      actions.updateCell(index, {
+                        cellStyle: {
+                          ...cellStyle,
+                          cellBackgroundImageSize: value[0]!,
+                        },
+                      });
                     });
                   }}
                   step={1}
@@ -499,7 +539,6 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
                   max={200}
                   id="zoom"
                 />
-
                 <Button variant="destructive" onClick={handleRemoveImage}>
                   Remove Image
                 </Button>

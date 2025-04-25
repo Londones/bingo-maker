@@ -399,7 +399,10 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
   }, []);
   return (
     <div ref={ref} className="flex flex-col items-center overflow-visible justify-center h-full w-full">
-      <div className="h-fit flex flex-col p-8 rounded-lg relative custom-scrollbar" style={getBackground}>
+      <div
+        className="h-fit flex flex-col p-8 rounded-lg overflow-hidden relative custom-scrollbar"
+        style={getBackground}
+      >
         <div className="absolute inset-0 pointer-events-none" style={getBackgroundImage} />
         <div className="relative z-10 max-w-full">
           {editingTitle ? (
