@@ -18,6 +18,7 @@ const BingoContent = ({ id }: { id: string }) => {
   const { data: session } = useSession();
   const { useGetBingo, useCheckOwnership } = useBingoStorage();
   const [isClientSide, setIsClientSide] = useState(false);
+  const [isOrdered, setIsOrdered] = useState(false);
 
   const { data: bingo, isLoading: isBingoLoading, error } = useGetBingo(id);
 
@@ -39,6 +40,7 @@ const BingoContent = ({ id }: { id: string }) => {
         orderedCells[cell.position] = cell;
       });
       bingo.cells = orderedCells;
+      setIsOrdered(true);
     }
   }, [bingo, session, isAuthor]);
 
@@ -46,7 +48,7 @@ const BingoContent = ({ id }: { id: string }) => {
     setIsClientSide(true);
   }, []);
 
-  if (!isClientSide || (isBingoLoading && !bingo)) {
+  if (!isClientSide || (isBingoLoading && !bingo && !isOrdered)) {
     return <LoadingComponent />;
   }
 

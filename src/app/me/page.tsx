@@ -90,7 +90,6 @@ const MePage = async ({
   const user = session?.user;
 
   if (!user) {
-    console.log("User not authenticated, redirecting to sign-in page.");
     redirect("/signin");
   }
   // Handle migration if bingoIds and authorToken are provided
@@ -111,6 +110,8 @@ const MePage = async ({
           if (page) {
             redirectParams.append("page", page);
           }
+          redirectParams.append("migrated", migrationResult.migratedCount.toString());
+          redirect(`/me?${redirectParams.toString()}`);
         }
       }
     } catch (error) {
@@ -127,7 +128,7 @@ const MePage = async ({
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">My Bingos</h1>
         <SignOutButton />
-      </div>{" "}
+      </div>
       <MigrationToast count={migratedCount || migrationResult?.migratedCount} />
       <UserBingoList initialBingos={bingos} initialPage={initialPage} hasMore={hasMore} userId={user.id} />
     </div>
