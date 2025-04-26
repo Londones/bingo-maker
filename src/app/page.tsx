@@ -69,7 +69,6 @@ export default function Home() {
   const [bounce, setBounce] = useState(false);
 
   useEffect(() => {
-    // Create a bouncy effect for the title
     const interval = setInterval(() => {
       setBounce(true);
       setTimeout(() => setBounce(false), 500);
@@ -82,7 +81,7 @@ export default function Home() {
     setIsTransitioning(true);
     setTimeout(() => {
       router.push("/editor");
-    }, 500); // Match this with the exit animation duration
+    }, 500);
   };
 
   return (
@@ -154,7 +153,6 @@ export default function Home() {
                 </motion.div>
               </div>
 
-              {/* Editor preview on the right side */}
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -166,14 +164,12 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Features Section */}
           <motion.div
             className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full mt-12"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.5 }}
           >
-            {/* Feature Card 1 */}
             <motion.div
               whileHover={{ scale: 1.03, y: -5 }}
               className="rounded-2xl bg-gradient-to-br from-pink-500/10 to-purple-500/10 backdrop-blur-sm border border-pink-500/20 p-6 shadow-lg transition-all duration-300"
@@ -202,7 +198,6 @@ export default function Home() {
               </p>
             </motion.div>
 
-            {/* Feature Card 2 */}
             <motion.div
               whileHover={{ scale: 1.03, y: -5 }}
               className="rounded-2xl bg-gradient-to-br from-blue-500/10 to-cyan-400/10 backdrop-blur-sm border border-blue-500/20 p-6 shadow-lg transition-all duration-300"
@@ -231,7 +226,6 @@ export default function Home() {
               </p>
             </motion.div>
 
-            {/* Feature Card 3 */}
             <motion.div
               whileHover={{ scale: 1.03, y: -5 }}
               className="rounded-2xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 backdrop-blur-sm border border-green-500/20 p-6 shadow-lg transition-all duration-300"
@@ -256,7 +250,6 @@ export default function Home() {
             </motion.div>
           </motion.div>
 
-          {/* Recent Bingos Section with playful design */}
           <motion.div
             className="w-full mt-20 relative"
             initial={{ opacity: 0, y: 30 }}
@@ -266,8 +259,6 @@ export default function Home() {
             {/* Decorative elements */}
             <div className="absolute -top-10 left-10 w-20 h-20 rounded-full bg-pink-400/10 blur-xl"></div>
             <div className="absolute -bottom-10 right-10 w-32 h-32 rounded-full bg-blue-400/10 blur-xl"></div>
-            <div className="absolute top-1/2 left-1/4 w-4 h-4 rounded-full bg-yellow-400/80 animate-pulse"></div>
-            <div className="absolute top-3/4 right-1/4 w-3 h-3 rounded-full bg-green-400/80 animate-pulse"></div>
 
             <div className="relative z-10">
               <div className="flex items-center justify-center gap-3 mb-6">

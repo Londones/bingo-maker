@@ -325,6 +325,7 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
               }}
               data-index={index}
               className="relative items-center justify-center rounded-md backdrop-blur-sm transition-all cursor-pointer hover:shadow-md"
+              data-testid={`cell-${index} bingo-cell`}
               style={{
                 ...cellStyles.baseStyles,
                 ...cellStyles.backgroundStyles,

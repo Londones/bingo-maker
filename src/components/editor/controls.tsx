@@ -308,6 +308,7 @@ const Controls = ({
               onClick={() => {
                 void (state.id ? handleUpdate() : handleSaveNew());
               }}
+              title="Save"
               disabled={saveStatus === "pending" || isSaving || (!canSave && !state.localImages?.length) || justSaved}
               variant="outline"
             >

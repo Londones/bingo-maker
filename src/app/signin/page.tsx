@@ -80,7 +80,7 @@ const Page = () => {
           </div>
 
           <Button disabled={isPending} className="w-full rounded-md" type="submit">
-            {isPending ? "Logging in..." : "Log in"}
+            {isPending ? "Signing in..." : "Sign in"}
           </Button>
 
           <div className="flex items-center justify-center gap-1">
