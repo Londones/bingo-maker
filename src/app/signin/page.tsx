@@ -68,7 +68,7 @@ const Page = () => {
           </div>
 
           <div className="relative h-fit">
-            <Label className="">Password</Label>
+            <Label htmlFor="password">Password</Label>
             <Input
               className="w-full rounded-md border"
               type="password"
@@ -124,7 +124,7 @@ const Page = () => {
           </Button>
 
           <p className="text-center text-xs text-gray-600">
-            No account?{" "}
+            No account?
             <Link className="text-blue-400 hover:text-blue-600" href="/signup">
               Create one
             </Link>

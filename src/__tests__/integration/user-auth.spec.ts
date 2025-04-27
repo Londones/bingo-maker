@@ -1,5 +1,5 @@
 import { authTest, expect } from "./auth-setup";
-import { createAnonymousBingo } from "./helpers";
+import { createBingo } from "./helpers";
 
 authTest.describe("User Authentication Features", () => {
   authTest("user can create and save a bingo while logged in", async ({ authenticatedPage }) => {
@@ -23,58 +23,100 @@ authTest.describe("User Authentication Features", () => {
     // Verify it appears in "My Bingos"
     await authenticatedPage.goto("/me");
     await expect(authenticatedPage.getByText(testTitle)).toBeVisible();
-  });
+  }); // Test the migration feature specifically
+  authTest("user can migrate anonymous bingos after login", async ({ anonymousPage }) => {
+    // First create an anonymous bingo while anonymous
+    const { bingoId, title } = await createBingo(anonymousPage);
 
-  // Test the migration feature specifically
-  authTest("user can migrate anonymous bingos after login", async ({ anonymousPage, browser }) => {
-    // First create an anonymous bingo
-    const bingoId = await createAnonymousBingo(anonymousPage);
+    // Verify bingo was created and authorToken exists
+    const authorToken = await anonymousPage.evaluate(() => localStorage.getItem("bingoAuthorToken"));
+    expect(authorToken).toBeTruthy();
 
-    // Store anonymous token
-    const anonymousToken = await anonymousPage.evaluate(() => localStorage.getItem("bingoAuthorToken"));
-    expect(anonymousToken).toBeTruthy();
+    // Check that the bingoId was stored in ownedBingos by the useSaveBingo hook
+    const ownedBingos = await anonymousPage.evaluate(() => {
+      const ownedBingosIds = localStorage.getItem("ownedBingos");
+      return ownedBingosIds ? (JSON.parse(ownedBingosIds) as string[]) : [];
+    });
+    expect(ownedBingos).toContain(bingoId);
 
-    // Create a new context for a fresh login
-    const newContext = await browser.newContext();
-    const newPage = await newContext.newPage();
-
-    // Sign up and login with a new account
+    // Sign up with a new account in the same context
     const email = `migrate-test-${Date.now()}@example.com`;
     const username = `migrate-user-${Date.now()}`;
     const password = "Test@123456";
 
-    await newPage.goto("/signup");
-    await newPage.getByLabel("Email").fill(email);
-    await newPage.getByLabel("Username").fill(username);
-    await newPage.getByLabel("Password").fill(password);
-    await newPage.getByRole("button", { name: /register|sign up/i }).click();
+    await anonymousPage.goto("/signup");
+    await anonymousPage.getByLabel("Email").fill(email);
+    await anonymousPage.getByLabel("Username").fill(username);
+    await anonymousPage.getByLabel("Password").fill(password);
+    await anonymousPage.getByRole("button", { name: /register|sign up/i }).click();
 
-    // Sign in
-    await newPage.goto("/signin");
-    await newPage.getByLabel("Email").fill(email);
-    await newPage.getByLabel("Password").fill(password);
-    await newPage.getByRole("button", { name: /sign in|log in/i }).click();
+    // Sign in - this should automatically trigger the migration flow
+    // since we're using the same browser context that has the bingoAuthorToken
+    // and ownedBingos in localStorage
+    await anonymousPage.goto("/signin");
+    await anonymousPage.getByLabel("Email").fill(email);
+    await anonymousPage.getByLabel("Password").fill(password);
+    await anonymousPage.getByRole("button", { name: /sign in/i }).click();
 
-    // Set the anonymous token in localStorage to simulate having created bingos anonymously
-    await newPage.evaluate((token) => {
-      localStorage.setItem("bingoAuthorToken", token);
-    }, anonymousToken);
+    // Wait for the success message banner that appears after migration
+    await anonymousPage.waitForSelector("text=Successfully migrated", { timeout: 5000 });
 
-    // Go to home page to trigger migration toast
-    await newPage.goto("/");
-
-    // Check for migration toast and click it
-    await newPage.waitForSelector("text=Do you want to migrate your anonymous bingos?");
-    await newPage.getByRole("button", { name: "Migrate now" }).click();
-
-    // Verify success message
-    await newPage.waitForSelector("text=Successfully migrated");
-
-    // Go to "My Bingos" and verify the migrated bingo is there
-    await newPage.goto("/me");
-    await expect(newPage.getByText("Test Bingo Created Anonymously")).toBeVisible();
-
-    // Clean up
-    await newContext.close();
+    // Verify the migrated bingo is in the user's bingos list
+    await expect(anonymousPage.getByText(title)).toBeVisible();
   });
+  // Test the scenario where a user with an existing account creates a bingo anonymously and then signs back in
+  authTest(
+    "existing user can create anonymous bingos and migrate them when signing back in",
+    async ({ anonymousPage }) => {
+      // 1. First, create a new user account
+      const email = `existing-user-${Date.now()}@example.com`;
+      const username = `existing-user-${Date.now()}`;
+      const password = "Test@123456";
+
+      // Sign up
+      await anonymousPage.goto("/signup");
+      await anonymousPage.getByLabel("Email").fill(email);
+      await anonymousPage.getByLabel("Username").fill(username);
+      await anonymousPage.getByLabel("Password").fill(password);
+      await anonymousPage.getByRole("button", { name: /register|sign up/i }).click();
+
+      // Sign in
+      await anonymousPage.goto("/signin");
+      await anonymousPage.getByLabel("Email").fill(email);
+      await anonymousPage.getByLabel("Password").fill(password);
+      await anonymousPage.getByRole("button", { name: /sign in/i }).click();
+
+      // Confirm we're logged in
+      await anonymousPage.waitForSelector("text=My Bingos", { timeout: 5000 });
+
+      // 2. Sign out
+      await anonymousPage.getByRole("button", { name: /sign out/i }).click();
+
+      // 3. Create a bingo anonymously
+      const { bingoId, title } = await createBingo(anonymousPage);
+
+      // Verify bingo was created and authorToken exists
+      const authorToken = await anonymousPage.evaluate(() => localStorage.getItem("bingoAuthorToken"));
+      expect(authorToken).toBeTruthy();
+      // Check that the bingoId was stored in ownedBingos
+      const ownedBingos = await anonymousPage.evaluate(() => {
+        const ownedBingosJson = localStorage.getItem("ownedBingos");
+        return ownedBingosJson ? (JSON.parse(ownedBingosJson) as string[]) : [];
+      });
+      expect(ownedBingos).toContain(bingoId);
+
+      // 4. Sign back in with existing account
+      await anonymousPage.goto("/signin");
+      await anonymousPage.getByLabel("Email").fill(email);
+      await anonymousPage.getByLabel("Password").fill(password);
+      await anonymousPage.getByRole("button", { name: /sign in/i }).click();
+
+      // 5. Verify migration happened automatically
+      // Wait for the success message banner that appears after migration
+      await anonymousPage.waitForSelector("text=Successfully migrated", { timeout: 5000 });
+
+      // Verify the migrated bingo is in the user's bingos list
+      await expect(anonymousPage.getByText(title)).toBeVisible();
+    }
+  );
 });

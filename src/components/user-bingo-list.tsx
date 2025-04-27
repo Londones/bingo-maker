@@ -5,6 +5,8 @@ import { BingoPreview } from "@/types/types";
 import { useInView } from "react-intersection-observer";
 import { useRouter, usePathname } from "next/navigation";
 import BingoPreviewCard from "@/components/bingo-preview-card";
+import NewBingoCard from "@/components/new-bingo-card";
+import { useEditorRoutePersistence } from "@/hooks/useEditorRoutePersistence";
 
 type UserBingoListProps = {
   initialBingos: BingoPreview[];
@@ -20,6 +22,21 @@ const UserBingoList = ({ initialBingos, initialPage, hasMore, userId }: UserBing
   const [allBingos, setAllBingos] = React.useState<BingoPreview[]>(initialBingos);
   const [hasMoreBingos, setHasMoreBingos] = React.useState(hasMore);
   const { ref, inView } = useInView();
+  const { loadEditorState } = useEditorRoutePersistence();
+  const wipBingo = React.useMemo(() => {
+    // Check if there's a bingo being edited but not yet saved (has changes but no ID)
+    const state = loadEditorState();
+    if (!state) return undefined;
+    if (!state.id) {
+      return {
+        id: "",
+        title: state.title,
+        background: state.background,
+        createdAt: new Date(),
+      } as BingoPreview;
+    }
+    return undefined;
+  }, [loadEditorState]);
 
   // Initialize React Query with our API
   const { useGetUserBingos } = useBingoStorage();
@@ -42,6 +59,9 @@ const UserBingoList = ({ initialBingos, initialPage, hasMore, userId }: UserBing
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* New Bingo Card component - shows either a "+" card or WIP bingo */}
+        <NewBingoCard wipBingo={wipBingo} />
+
         {allBingos.map((bingo) => (
           <BingoPreviewCard key={bingo.id} bingo={bingo} type="user" />
         ))}

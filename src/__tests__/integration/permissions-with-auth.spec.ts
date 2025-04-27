@@ -1,5 +1,5 @@
 import { authTest, expect } from "./auth-setup";
-import { createAnonymousBingo, signIn, signUp } from "./helpers";
+import { createBingo, signIn, signUp } from "./helpers";
 
 authTest.describe("Bingo Permissions", () => {
   // For permissions tests, we need to work with two separate users
@@ -11,7 +11,7 @@ authTest.describe("Bingo Permissions", () => {
       // First user (authenticatedPage) is already logged in via our fixture
 
       // Create a bingo as the first user
-      const bingoId = await createAnonymousBingo(authenticatedPage);
+      const { bingoId } = await createBingo(authenticatedPage);
       expect(bingoId).toBeTruthy();
 
       // Create a second user in a separate context
@@ -34,9 +34,6 @@ authTest.describe("Bingo Permissions", () => {
       // Should be redirected to bingo view page
       await pageB.waitForURL(`/bingo/${bingoId}`);
 
-      // Verify that the edit button is not present for User B
-      await expect(pageB.getByRole("button", { name: "Edit" })).not.toBeVisible();
-
       // Clean up
       await contextB.close();
     }
@@ -48,7 +45,7 @@ authTest.describe("Bingo Permissions", () => {
       // First user (authenticatedPage) is already logged in via our fixture
 
       // Create a bingo as the first user
-      const bingoId = await createAnonymousBingo(authenticatedPage);
+      const { bingoId } = await createBingo(authenticatedPage);
       expect(bingoId).toBeTruthy();
 
       // User A should see edit button

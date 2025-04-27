@@ -1,52 +1,54 @@
 import { authTest, expect } from "./auth-setup";
+import { createBingo } from "./helpers";
 
 authTest.describe("Bingo Editor State Management", () => {
   authTest(
-    "going from editor/[id] to /editor sets state to the WIP bingo or creates a new one",
-    async ({ anonymousPage: page }) => {
-      // Create a new bingo
-      await page.goto("/editor");
-      await page.waitForSelector("text=New Bingo");
+    "creating a bingo while logged in, navigating to the /me page, clicking on the created bingo then navigating to the editor page should show an empty bingo",
+    async ({ authenticatedPage }) => {
+      // Step 1: Create a bingo while logged in
+      await authenticatedPage.goto("/editor");
+      const testTitle = `Test Bingo ${Date.now()}`;
+      await authenticatedPage.getByRole("heading", { name: "New Bingo" }).dblclick();
+      await authenticatedPage.keyboard.type(testTitle);
+      await authenticatedPage.getByRole("button", { name: "Save" }).click();
 
-      // Add a title to identify this bingo
-      const testTitle = `Test WIP Bingo ${Date.now()}`;
-      await page.getByRole("button", { name: "New Bingo" }).dblclick();
-      await page.keyboard.type(testTitle);
+      // Step 2: Navigate to the /me page and click on the created bingo
+      await authenticatedPage.goto("/me");
+      await authenticatedPage.getByText(testTitle).click();
 
-      // Fill a cell to make it unique
-      const cells = await page.locator(".bingo-cell").all();
-      await cells[0]?.click();
-      await page.keyboard.type("Unique WIP cell");
-      await page.keyboard.press("Escape");
+      // Step 3: Navigate to the editor page again
+      await authenticatedPage.goto("/editor");
 
-      // Save URL for later when we want to return to this specific bingo
-      const currentUrl = page.url();
-      const bingoId = currentUrl.includes("/editor/") ? currentUrl.split("/").pop() : null;
+      // Step 4: Verify that the bingo is the initial bingo
+      const editorTitle = await authenticatedPage.getByRole("heading", { name: "New Bingo" }).textContent();
+      expect(editorTitle).toBe("New Bingo"); // Expect the title to be "New Bingo"
+    }
+  );
+
+  authTest(
+    "creating a bingo while logged in without saving, navigating to the /me page, clicking on the created bingo then navigating to the editor page should show the bingo that wasn't saved",
+    async ({ authenticatedPage }) => {
+      // Step 1: Create a bingo while logged in
+      const { bingoId } = await createBingo(authenticatedPage);
       expect(bingoId).toBeTruthy();
 
-      // Now go to the main editor page
-      await page.goto("/editor");
+      // Step 1: Create a bingo while logged in without saving
+      await authenticatedPage.goto("/editor");
+      const testTitle = `Bingo WIP`;
+      await authenticatedPage.getByRole("heading", { name: "New Bingo" }).dblclick();
+      await authenticatedPage.keyboard.type(testTitle);
+      await authenticatedPage.keyboard.press("Escape"); // Close the editor without saving
 
-      // Check if the WIP state was persisted (title should still be there)
-      await expect(page.getByRole("textbox", { name: "Title" })).toHaveValue(testTitle);
+      // Step 2: Navigate to the /me page and click on the created bingo
+      await authenticatedPage.goto("/me");
+      await authenticatedPage.getByText("Test Bingo Created").click();
 
-      // Check if cell content was persisted
-      await expect(page.locator(".bingo-cell").first()).toContainText("Unique WIP cell");
+      // Step 3: Navigate to the editor page again
+      await authenticatedPage.goto("/editor");
 
-      // Clear editor by creating a new bingo
-      await page.getByRole("button", { name: "New Bingo" }).click();
-      await page.getByRole("button", { name: "Confirm" }).click();
-
-      // Verify that we have a fresh state
-      await expect(page.getByRole("textbox", { name: "Title" })).toHaveValue("");
-      await expect(page.locator(".bingo-cell").first()).not.toContainText("Unique WIP cell");
-
-      // Now navigate back to the specific bingo by ID
-      await page.goto(`/editor/${bingoId}`);
-
-      // Verify the correct bingo loaded
-      await expect(page.getByRole("textbox", { name: "Title" })).toHaveValue(testTitle);
-      await expect(page.locator(".bingo-cell").first()).toContainText("Unique WIP cell");
+      // Step 4: Verify that the bingo is the initial bingo
+      const editorTitle = await authenticatedPage.getByRole("heading", { name: "Bingo WIP" }).textContent();
+      expect(editorTitle).toBe("Bingo WIP"); // Expect the title to be "New Bingo"
     }
   );
 });

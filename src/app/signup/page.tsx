@@ -46,14 +46,12 @@ const Page = () => {
             <Label htmlFor="email">Email</Label>
             <Input id="email" className="w-full rounded-md" type="email" name="email" required />
           </div>
-
           <div className="relative h-fit">
-            <Label>Username</Label>
+            <Label htmlFor="username">Username</Label>
             <Input id="username" className="w-full rounded-md" type="text" name="username" required />
           </div>
-
           <div className="relative h-fit">
-            <Label>Password</Label>
+            <Label htmlFor="password">Password</Label>
             <Input
               className="w-full rounded-md border"
               type="password"
@@ -63,11 +61,9 @@ const Page = () => {
               id="password"
             />
           </div>
-
           <Button disabled={isPending} className="w-full rounded-md">
             {isPending ? "Signing up..." : "Sign up"}
           </Button>
-
           <div className="flex items-center justify-center gap-1">
             <div className="flex w-full items-center">
               <span className="border-t w-full" />
@@ -79,7 +75,6 @@ const Page = () => {
               <span className="border-t w-full" />
             </div>
           </div>
-
           <Button
             type="button"
             disabled={isGooglePending}
@@ -107,7 +102,6 @@ const Page = () => {
             </svg>
             {isGooglePending ? "Signing in with Google..." : "Google"}
           </Button>
-
           <p className="text-center text-xs text-gray-600">
             Have an account?
             <Link className="text-blue-400 hover:text-blue-600" href="/signin">

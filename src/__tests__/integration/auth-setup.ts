@@ -65,27 +65,6 @@ export const authTest = baseTest.extend<CustomFixtures>({
 
     const page = await context.newPage();
 
-    // Set up anonymous user auth token if needed
-    try {
-      await page.goto("/editor");
-
-      // Check if we have an anonymous auth token
-      const hasAuthToken = await page.evaluate(() => {
-        return !!localStorage.getItem("bingoAuthorToken");
-      });
-
-      if (!hasAuthToken) {
-        // Create a bingo to generate an anonymous token
-        await page.goto("/editor");
-        await page.waitForSelector("text=New Bingo", { timeout: 10000 });
-
-        // Save the anonymous state for future tests
-        await context.storageState({ path: anonymousUserFile });
-      }
-    } catch (error) {
-      console.log("Error in anonymous setup:", error);
-    }
-
     // Pass the page to the test
     await testHandler(page);
 

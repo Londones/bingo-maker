@@ -1,6 +1,11 @@
 import { Page } from "@playwright/test";
 
-export async function createAnonymousBingo(page: Page): Promise<string> {
+interface BingoIdAndTitle {
+  bingoId: string;
+  title: string;
+}
+
+export async function createBingo(page: Page): Promise<BingoIdAndTitle> {
   // Navigate to editor
   await page.goto("/editor");
 
@@ -8,8 +13,9 @@ export async function createAnonymousBingo(page: Page): Promise<string> {
   await page.waitForSelector("text=New Bingo");
 
   // Add a title
+  const title = `Test Bingo Created ${Date.now()}`;
   await page.getByRole("heading", { name: "New Bingo" }).dblclick();
-  await page.keyboard.type(`Test Bingo Created Anonymously ${Date.now()}`);
+  await page.keyboard.type(title);
 
   // Fill some cells
   const cells = await page.locator(".bingo-cell").all();
@@ -29,7 +35,10 @@ export async function createAnonymousBingo(page: Page): Promise<string> {
   const url = page.url();
   const bingoId = url.split("/").pop();
 
-  return bingoId || "";
+  return {
+    bingoId,
+    title,
+  } as BingoIdAndTitle;
 }
 
 export async function signIn(page: Page, email: string, password: string): Promise<void> {

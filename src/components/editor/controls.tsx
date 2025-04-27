@@ -103,6 +103,11 @@ const Controls = ({
       toast.success("Bingo saved successfully");
 
       setJustSaved(true);
+
+      // redirect to the editor page with the new bingo ID
+      if (savedBingo.id) {
+        window.history.replaceState({}, "", `/editor/${savedBingo.id}`);
+      }
     } catch (error) {
       if (error instanceof APIError) {
         toast.error(error.message);
