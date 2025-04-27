@@ -33,9 +33,9 @@ jobs:
       S3_ENDPOINT: http://localhost:9000
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
 
@@ -48,8 +48,15 @@ jobs:
       - name: Setup test database
         run: npm run test:e2e:setup
 
-      - name: Run Playwright tests
-        run: npm run test:e2e
+      - name: Build for production tests
+        run: npm run test:e2e:build
+
+      - name: Run Playwright tests in production mode
+        run: |
+          npm run test:e2e:server:prod &
+          SERVER_PID=$!
+          npx playwright test
+          kill $SERVER_PID || true
 
       - uses: actions/upload-artifact@v3
         if: always()
