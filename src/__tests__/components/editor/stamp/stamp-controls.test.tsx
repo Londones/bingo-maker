@@ -67,6 +67,7 @@ jest.mock("emoji-picker-react", () => {
 jest.mock("next/image", () => ({
   __esModule: true,
   default: ({ src, alt, width, height }: { src: string; alt: string; width: number; height: number }) => (
+    // eslint-disable-next-line @next/next/no-img-element
     <img src={src} alt={alt} width={width} height={height} data-testid="mock-next-image" />
   ),
 }));

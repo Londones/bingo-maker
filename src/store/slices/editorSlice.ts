@@ -104,7 +104,8 @@ export const editorSlice = createSlice({
         ...action.payload,
         cells: sortedCells,
       };
-      state.canSave = false;
+      const isWIP = action.payload.id === undefined || action.payload.id === null;
+      state.canSave = isWIP;
       state.history.future = []; // Also clear future history here
       state.canRedo = false;
       state.changes = {} as ChangeTracker; // Reset change tracking

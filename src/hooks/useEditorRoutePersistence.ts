@@ -20,6 +20,14 @@ const safeStorage = {
       console.error("Error writing to localStorage", e);
     }
   },
+  remove: (key: string) => {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.removeItem(key);
+    } catch (e) {
+      console.error("Error removing from localStorage", e);
+    }
+  },
 };
 
 export const useEditorRoutePersistence = () => {
@@ -29,11 +37,14 @@ export const useEditorRoutePersistence = () => {
   return {
     isMainEditorPage,
     saveEditorState: (state: Bingo) => {
-      if (!state) return;
+      if (!state || state.id) return;
       safeStorage.set("editor_main_state", state);
     },
     loadEditorState: () => {
       return safeStorage.get("editor_main_state");
+    },
+    clearEditorState: () => {
+      safeStorage.remove("editor_main_state");
     },
   };
 };

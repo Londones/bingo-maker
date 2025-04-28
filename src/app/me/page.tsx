@@ -81,11 +81,11 @@ const migrateBingos = async (bingoIds: string[], authorToken: string, userId: st
   };
 };
 
-const MePage = async ({
+export default async function MePage({
   searchParams,
 }: {
-  searchParams: { page?: string; bingoIds?: string; authorToken?: string; migrated?: string };
-}) => {
+  searchParams: Promise<{ page?: string; bingoIds?: string; authorToken?: string; migrated?: string }>;
+}) {
   const session = await auth();
   const user = session?.user;
 
@@ -93,7 +93,6 @@ const MePage = async ({
     redirect("/signin");
   }
   // Handle migration if bingoIds and authorToken are provided
-  // eslint-disable-next-line @typescript-eslint/await-thenable
   const { bingoIds, authorToken, page, migrated } = await searchParams;
 
   let migrationResult = null;
@@ -133,6 +132,4 @@ const MePage = async ({
       <UserBingoList initialBingos={bingos} initialPage={initialPage} hasMore={hasMore} userId={user.id} />
     </div>
   );
-};
-
-export default MePage;
+}

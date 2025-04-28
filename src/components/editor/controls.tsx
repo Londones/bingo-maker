@@ -11,6 +11,8 @@ import { motion } from "framer-motion";
 import { uploadPendingImages } from "@/app/actions/uploadthing";
 import { useQueryClient } from "@tanstack/react-query";
 import { Bingo, BingoPatch } from "@/types/types";
+import { useRouter } from "next/navigation";
+import { useEditorRoutePersistence } from "@/hooks/useEditorRoutePersistence";
 
 const Controls = ({
   isPanelOpen,
@@ -25,6 +27,8 @@ const Controls = ({
   const { status: saveStatus } = useSaveBingo;
   const [isSaving, setIsSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
+  const router = useRouter();
+  const { clearEditorState } = useEditorRoutePersistence();
 
   // Reset justSaved when editor state changes (through undo/redo)
   useEffect(() => {
@@ -101,12 +105,14 @@ const Controls = ({
 
       actions.setBingo(savedBingo);
       toast.success("Bingo saved successfully");
-
       setJustSaved(true);
+
+      // Clear the editor state from local storage
+      clearEditorState();
 
       // redirect to the editor page with the new bingo ID
       if (savedBingo.id) {
-        window.history.replaceState({}, "", `/editor/${savedBingo.id}`);
+        router.push(`/editor/${savedBingo.id}`);
       }
     } catch (error) {
       if (error instanceof APIError) {
@@ -217,8 +223,10 @@ const Controls = ({
         bingoId: state.id!,
         updates: updateData,
       });
-
       setJustSaved(true);
+
+      // Clear editor state from localStorage to prevent WIP persistence
+      clearEditorState();
 
       actions.setBingo(updatedBingo);
       toast.success("Bingo updated successfully");
@@ -337,6 +345,7 @@ const Controls = ({
               onClick={() => {
                 void handleShare();
               }}
+              disabled={!state.id || isSaving}
             >
               <Share className="h-4 w-4" />
             </Button>

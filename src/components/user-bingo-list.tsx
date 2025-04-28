@@ -25,6 +25,9 @@ const UserBingoList = ({ initialBingos, initialPage, hasMore, userId }: UserBing
   const { loadEditorState } = useEditorRoutePersistence();
   const wipBingo = React.useMemo(() => {
     // Check if there's a bingo being edited but not yet saved (has changes but no ID)
+    // Ensure this runs on client-side only to avoid hydration mismatch
+    if (typeof window === "undefined") return undefined;
+
     const state = loadEditorState();
     if (!state) return undefined;
     if (!state.id) {
@@ -32,7 +35,7 @@ const UserBingoList = ({ initialBingos, initialPage, hasMore, userId }: UserBing
         id: "",
         title: state.title,
         background: state.background,
-        createdAt: new Date(),
+        createdAt: new Date(Date.now()),
       } as BingoPreview;
     }
     return undefined;

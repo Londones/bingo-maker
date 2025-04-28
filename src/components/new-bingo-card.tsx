@@ -45,7 +45,6 @@ const NewBingoCard = ({ wipBingo }: NewBingoCardProps) => {
         backgroundRepeat: "no-repeat",
       }
     : {};
-
   // For completely new bingo (no WIP)
   const emptyCardGradient = {
     backgroundImage:

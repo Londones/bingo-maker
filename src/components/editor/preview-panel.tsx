@@ -45,18 +45,19 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
     };
   }, [state.background]);
 
-  // Optimize the getBackgroundImage function with specific dependencies
   const getBackgroundImage = useMemo(() => {
     const { backgroundImage, backgroundImageSize, backgroundImagePosition, backgroundImageOpacity } = state.background;
 
-    return {
-      backgroundImage: `url(${backgroundImage})`,
-      backgroundSize: `${backgroundImageSize}%` || "100%",
-      backgroundPosition: backgroundImagePosition || "center",
-      opacity: (backgroundImageOpacity ?? 100) / 100,
-      backgroundRepeat: "no-repeat",
-      backgroundAttachment: "local",
-    };
+    return backgroundImage
+      ? {
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundSize: `${backgroundImageSize}%` || "100%",
+          backgroundPosition: backgroundImagePosition || "center",
+          opacity: (backgroundImageOpacity ?? 100) / 100,
+          backgroundRepeat: "no-repeat",
+          backgroundAttachment: "local",
+        }
+      : {};
   }, [state.background]);
 
   const getBackgroundCellImage = useCallback(
