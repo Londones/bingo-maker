@@ -15,9 +15,9 @@ const config: Config = {
 
   // API tests setup - use absolute paths
   setupFilesAfterEnv: [path.join(rootDir, "jest/setup/api.ts")],
-
-  // Match API test patterns but exclude component tests
-  testMatch: ["**/__tests__/routes/**/*.[jt]s?(x)", "**/__tests__/!(components)/**/*.[jt]s?(x)"],
+  // Match API test patterns but exclude component and integration tests
+  testMatch: ["**/__tests__/routes/**/*.[jt]s?(x)", "**/__tests__/!(components|integration)/**/*.[jt]s?(x)"],
+  testPathIgnorePatterns: [...(baseConfig.testPathIgnorePatterns || []), "integration", ".*integration.*"],
 };
 
 export default config;

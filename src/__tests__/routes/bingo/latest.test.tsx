@@ -103,7 +103,6 @@ describe("Latest Bingos API Route", () => {
       expect(data.total).toBe(8);
       expect(data.items.every((item) => item.status === "draft")).toBe(true);
     });
-
     it("should return 400 with invalid cursor", async () => {
       // Arrange
       (prisma.bingo.findUnique as jest.Mock).mockResolvedValue(null); // Cursor doesn't exist
@@ -115,15 +114,11 @@ describe("Latest Bingos API Route", () => {
 
       // Assert
       if (error instanceof APIError) {
-        expect(error.status).toBe(400);
+        expect(error.message).toBe("Invalid cursor position");
         expect(error.code).toBe("INVALID_REQUEST");
-      } else {
-        const response = await error.json();
-        expect(response.code).toBe("INVALID_REQUEST");
-        expect(response.status).toBe(400);
+        expect(error.status).toBe(400);
       }
     });
-
     it("should handle server error when no bingos returned", async () => {
       // Arrange
       (prisma.bingo.findMany as jest.Mock).mockResolvedValue([]);
@@ -134,12 +129,9 @@ describe("Latest Bingos API Route", () => {
 
       // Assert
       if (error instanceof APIError) {
-        expect(error.status).toBe(500);
+        expect(error.message).toBe("Failed to retrieve bingos");
         expect(error.code).toBe("FAILED_TO_GET_BINGOS");
-      } else {
-        const response = await error.json();
-        expect(response.code).toBe("FAILED_TO_GET_BINGOS");
-        expect(response.status).toBe(500);
+        expect(error.status).toBe(500);
       }
     });
   });

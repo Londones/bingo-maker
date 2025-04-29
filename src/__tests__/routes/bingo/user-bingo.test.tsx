@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { BingoPreview } from "@/types/types";
 import { auth } from "@/lib/auth";
 import { APIError } from "@/lib/errors";
+import { ITEMS_PER_PAGE } from "@/utils/constants";
 
 const TEST_URL = "http://localhost:3000";
 
@@ -102,35 +103,36 @@ describe("User Bingo API Route", () => {
     // Clear the existing mockBingos array and create a new one with 12 items (for pagination testing)
     mockBingos.length = 0;
 
-    // Add first 2 standard bingos back
-    mockBingos.push({
-      id: "1",
-      title: "Test Bingo 1",
-      background: {
-        value: "test",
-        backgroundImage: "image1.jpg",
-        backgroundImageOpacity: 0.5,
-        backgroundImagePosition: "center",
-        backgroundImageSize: 50,
+    // Add 2 initial bingos for the first page
+    mockBingos.push(
+      {
+        id: "1",
+        title: "Test Bingo 1",
+        background: {
+          value: "test",
+          backgroundImage: "image1.jpg",
+          backgroundImageOpacity: 0.5,
+          backgroundImagePosition: "center",
+          backgroundImageSize: 50,
+        },
+        createdAt: new Date(),
       },
-      createdAt: new Date(),
-    });
-
-    mockBingos.push({
-      id: "2",
-      title: "Test Bingo 2",
-      background: {
-        value: "test",
-        backgroundImage: "image2.jpg",
-        backgroundImageOpacity: 0.5,
-        backgroundImagePosition: "center",
-        backgroundImageSize: 50,
-      },
-      createdAt: new Date("2023-01-01"),
-    });
+      {
+        id: "2",
+        title: "Test Bingo 2",
+        background: {
+          value: "test",
+          backgroundImage: "image2.jpg",
+          backgroundImageOpacity: 0.5,
+          backgroundImagePosition: "center",
+          backgroundImageSize: 50,
+        },
+        createdAt: new Date("2023-01-01"),
+      }
+    );
 
     // Add 18 more bingos for pagination testing
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < ITEMS_PER_PAGE * 2; i++) {
       mockBingos.push({
         id: `${i + 3}`,
         title: `Test Bingo ${i + 3}`,
@@ -146,7 +148,7 @@ describe("User Bingo API Route", () => {
     }
 
     // Mock that findMany returns only the items for page 2 (items 10-19)
-    const page2Items = mockBingos.slice(7, 13);
+    const page2Items = mockBingos.slice(ITEMS_PER_PAGE, ITEMS_PER_PAGE * 2);
     (prisma.bingo.findMany as jest.Mock).mockResolvedValue(page2Items);
 
     const totalCount = mockBingos.length;
@@ -154,12 +156,12 @@ describe("User Bingo API Route", () => {
 
     const newPage = 2;
     // Fix the hasMore calculation to match what the actual route is doing
-    const page2Skip = (newPage - 1) * 6;
+    const page2Skip = (newPage - 1) * ITEMS_PER_PAGE;
     const hasMore = page2Skip + page2Items.length < totalCount;
 
     const newResponse = {
       bingos: JSON.parse(JSON.stringify(page2Items)),
-      totalPages: Math.ceil(totalCount / 6),
+      totalPages: Math.ceil(totalCount / ITEMS_PER_PAGE),
       hasMore: hasMore, // This will be true if there are more items after page 2
     };
 
