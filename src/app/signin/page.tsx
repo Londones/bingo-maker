@@ -124,7 +124,7 @@ const Page = () => {
           </Button>
 
           <p className="text-center text-xs text-gray-600">
-            No account?
+            No account?{" "}
             <Link className="text-blue-400 hover:text-blue-600" href="/signup">
               Create one
             </Link>

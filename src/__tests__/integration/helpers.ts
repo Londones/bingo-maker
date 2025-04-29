@@ -16,6 +16,7 @@ export async function createBingo(page: Page): Promise<BingoIdAndTitle> {
   const title = `Test Bingo Created ${Date.now()}`;
   await page.getByRole("heading", { name: "New Bingo" }).dblclick();
   await page.keyboard.type(title);
+  await page.keyboard.press("Escape"); // Close the title input
 
   // Fill some cells
   const cells = await page.locator(".bingo-cell").all();

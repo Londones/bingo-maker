@@ -106,9 +106,11 @@ export const editorSlice = createSlice({
       };
       const isWIP = action.payload.id === undefined || action.payload.id === null;
       state.canSave = isWIP;
-      state.history.future = []; // Also clear future history here
+      state.history.future = [];
+      state.history.past = [];
       state.canRedo = false;
-      state.changes = {} as ChangeTracker; // Reset change tracking
+      state.canUndo = false;
+      state.changes = {} as ChangeTracker;
     },
     setTitle: (state, action: PayloadAction<string>) => {
       pushToHistory(state);
@@ -361,7 +363,18 @@ export const editorSlice = createSlice({
         return { payload: undefined };
       },
     },
-    resetEditor: () => initialState,
+    resetEditor: (state) => {
+      // Reset each property individually to maintain correct state reference
+      state.history = {
+        past: [],
+        present: { ...initialBingoState },
+        future: [],
+      };
+      state.canUndo = false;
+      state.canRedo = false;
+      state.canSave = false;
+      state.changes = {} as ChangeTracker;
+    },
   },
 });
 

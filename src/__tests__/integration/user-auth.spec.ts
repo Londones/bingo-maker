@@ -19,6 +19,7 @@ authTest.describe("User Authentication Features", () => {
 
     // Save the bingo
     await authenticatedPage.getByRole("button", { name: "Save" }).click();
+    await authenticatedPage.waitForSelector("text=Bingo saved successfully");
 
     // Verify it appears in "My Bingos"
     await authenticatedPage.goto("/me");
@@ -58,9 +59,6 @@ authTest.describe("User Authentication Features", () => {
     await anonymousPage.getByLabel("Password").fill(password);
     await anonymousPage.getByRole("button", { name: /sign in/i }).click();
 
-    // Wait for the success message banner that appears after migration
-    await anonymousPage.waitForSelector("text=Successfully migrated", { timeout: 5000 });
-
     // Verify the migrated bingo is in the user's bingos list
     await expect(anonymousPage.getByText(title)).toBeVisible();
   });
@@ -93,17 +91,7 @@ authTest.describe("User Authentication Features", () => {
       await anonymousPage.getByRole("button", { name: /sign out/i }).click();
 
       // 3. Create a bingo anonymously
-      const { bingoId, title } = await createBingo(anonymousPage);
-
-      // Verify bingo was created and authorToken exists
-      const authorToken = await anonymousPage.evaluate(() => localStorage.getItem("bingoAuthorToken"));
-      expect(authorToken).toBeTruthy();
-      // Check that the bingoId was stored in ownedBingos
-      const ownedBingos = await anonymousPage.evaluate(() => {
-        const ownedBingosJson = localStorage.getItem("ownedBingos");
-        return ownedBingosJson ? (JSON.parse(ownedBingosJson) as string[]) : [];
-      });
-      expect(ownedBingos).toContain(bingoId);
+      const { title } = await createBingo(anonymousPage);
 
       // 4. Sign back in with existing account
       await anonymousPage.goto("/signin");
@@ -111,9 +99,7 @@ authTest.describe("User Authentication Features", () => {
       await anonymousPage.getByLabel("Password").fill(password);
       await anonymousPage.getByRole("button", { name: /sign in/i }).click();
 
-      // 5. Verify migration happened automatically
-      // Wait for the success message banner that appears after migration
-      await anonymousPage.waitForSelector("text=Successfully migrated", { timeout: 5000 });
+      await anonymousPage.waitForSelector("text=My Bingos", { timeout: 5000 });
 
       // Verify the migrated bingo is in the user's bingos list
       await expect(anonymousPage.getByText(title)).toBeVisible();

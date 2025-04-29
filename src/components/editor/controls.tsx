@@ -11,24 +11,24 @@ import { motion } from "framer-motion";
 import { uploadPendingImages } from "@/app/actions/uploadthing";
 import { useQueryClient } from "@tanstack/react-query";
 import { Bingo, BingoPatch } from "@/types/types";
-import { useRouter } from "next/navigation";
 import { useEditorRoutePersistence } from "@/hooks/useEditorRoutePersistence";
+import { useRouter } from "next/navigation";
 
-const Controls = ({
-  isPanelOpen,
-  setIsPanelOpen,
-}: {
+interface ControlsProps {
   isPanelOpen?: boolean;
   setIsPanelOpen?: (open: boolean) => void;
-}) => {
+  setSaving?: (isSaving: boolean) => void;
+}
+
+export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving }: ControlsProps) {
   const { actions, canRedo, canUndo, canSave, state } = useEditor();
   const { useSaveBingo, useUpdateBingo } = useBingoStorage();
   const queryClient = useQueryClient();
   const { status: saveStatus } = useSaveBingo;
   const [isSaving, setIsSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
-  const router = useRouter();
   const { clearEditorState } = useEditorRoutePersistence();
+  const router = useRouter();
 
   // Reset justSaved when editor state changes (through undo/redo)
   useEffect(() => {
@@ -94,11 +94,11 @@ const Controls = ({
     }
 
     setIsSaving(true);
+    setSaving?.(true);
 
     try {
       const preparedState = await prepareStateForSave(state);
 
-      // Clear future history when saving
       actions.clearFutureHistory();
 
       const savedBingo = await useSaveBingo.mutateAsync(preparedState);
@@ -107,12 +107,10 @@ const Controls = ({
       toast.success("Bingo saved successfully");
       setJustSaved(true);
 
-      // Clear the editor state from local storage
       clearEditorState();
-
-      // redirect to the editor page with the new bingo ID
       if (savedBingo.id) {
-        router.push(`/editor/${savedBingo.id}`);
+        window.history.replaceState({}, "", `/editor/${savedBingo.id}`);
+        return;
       }
     } catch (error) {
       if (error instanceof APIError) {
@@ -120,6 +118,7 @@ const Controls = ({
       } else {
         toast.error(`${error as string}`);
       }
+      setSaving?.(false);
     } finally {
       setIsSaving(false);
     }
@@ -357,6 +356,4 @@ const Controls = ({
       </div>
     </TooltipProvider>
   );
-};
-
-export default Controls;
+}

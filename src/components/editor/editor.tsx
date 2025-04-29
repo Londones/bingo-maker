@@ -3,7 +3,11 @@ import PreviewPanel from "@/components/editor/preview-panel";
 import SettingsPanel from "@/components/editor/settings-panel";
 import Controls from "@/components/editor/controls";
 
-const Editor = () => {
+interface EditorProps {
+  setSaving?: (isSaving: boolean) => void;
+}
+
+export default function Editor({ setSaving }: EditorProps) {
   const previewRef = useRef<HTMLDivElement>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(true);
 
@@ -18,7 +22,7 @@ const Editor = () => {
     <div className="fixed inset-0 w-screen h-screen bg-background/40 backdrop-blur-sm overflow-hidden z-40">
       <div className="h-full w-full flex flex-col text-foreground/50">
         <div className="p-4 border-b flex items-center bg-background/40 backdrop-blur-sm">
-          <Controls isPanelOpen={isPanelOpen} setIsPanelOpen={setIsPanelOpen} />
+          <Controls isPanelOpen={isPanelOpen} setIsPanelOpen={setIsPanelOpen} setSaving={setSaving} />
         </div>
         <div className="flex overflow-hidden relative flex-1">
           <div
@@ -45,6 +49,4 @@ const Editor = () => {
       </div>
     </div>
   );
-};
-
-export default Editor;
+}

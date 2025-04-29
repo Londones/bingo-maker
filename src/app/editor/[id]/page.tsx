@@ -1,13 +1,11 @@
 "use client";
-import React, { useEffect } from "react";
-import { useParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useEditor } from "@/hooks/useEditor";
 import { useSession } from "next-auth/react";
 import { useBingoStorage } from "@/hooks/useBingoStorage";
 import Editor from "@/components/editor/editor";
-import { useRouter } from "next/navigation";
 import { BingoCell } from "@/types/types";
-
 import { Skeleton } from "@/components/ui/skeleton";
 
 const LoadingComponent = () => (
@@ -78,9 +76,10 @@ const LoadingComponent = () => (
 export default function EditorWithIdPage() {
   const { id } = useParams<{ id: string }>();
   const { state, actions } = useEditor();
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
   const { useGetBingo, useCheckOwnership } = useBingoStorage();
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
   const { data: bingo, isLoading: isBingoLoading, error } = useGetBingo(id);
 
@@ -88,33 +87,47 @@ export default function EditorWithIdPage() {
     enabled: !!bingo && !!session?.user?.id && bingo.userId !== session.user.id,
   });
 
+  // Early permission check - runs before rendering editor
   useEffect(() => {
-    if (bingo && state.id !== bingo.id) {
-      // Check if user is authorized to edit
-      const isAuthor = !!session?.user?.id && bingo.userId === session?.user?.id;
-      const isOwner = !!ownershipData?.isOwner;
+    // Wait for session and bingo data to load
+    if (sessionStatus === "loading" || isBingoLoading || isOwnershipLoading) return;
 
-      if (!isAuthor && !isOwner && !isOwnershipLoading) {
-        // Redirect to view-only page if not authorized
-        router.push(`/bingo/${id}`);
-        return;
-      }
+    // If no bingo found, no need to check permissions
+    if (!bingo) return;
 
-      // Load the bingo data into the editor
-      const orderedCells: BingoCell[] = Array(bingo.gridSize ** 2).fill(null);
-      bingo.cells.forEach((cell) => {
-        orderedCells[cell.position] = cell;
-      });
-      bingo.cells = orderedCells;
+    // Check if user is authorized to edit
+    const isAuthor = !!session?.user?.id && bingo.userId === session?.user?.id;
+    const isOwner = !!ownershipData?.isOwner;
+    const hasPermission = isAuthor || isOwner;
 
-      actions.setBingo(bingo);
+    setIsAuthorized(hasPermission);
+
+    // Redirect immediately if not authorized
+    if (hasPermission === false) {
+      router.push(`/bingo/${id}`);
     }
-  }, [bingo, session, ownershipData, actions, state.id, id, isOwnershipLoading, router]);
+  }, [bingo, session, ownershipData, id, router, sessionStatus, isBingoLoading, isOwnershipLoading]);
 
-  if (isBingoLoading) {
+  // Only load bingo data into editor once we know user is authorized
+  useEffect(() => {
+    if (!isAuthorized || !bingo || state.id === bingo.id) return;
+
+    // Load the bingo data into the editor
+    const orderedCells: BingoCell[] = Array(bingo.gridSize ** 2).fill(null);
+    bingo.cells.forEach((cell) => {
+      orderedCells[cell.position] = cell;
+    });
+    bingo.cells = orderedCells;
+
+    actions.setBingo(bingo);
+  }, [bingo, actions, state.id, isAuthorized]);
+
+  // Show loading while checking permissions
+  if (isBingoLoading || isOwnershipLoading || isAuthorized === null) {
     return <LoadingComponent />;
   }
 
+  // Show error if bingo not found
   if (error || !bingo) {
     return (
       <div className="w-full h-screen flex items-center justify-center">
@@ -123,5 +136,11 @@ export default function EditorWithIdPage() {
     );
   }
 
-  return <Editor />;
+  // Only render editor if authorized
+  if (isAuthorized) {
+    return <Editor />;
+  }
+
+  // This will briefly show while redirecting
+  return <LoadingComponent />;
 }

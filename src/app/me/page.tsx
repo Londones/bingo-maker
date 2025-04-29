@@ -92,9 +92,9 @@ export default async function MePage({
   if (!user) {
     redirect("/signin");
   }
+
   // Handle migration if bingoIds and authorToken are provided
   const { bingoIds, authorToken, page, migrated } = await searchParams;
-
   let migrationResult = null;
 
   if (bingoIds && authorToken) {
@@ -110,25 +110,30 @@ export default async function MePage({
             redirectParams.append("page", page);
           }
           redirectParams.append("migrated", migrationResult.migratedCount.toString());
-          redirect(`/me?${redirectParams.toString()}`);
+          return redirect(`/me?${redirectParams.toString()}`);
         }
       }
     } catch (error) {
-      console.error("Error migrating bingos:", error);
+      // Only catch non-redirect errors
+      if (!(error instanceof Error && error.message.includes("NEXT_REDIRECT"))) {
+        console.error("Error migrating bingos:", error);
+      }
     }
   }
+
   // Show the migration success message if we have the 'migrated' parameter
   const migratedCount = migrated ? parseInt(migrated) : 0;
 
   const initialPage = page ? parseInt(page) : 1;
   const { bingos, hasMore } = await getUserPreviewBingos(user.id, initialPage);
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">My Bingos</h1>
         <SignOutButton />
       </div>
-      <MigrationToast count={migratedCount || migrationResult?.migratedCount} />
+      <MigrationToast count={migratedCount} />
       <UserBingoList initialBingos={bingos} initialPage={initialPage} hasMore={hasMore} userId={user.id} />
     </div>
   );

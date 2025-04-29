@@ -103,7 +103,7 @@ const Page = () => {
             {isGooglePending ? "Signing in with Google..." : "Google"}
           </Button>
           <p className="text-center text-xs text-gray-600">
-            Have an account?
+            Have an account?{" "}
             <Link className="text-blue-400 hover:text-blue-600" href="/signin">
               Sign in
             </Link>

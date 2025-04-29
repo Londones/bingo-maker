@@ -20,7 +20,7 @@ export const getQueryClient = cache(() => {
       storage: window.localStorage,
     });
 
-    persistQueryClient({
+    void persistQueryClient({
       queryClient,
       persister,
       maxAge: 1000 * 60 * 60 * 24, // 24 hours

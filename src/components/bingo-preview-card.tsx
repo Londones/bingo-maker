@@ -44,7 +44,7 @@ const BingoPreviewCard = ({ bingo, type }: BingoPreviewCardProps) => {
     : {};
 
   return (
-    <Link href={link} className="w-full block group">
+    <Link href={link} scroll={false} className="w-full block group">
       <Card className="overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.03] border border-gray-200/20">
         <div className="h-48 relative overflow-hidden">
           {/* Gradient background layer */}
