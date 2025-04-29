@@ -16,12 +16,27 @@ authTest.describe("Bingo Editor State Management", () => {
       // Step 2: Navigate to the /me page and click on the created bingo
       await authenticatedPage.goto("/me");
       await authenticatedPage.waitForTimeout(1000); // Wait for the page to load
-      await authenticatedPage.getByText(testTitle).click();
+      await authenticatedPage.getByText(testTitle).click(); // Step 3: Navigate to the editor page again with additional options to handle navigation issues
+      try {
+        // Use waitUntil: 'domcontentloaded' instead of 'load' to prevent NS_BINDING_ABORTED issues
+        await authenticatedPage.goto("/editor", {
+          waitUntil: "domcontentloaded",
+          timeout: 10000, // Increase timeout to 10 seconds
+        });
+      } catch (error) {
+        console.log("Navigation error:", error);
+        // If navigation fails, try again with a different approach
+        await authenticatedPage.evaluate(() => {
+          window.location.href = "/editor";
+        });
+        await authenticatedPage.waitForLoadState("domcontentloaded");
+      }
 
-      // Step 3: Navigate to the editor page again
-      await authenticatedPage.goto("/editor");
+      // Add a short wait to ensure the page is stable
+      await authenticatedPage.waitForTimeout(1000);
 
       // Step 4: Verify that the bingo is the initial bingo
+      await authenticatedPage.waitForSelector("text=New Bingo", { state: "visible", timeout: 5000 });
       const editorTitle = await authenticatedPage.getByRole("heading", { name: "New Bingo" }).textContent();
       expect(editorTitle).toBe("New Bingo"); // Expect the title to be "New Bingo"
     }
