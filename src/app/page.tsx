@@ -162,94 +162,93 @@ export default function Home() {
                 <EditorPreview />
               </motion.div>
             </div>
-          </div>
-
+          </div>{" "}
           <motion.div
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full mt-12"
+            className="max-w-4xl mx-auto w-full mt-16"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.5 }}
           >
-            <motion.div
-              whileHover={{ scale: 1.03, y: -5 }}
-              className="rounded-2xl bg-gradient-to-br from-pink-500/10 to-purple-500/10 backdrop-blur-sm border border-pink-500/20 p-6 shadow-lg transition-all duration-300"
-            >
-              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[hsla(339,100%,65%,0.7)] to-[hsla(339,100%,45%,0.6)] flex items-center justify-center mb-4 shadow-lg transform -rotate-6">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  className="w-8 h-8 text-white"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600">
-                Custom Grids
-              </h3>
-              <p className="text-foreground/80">
-                Choose from differents layouts! Design each cell just how you want it.
-              </p>
-            </motion.div>
+            <div className="flex flex-col md:flex-row gap-6 items-center justify-center">
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                className="flex items-center gap-4 px-5 py-3 rounded-lg bg-background/50 border border-foreground/5 backdrop-blur-sm"
+              >
+                <div className="h-10 w-10 rounded-md bg-foreground/5 flex items-center justify-center text-primary">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">Custom Grids</p>
+                  <p className="text-sm text-foreground/70">Personalize every cell your way</p>
+                </div>
+              </motion.div>
 
-            <motion.div
-              whileHover={{ scale: 1.03, y: -5 }}
-              className="rounded-2xl bg-gradient-to-br from-blue-500/10 to-cyan-400/10 backdrop-blur-sm border border-blue-500/20 p-6 shadow-lg transition-all duration-300"
-            >
-              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[hsla(210,100%,65%,0.7)] to-[hsla(210,100%,45%,0.6)] flex items-center justify-center mb-4 shadow-lg transform rotate-6">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  className="w-8 h-8 text-white"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400">
-                Amazing Backgrounds
-              </h3>
-              <p className="text-foreground/80">
-                Create colorful gradients or upload your own images! Let your creativity shine.
-              </p>
-            </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                className="flex items-center gap-4 px-5 py-3 rounded-lg bg-background/50 border border-foreground/5 backdrop-blur-sm"
+              >
+                <div className="h-10 w-10 rounded-md bg-foreground/5 flex items-center justify-center text-primary">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">Stunning Themes</p>
+                  <p className="text-sm text-foreground/70">Gradients, images & more</p>
+                </div>
+              </motion.div>
 
-            <motion.div
-              whileHover={{ scale: 1.03, y: -5 }}
-              className="rounded-2xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 backdrop-blur-sm border border-green-500/20 p-6 shadow-lg transition-all duration-300"
-            >
-              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[hsla(150,100%,50%,0.7)] to-[hsla(150,100%,35%,0.6)] flex items-center justify-center mb-4 shadow-lg transform -rotate-3">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  className="w-8 h-8 text-white"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-500">
-                Shareable Fun
-              </h3>
-              <p className="text-foreground/80">
-                Instantly share with friends! Perfect for game nights, movie bingo, or any party.
-              </p>
-            </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                className="flex items-center gap-4 px-5 py-3 rounded-lg bg-background/50 border border-foreground/5 backdrop-blur-sm"
+              >
+                <div className="h-10 w-10 rounded-md bg-foreground/5 flex items-center justify-center text-primary">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">Shareable Fun</p>
+                  <p className="text-sm text-foreground/70">Perfect for game nights & parties</p>
+                </div>
+              </motion.div>
+            </div>
           </motion.div>
-
           <motion.div
             className="w-full mt-20 relative"
             initial={{ opacity: 0, y: 30 }}
