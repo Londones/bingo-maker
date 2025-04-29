@@ -18,37 +18,41 @@ const BingoContent = ({ id }: { id: string }) => {
   const { data: session } = useSession();
   const { useGetBingo, useCheckOwnership } = useBingoStorage();
   const [isClientSide, setIsClientSide] = useState(false);
-  const [isOrdered, setIsOrdered] = useState(false);
 
-  const { data: bingo, isLoading: isBingoLoading, error } = useGetBingo(id);
+  const { data: bingoData, isLoading: isBingoLoading, error } = useGetBingo(id);
 
-  const isOwnerOfBingo = useMemo(() => session?.user?.id === bingo?.userId, [session?.user?.id, bingo?.userId]);
+  const isOwnerOfBingo = useMemo(() => session?.user?.id === bingoData?.userId, [session?.user?.id, bingoData?.userId]);
 
   const { data: ownershipData } = useCheckOwnership(id, {
     enabled: !isOwnerOfBingo,
   });
 
   const isAuthor = useMemo(
-    () => (!!session?.user?.id && bingo?.userId === session.user.id) || !!ownershipData?.isOwner,
-    [session?.user?.id, bingo?.userId, ownershipData?.isOwner]
+    () => (!!session?.user?.id && bingoData?.userId === session.user.id) || !!ownershipData?.isOwner,
+    [session?.user?.id, bingoData?.userId, ownershipData?.isOwner]
   );
 
-  useEffect(() => {
-    if (bingo) {
-      const orderedCells: BingoCell[] = Array(bingo.gridSize ** 2).fill(null);
-      bingo.cells.forEach((cell) => {
+  const bingo = useMemo(() => {
+    if (!bingoData) return null;
+
+    const result = { ...bingoData };
+    const orderedCells: BingoCell[] = Array(bingoData.gridSize ** 2).fill(null);
+
+    bingoData.cells.forEach((cell) => {
+      if (cell && typeof cell.position === "number") {
         orderedCells[cell.position] = cell;
-      });
-      bingo.cells = orderedCells;
-      setIsOrdered(true);
-    }
-  }, [bingo, session, isAuthor]);
+      }
+    });
+
+    result.cells = orderedCells;
+    return result;
+  }, [bingoData]);
 
   useEffect(() => {
     setIsClientSide(true);
   }, []);
 
-  if (!isClientSide || (isBingoLoading && !bingo && !isOrdered)) {
+  if (!isClientSide || (isBingoLoading && !bingo)) {
     return <LoadingComponent />;
   }
 
