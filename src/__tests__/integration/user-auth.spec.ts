@@ -51,6 +51,8 @@ authTest.describe("User Authentication Features", () => {
     await anonymousPage.getByLabel("Password").fill(password);
     await anonymousPage.getByRole("button", { name: /register|sign up/i }).click();
 
+    await anonymousPage.waitForTimeout(2000); // Wait for the sign-up process to complete
+
     // Sign in - this should automatically trigger the migration flow
     // since we're using the same browser context that has the bingoAuthorToken
     // and ownedBingos in localStorage
@@ -58,7 +60,6 @@ authTest.describe("User Authentication Features", () => {
     await anonymousPage.getByLabel("Email").fill(email);
     await anonymousPage.getByLabel("Password").fill(password);
     await anonymousPage.getByRole("button", { name: /sign in/i }).click(); // Navigate explicitly to /me to see the user's bingos
-    await anonymousPage.goto("/me");
 
     // Wait for the page to load and stabilize
     await anonymousPage.waitForTimeout(2000);
@@ -82,24 +83,23 @@ authTest.describe("User Authentication Features", () => {
       await anonymousPage.getByLabel("Password").fill(password);
       await anonymousPage.getByRole("button", { name: /register|sign up/i }).click();
 
+      await anonymousPage.waitForTimeout(2000); // Wait for the sign-up process to complete
+
       // Sign in
       await anonymousPage.goto("/signin");
       await anonymousPage.getByLabel("Email").fill(email);
       await anonymousPage.getByLabel("Password").fill(password);
       await anonymousPage.getByRole("button", { name: /sign in/i }).click(); // Confirm we're logged in - increase timeout and add more reliable check
-      try {
-        await anonymousPage.waitForSelector("text=My Bingos", { timeout: 10000 });
-      } catch (error) {
-        // If "My Bingos" doesn't appear, check for other indicators of being logged in
-        console.log('Waiting for "My Bingos" failed, checking alternative login indicators');
-        await anonymousPage.waitForSelector("[data-testid='user-dropdown']", { timeout: 5000 });
-      }
 
       // Ensure we're fully logged in by checking URL and waiting for any post-login redirects
       await anonymousPage.waitForTimeout(1000);
 
+      await expect(anonymousPage.getByRole("heading", { name: "My Bingos" })).toBeVisible({ timeout: 5000 });
+
       // 2. Sign out
       await anonymousPage.getByRole("button", { name: /sign out/i }).click();
+
+      await anonymousPage.waitForTimeout(1000); // Wait for the sign-out process to complete
 
       // 3. Create a bingo anonymously
       const { title } = await createBingo(anonymousPage);

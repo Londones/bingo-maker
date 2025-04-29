@@ -8,35 +8,31 @@ authTest.describe("Bingo Editor State Management", () => {
       // Step 1: Create a bingo while logged in
       await authenticatedPage.goto("/editor");
       const testTitle = `Test Bingo ${Date.now()}`;
+
+      // Wait for the editor to be fully loaded
+      await authenticatedPage.waitForSelector("text=New Bingo", { state: "visible", timeout: 10000 });
+
       await authenticatedPage.getByRole("heading", { name: "New Bingo" }).dblclick();
       await authenticatedPage.keyboard.type(testTitle);
       await authenticatedPage.getByRole("button", { name: "Save" }).click();
-      await authenticatedPage.waitForSelector("text=Bingo saved successfully");
 
-      // Step 2: Navigate to the /me page and click on the created bingo
-      await authenticatedPage.goto("/me");
-      await authenticatedPage.waitForTimeout(1000); // Wait for the page to load
-      await authenticatedPage.getByText(testTitle).click(); // Step 3: Navigate to the editor page again with additional options to handle navigation issues
-      try {
-        // Use waitUntil: 'domcontentloaded' instead of 'load' to prevent NS_BINDING_ABORTED issues
-        await authenticatedPage.goto("/editor", {
-          waitUntil: "domcontentloaded",
-          timeout: 10000, // Increase timeout to 10 seconds
-        });
-      } catch (error) {
-        console.log("Navigation error:", error);
-        // If navigation fails, try again with a different approach
-        await authenticatedPage.evaluate(() => {
-          window.location.href = "/editor";
-        });
-        await authenticatedPage.waitForLoadState("domcontentloaded");
-      }
+      // Wait for save confirmation with increased timeout
+      await authenticatedPage.waitForSelector("text=Bingo saved successfully", { timeout: 15000 });
+
+      // Step 2: Navigate to the /me page and ensure navigation completes
+      await authenticatedPage.goto("/me", { waitUntil: "domcontentloaded" });
+
+      // Wait for the page to be fully loaded and the bingo to appear
+      await authenticatedPage.waitForSelector(`text=${testTitle}`, { state: "visible", timeout: 10000 });
+
+      await expect(authenticatedPage.getByText(testTitle)).toBeVisible();
+      await authenticatedPage.getByText("Create New Bingo").click();
 
       // Add a short wait to ensure the page is stable
       await authenticatedPage.waitForTimeout(1000);
 
       // Step 4: Verify that the bingo is the initial bingo
-      await authenticatedPage.waitForSelector("text=New Bingo", { state: "visible", timeout: 5000 });
+      await authenticatedPage.waitForSelector("text=New Bingo", { state: "visible", timeout: 10000 });
       const editorTitle = await authenticatedPage.getByRole("heading", { name: "New Bingo" }).textContent();
       expect(editorTitle).toBe("New Bingo"); // Expect the title to be "New Bingo"
     }

@@ -47,6 +47,7 @@ export async function signIn(page: Page, email: string, password: string): Promi
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
+  await page.waitForTimeout(1000); // Wait for the page to load
   // Wait for redirect to complete
   await page.waitForURL("/me");
 }
@@ -57,6 +58,8 @@ export async function signUp(page: Page, email: string, username: string, passwo
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign up" }).click();
+
+  await page.waitForTimeout(1000);
   // Wait for redirect to complete
   await page.waitForURL("/signin");
 }

@@ -2,13 +2,13 @@
   "cookies": [
     {
       "name": "authjs.csrf-token",
-      "value": "967176b4385199939b0ccffa1410857eba176a07319e2d3b87042f376e6cbf92%7Cd32bb0a235b5320d6ca1547c7bd3e187f0718b9f0ad28d13c9e6603c49d6c6a1",
+      "value": "9a5f196428cfb838b3a0fc6ef5f41f126a5e534ed29786806d056aabd00092b2%7C10a0e5c09c4e2a604b911759079beb05cc617078386c3e2667d15c837ef60771",
       "domain": "127.0.0.1",
       "path": "/",
       "expires": -1,
       "httpOnly": true,
       "secure": false,
-      "sameSite": "Lax"
+      "sameSite": "None"
     },
     {
       "name": "authjs.callback-url",
@@ -18,14 +18,14 @@
       "expires": -1,
       "httpOnly": true,
       "secure": false,
-      "sameSite": "Lax"
+      "sameSite": "None"
     },
     {
       "name": "authjs.session-token",
-      "value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoic29nb1FFUjM0dDBxb0hxSHJYZHFMckczRjZHa0pROXdlOGN0S0trYjR5T3FQYVNYRzVUSmd2ZUtkVUpoYTh1cmIzMmc1UEpPM1JUOExoS2RYSTdlVFEifQ..cyGN2qdHVqVTE4cxjISI-Q.8GyYI14lSjdnn9DScEaDXeQmjxrrJX0z8nLq7oIWv7-x0VtttMCaF7EahqCbfEX8Tx8qswxwzgCE5daZrGaq5fHAbbCAcKnvAtuWY-ZcSQJc5alu9-SnRKKSDeHiWiFpkKngYR0YjyrMsICGsZYWGjfc86JTnkgcg6Igg0Hwk7ZsTP05fOnf1TQa9w9nUb9xiSWIq3G-XJGnvRdBU-XhFsVFjHL7nMnSRxMURh5MbD_Wa7p4Ly9Ba0_73KGdHF5NOxUz0Sj_N63ryRKHyneTLw.Phbs2ugurfU5ESJkE2lk-zjlgTPGc9G6K8ZrpKH0P-I",
+      "value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoic29nb1FFUjM0dDBxb0hxSHJYZHFMckczRjZHa0pROXdlOGN0S0trYjR5T3FQYVNYRzVUSmd2ZUtkVUpoYTh1cmIzMmc1UEpPM1JUOExoS2RYSTdlVFEifQ..2oBTEatE5FzNCDRvOxh_7w.0woU9D9X-TLjzlssgX972AKPDjkZEiUHOd7-YzDfIS5lC7OBm-w2BV5h4bdEUZFfNTWccuVhHdeLmXxM70cUhbS9MGlK7AgGC1WBRu7FASaBbwIeyCsruzTUn4_WD5lvUfxSl_zQ-PSqfEgYoiuZ568p1Al-asJNgm4OS3R90sIvkEYIusLYx86MqDBIn6uWxr1xi14uQ9eR-jmqwUCeIv6nMWXfqOKwXyWMnMq2nNvQQOF6IQVH3At_9XcoLRPrNre25UQH2Inpf7Zv0L7uUA.8ltiiwr6xLNJ0vCycg8OSH9NAIf66cUG3juwdpH57mg",
       "domain": "127.0.0.1",
       "path": "/",
-      "expires": 1748483218.485408,
+      "expires": 1748534108,
       "httpOnly": true,
       "secure": false,
       "sameSite": "Lax"
@@ -41,7 +41,7 @@
         },
         {
           "name": "BINGO_MAKER_REACT_QUERY_CACHE",
-          "value": "{\"buster\":\"\",\"timestamp\":1745891213891,\"clientState\":{\"mutations\":[],\"queries\":[]}}"
+          "value": "{\"buster\":\"\",\"timestamp\":1745941971785,\"clientState\":{\"mutations\":[],\"queries\":[]}}"
         }
       ]
     }
