@@ -254,14 +254,18 @@ export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving }: Con
       toast.success("Share link copied to clipboard");
     });
   };
-
   return (
     <TooltipProvider>
-      <div className="flex w-full justify-center gap-6">
+      <div id="editor-controls" className="flex w-full justify-center gap-6">
         {setIsPanelOpen && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button onClick={() => setIsPanelOpen(!isPanelOpen)} variant="outline" className="ml-2">
+              <Button
+                id="panel-toggle-btn"
+                onClick={() => setIsPanelOpen(!isPanelOpen)}
+                variant="outline"
+                className="ml-2"
+              >
                 {isPanelOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
               </Button>
             </TooltipTrigger>
@@ -284,6 +288,7 @@ export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving }: Con
           <Tooltip>
             <TooltipTrigger asChild>
               <Switch
+                id="publish-switch"
                 checked={state.status === "published"}
                 onCheckedChange={(checked) => actions.switchStatus(checked ? "published" : "draft")}
               />
@@ -294,7 +299,7 @@ export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving }: Con
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" onClick={actions.undo} disabled={!canUndo}>
+              <Button id="undo-btn" variant="outline" onClick={actions.undo} disabled={!canUndo}>
                 <Undo className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
@@ -305,7 +310,7 @@ export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving }: Con
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" onClick={actions.redo} disabled={!canRedo}>
+              <Button id="redo-btn" variant="outline" onClick={actions.redo} disabled={!canRedo}>
                 <Redo className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
@@ -317,6 +322,7 @@ export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving }: Con
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              id="save-btn"
               onClick={() => {
                 void (state.id ? handleUpdate() : handleSaveNew());
               }}
@@ -345,6 +351,7 @@ export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving }: Con
                 void handleShare();
               }}
               disabled={!state.id || isSaving}
+              id="share-btn"
             >
               <Share className="h-4 w-4" />
             </Button>

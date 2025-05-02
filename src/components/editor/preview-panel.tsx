@@ -325,7 +325,7 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
                 if (el) cellRefs.current[index] = el;
               }}
               data-index={index}
-              className="relative items-center justify-center rounded-md backdrop-blur-sm transition-all cursor-pointer hover:shadow-md"
+              className="relative items-center justify-center rounded-md backdrop-blur-sm transition-all cursor-pointer bingo-cell hover:shadow-md"
               data-testid={`cell-${index} bingo-cell`}
               style={{
                 ...cellStyles.baseStyles,
@@ -407,6 +407,7 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
       >
         <div className="absolute inset-0 pointer-events-none" style={getBackgroundImage} />
         <div className="relative z-10 max-w-full">
+          {" "}
           {editingTitle ? (
             <textarea
               ref={titleRef}
@@ -423,6 +424,7 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
             />
           ) : (
             <h1
+              id="bingo-title"
               className="text-center z-10 text-4xl font-bold"
               style={{
                 ...titleStyle,

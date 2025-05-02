@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import PreviewPanel from "@/components/editor/preview-panel";
 import SettingsPanel from "@/components/editor/settings-panel";
 import Controls from "@/components/editor/controls";
+import EditorTutorial from "@/components/editor/tutorial";
 
 interface EditorProps {
   setSaving?: (isSaving: boolean) => void;
@@ -17,9 +18,11 @@ export default function Editor({ setSaving }: EditorProps) {
       document.body.style.overflow = "auto";
     };
   }, []);
-
   return (
     <div className="fixed inset-0 w-screen h-screen bg-background/40 backdrop-blur-sm overflow-hidden z-40">
+      {/* Add the tutorial component that will automatically show on first visit */}
+      <EditorTutorial />
+
       <div className="h-full w-full flex flex-col text-foreground/50">
         <div className="p-4 border-b flex items-center bg-background/40 backdrop-blur-sm">
           <Controls isPanelOpen={isPanelOpen} setIsPanelOpen={setIsPanelOpen} setSaving={setSaving} />

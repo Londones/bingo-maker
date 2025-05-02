@@ -174,11 +174,11 @@ const GradientEditor = () => {
       .map((stop) => `radial-gradient(at ${stop.position.x}% ${stop.position.y}%, ${stop.color} 0px, transparent 50%)`)
       .join(", "),
   };
-
   return (
     <div>
       <div ref={containerRef} className="relative w-full h-28 border rounded-lg">
         <div
+          id="gradient-background"
           className="w-full h-full rounded-lg"
           style={backgroundStyle}
           onContextMenu={handleContextMenu}
