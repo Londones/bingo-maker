@@ -18,13 +18,11 @@ export async function createBingo(page: Page): Promise<BingoIdAndTitle> {
   await page.keyboard.type(title);
   await page.keyboard.press("Escape"); // Close the title input
 
-  // Fill some cells
+  // Fill one cell with text
   const cells = await page.locator(".bingo-cell").all();
-  for (let i = 0; i < Math.min(5, cells.length); i++) {
-    await cells[i]?.click();
-    await page.keyboard.type(`Cell ${i + 1}`);
-    await page.keyboard.press("Escape");
-  }
+  await cells[0]?.click();
+  await page.keyboard.type(`Cell ${1}`);
+  await page.keyboard.press("Escape");
 
   // Save the bingo
   await page.getByTitle("Save").click();

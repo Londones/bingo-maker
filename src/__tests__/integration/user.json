@@ -2,7 +2,7 @@
   "cookies": [
     {
       "name": "authjs.csrf-token",
-      "value": "3771734753837c7b9fe4cbb1c6271316269fc148f8e0b8574469fda076a47ea8%7C1aaa0da3a79232845fa10a13ccc4abeff512751b688391e529042e36d4f24d59",
+      "value": "b619037359a6b556d3f74d393a04af3f8b5127b51292284e16cff606c7fae45a%7C73f55178334fd98c223f6923f4096fd1dd67b60194354ef951e4b9025c89ca5e",
       "domain": "127.0.0.1",
       "path": "/",
       "expires": -1,
@@ -22,10 +22,10 @@
     },
     {
       "name": "authjs.session-token",
-      "value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoic29nb1FFUjM0dDBxb0hxSHJYZHFMckczRjZHa0pROXdlOGN0S0trYjR5T3FQYVNYRzVUSmd2ZUtkVUpoYTh1cmIzMmc1UEpPM1JUOExoS2RYSTdlVFEifQ..3Z2UqB192Kw0sih9ZPGu9w.r7sCUruIHZWk0C2e_FVEOLkycanDfUKWaYl7ncH-gTeJQUm6VLc5Dsqd0m_-kPxy1D6_hmosgL3bPsgdVkcnq2XM_hBLjj2EgTDj_4bVCp5B0QBJt5BpftRSnnyRy0WjmwDg4djCFI4dCCvXZqmlmSRKIip7HYpiBSk5kQzcJVGMUDQ1MsLHE9RpHuBRjpRQu6Rokp36S73k5S08TKI3zsZeL0H72EmN2Svqm96zkORTYGycRRukT2V94WF3U_vygaUTGmJbECcFjVFFWs1JAg.EWEG4Zybz4RmySwG2xG-XDGnM2mO_-4kw_GcYXbmoYA",
+      "value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoic29nb1FFUjM0dDBxb0hxSHJYZHFMckczRjZHa0pROXdlOGN0S0trYjR5T3FQYVNYRzVUSmd2ZUtkVUpoYTh1cmIzMmc1UEpPM1JUOExoS2RYSTdlVFEifQ..jizUVLv51CzNS0JFgodYOQ.H-pjS0RIRTH_SOdpD0ltJhkIhLPb8XY6do1Vql37YY2-UiADqNWcVxs9-bGFeUGDoXMrMv44_PXGWz8V9Hyq-oW0JMxMROV4QM5vgIt3Zlm_kq2ZsqbnOjh9wqGkMmyjixwavcjI3gBICUJlIRzghyppvgh2O_1vA6vTd9ABfrFV6YyGfuKgYlduUgIosqf3rb55l-8MyLBUPXRMjRu8f-IloXvJK1kSetUzB4WfDJUYhCsmiBBmnnDyMubFfcKRgH__m5ZLUWhNbNwjBvJruA.h_Oq6u70p4y1v3QEZlg3-DaE1j-LbciYD1_1wo_YVnU",
       "domain": "127.0.0.1",
       "path": "/",
-      "expires": 1748814321,
+      "expires": 1748819186,
       "httpOnly": true,
       "secure": false,
       "sameSite": "None"
@@ -41,7 +41,7 @@
         },
         {
           "name": "BINGO_MAKER_REACT_QUERY_CACHE",
-          "value": "{\"buster\":\"\",\"timestamp\":1746219121063,\"clientState\":{\"mutations\":[],\"queries\":[]}}"
+          "value": "{\"buster\":\"\",\"timestamp\":1746227186578,\"clientState\":{\"mutations\":[],\"queries\":[]}}"
         },
         {
           "name": "bingo-maker-tutorial-shown",
