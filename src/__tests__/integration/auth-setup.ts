@@ -21,6 +21,11 @@ export const authTest = baseTest.extend<CustomFixtures>({
       storageState: fs.existsSync(authenticatedUserFile) ? authenticatedUserFile : undefined,
     });
 
+    // Disable tutorial for tests by marking it as already shown
+    await context.addInitScript(() => {
+      localStorage.setItem("bingo-maker-tutorial-shown", "true");
+    });
+
     const page = await context.newPage();
 
     // Check if we need to log in (if auth state was not saved or expired)
@@ -55,12 +60,16 @@ export const authTest = baseTest.extend<CustomFixtures>({
     // Close the context after test
     await context.close();
   },
-
   // Define a fixture for a context with anonymous auth token
   anonymousPage: async ({ browser }, testHandler) => {
     // Create a new context with storage state if it exists
     const context = await browser.newContext({
       storageState: fs.existsSync(anonymousUserFile) ? anonymousUserFile : undefined,
+    });
+
+    // Disable tutorial for tests by marking it as already shown
+    await context.addInitScript(() => {
+      localStorage.setItem("bingo-maker-tutorial-shown", "true");
     });
 
     const page = await context.newPage();

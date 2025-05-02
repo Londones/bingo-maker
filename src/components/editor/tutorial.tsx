@@ -253,7 +253,7 @@ const EditorTutorial = ({ enabled = true, onComplete }: EditorTutorialProps) => 
   }, []);
 
   useEffect(() => {
-    if (process.env.NODE_ENV === "test" || !enabled || hasBeenShown) {
+    if (!enabled || hasBeenShown) {
       return;
     }
 

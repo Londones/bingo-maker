@@ -2,7 +2,7 @@
   "cookies": [
     {
       "name": "authjs.csrf-token",
-      "value": "9a5f196428cfb838b3a0fc6ef5f41f126a5e534ed29786806d056aabd00092b2%7C10a0e5c09c4e2a604b911759079beb05cc617078386c3e2667d15c837ef60771",
+      "value": "3771734753837c7b9fe4cbb1c6271316269fc148f8e0b8574469fda076a47ea8%7C1aaa0da3a79232845fa10a13ccc4abeff512751b688391e529042e36d4f24d59",
       "domain": "127.0.0.1",
       "path": "/",
       "expires": -1,
@@ -22,13 +22,13 @@
     },
     {
       "name": "authjs.session-token",
-      "value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoic29nb1FFUjM0dDBxb0hxSHJYZHFMckczRjZHa0pROXdlOGN0S0trYjR5T3FQYVNYRzVUSmd2ZUtkVUpoYTh1cmIzMmc1UEpPM1JUOExoS2RYSTdlVFEifQ..2oBTEatE5FzNCDRvOxh_7w.0woU9D9X-TLjzlssgX972AKPDjkZEiUHOd7-YzDfIS5lC7OBm-w2BV5h4bdEUZFfNTWccuVhHdeLmXxM70cUhbS9MGlK7AgGC1WBRu7FASaBbwIeyCsruzTUn4_WD5lvUfxSl_zQ-PSqfEgYoiuZ568p1Al-asJNgm4OS3R90sIvkEYIusLYx86MqDBIn6uWxr1xi14uQ9eR-jmqwUCeIv6nMWXfqOKwXyWMnMq2nNvQQOF6IQVH3At_9XcoLRPrNre25UQH2Inpf7Zv0L7uUA.8ltiiwr6xLNJ0vCycg8OSH9NAIf66cUG3juwdpH57mg",
+      "value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoic29nb1FFUjM0dDBxb0hxSHJYZHFMckczRjZHa0pROXdlOGN0S0trYjR5T3FQYVNYRzVUSmd2ZUtkVUpoYTh1cmIzMmc1UEpPM1JUOExoS2RYSTdlVFEifQ..3Z2UqB192Kw0sih9ZPGu9w.r7sCUruIHZWk0C2e_FVEOLkycanDfUKWaYl7ncH-gTeJQUm6VLc5Dsqd0m_-kPxy1D6_hmosgL3bPsgdVkcnq2XM_hBLjj2EgTDj_4bVCp5B0QBJt5BpftRSnnyRy0WjmwDg4djCFI4dCCvXZqmlmSRKIip7HYpiBSk5kQzcJVGMUDQ1MsLHE9RpHuBRjpRQu6Rokp36S73k5S08TKI3zsZeL0H72EmN2Svqm96zkORTYGycRRukT2V94WF3U_vygaUTGmJbECcFjVFFWs1JAg.EWEG4Zybz4RmySwG2xG-XDGnM2mO_-4kw_GcYXbmoYA",
       "domain": "127.0.0.1",
       "path": "/",
-      "expires": 1748534108,
+      "expires": 1748814321,
       "httpOnly": true,
       "secure": false,
-      "sameSite": "Lax"
+      "sameSite": "None"
     }
   ],
   "origins": [
@@ -41,7 +41,11 @@
         },
         {
           "name": "BINGO_MAKER_REACT_QUERY_CACHE",
-          "value": "{\"buster\":\"\",\"timestamp\":1745941971785,\"clientState\":{\"mutations\":[],\"queries\":[]}}"
+          "value": "{\"buster\":\"\",\"timestamp\":1746219121063,\"clientState\":{\"mutations\":[],\"queries\":[]}}"
+        },
+        {
+          "name": "bingo-maker-tutorial-shown",
+          "value": "true"
         }
       ]
     }
