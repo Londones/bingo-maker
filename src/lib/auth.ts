@@ -18,6 +18,7 @@ declare module "next-auth" {
 
 const authOptions = {
     adapter: PrismaAdapter(prisma),
+    trustHost: true,
     providers: [
         Credentials({
             credentials: {

@@ -2,13 +2,13 @@
   "cookies": [
     {
       "name": "authjs.csrf-token",
-      "value": "b619037359a6b556d3f74d393a04af3f8b5127b51292284e16cff606c7fae45a%7C73f55178334fd98c223f6923f4096fd1dd67b60194354ef951e4b9025c89ca5e",
+      "value": "1bf24e229a2f5bd50ac4d3ff31065ff3cbd4c11d3e2e172823877eafcb73e042%7C2cb51c70aff51ce2e455e0054c10f545328550a865ee415c4a87f129431e275d",
       "domain": "127.0.0.1",
       "path": "/",
       "expires": -1,
       "httpOnly": true,
       "secure": false,
-      "sameSite": "None"
+      "sameSite": "Lax"
     },
     {
       "name": "authjs.callback-url",
@@ -18,17 +18,17 @@
       "expires": -1,
       "httpOnly": true,
       "secure": false,
-      "sameSite": "None"
+      "sameSite": "Lax"
     },
     {
       "name": "authjs.session-token",
-      "value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoic29nb1FFUjM0dDBxb0hxSHJYZHFMckczRjZHa0pROXdlOGN0S0trYjR5T3FQYVNYRzVUSmd2ZUtkVUpoYTh1cmIzMmc1UEpPM1JUOExoS2RYSTdlVFEifQ..jizUVLv51CzNS0JFgodYOQ.H-pjS0RIRTH_SOdpD0ltJhkIhLPb8XY6do1Vql37YY2-UiADqNWcVxs9-bGFeUGDoXMrMv44_PXGWz8V9Hyq-oW0JMxMROV4QM5vgIt3Zlm_kq2ZsqbnOjh9wqGkMmyjixwavcjI3gBICUJlIRzghyppvgh2O_1vA6vTd9ABfrFV6YyGfuKgYlduUgIosqf3rb55l-8MyLBUPXRMjRu8f-IloXvJK1kSetUzB4WfDJUYhCsmiBBmnnDyMubFfcKRgH__m5ZLUWhNbNwjBvJruA.h_Oq6u70p4y1v3QEZlg3-DaE1j-LbciYD1_1wo_YVnU",
+      "value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoic29nb1FFUjM0dDBxb0hxSHJYZHFMckczRjZHa0pROXdlOGN0S0trYjR5T3FQYVNYRzVUSmd2ZUtkVUpoYTh1cmIzMmc1UEpPM1JUOExoS2RYSTdlVFEifQ..Lhc7Mex_LocwY00mvhRM4A.4eQb0V1EKCepHWRu4DAKCf_H-KXBs62O7Eo8GN4PyNLxt7b0dkNlSry1k6ZOp1WMWi0d2FIFRY_lrRlX-fpmxP5QzS6QlMNK5X88TAVV9UvItTMDHf4Af04RVZXiJwkIFzS3-yXOjLYD3jKmif98hp8B6Hks_gRYs3q1BoZKPBwVwqgnNGPvuKJcoUGKTboTq5l_uKYdpk9hiBwRnSbLVuDwJu_woTMLLpjerKK5fHWGjxR826jKWd6LZsvI44fYCijTZmN6f01go2u0G2qvcA.SbOjU6hOdnjzIDebF1HIDoASd9gUSb4xqMGYtuaRRPk",
       "domain": "127.0.0.1",
       "path": "/",
-      "expires": 1748819186,
+      "expires": 1749412599.962883,
       "httpOnly": true,
       "secure": false,
-      "sameSite": "None"
+      "sameSite": "Lax"
     }
   ],
   "origins": [
@@ -36,16 +36,12 @@
       "origin": "http://127.0.0.1:3000",
       "localStorage": [
         {
-          "name": "bingoAuthorToken",
-          "value": "8d291742f1bc870a5a23dee30f559dfc7aa9f4e9a6905ea14546ade8951cb063"
-        },
-        {
-          "name": "BINGO_MAKER_REACT_QUERY_CACHE",
-          "value": "{\"buster\":\"\",\"timestamp\":1746227186578,\"clientState\":{\"mutations\":[],\"queries\":[]}}"
-        },
-        {
           "name": "bingo-maker-tutorial-shown",
           "value": "true"
+        },
+        {
+          "name": "bingoAuthorToken",
+          "value": "8d291742f1bc870a5a23dee30f559dfc7aa9f4e9a6905ea14546ade8951cb063"
         }
       ]
     }

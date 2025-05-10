@@ -8,7 +8,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
 </div>
-A modern, responsive web application for creating and customizing beautiful gradient backgrounds and designs built with Next.js 14.
+A modern, responsive web application for creating and customizing beautiful gradient backgrounds and designs built with Next.js 15.
 
 ## ✨ Features
 
@@ -36,11 +36,11 @@ A modern, responsive web application for creating and customizing beautiful grad
 
 ## 🛠️ Tech Stack
 
--   **Frontend**: Next.js 14, React, TypeScript
+-   **Frontend**: Next.js 15, React 18, TypeScript
 -   **Styling**: Tailwind CSS, Shadcn/ui
 -   **State**: Redux Toolkit
 -   **Database**: Prisma, PostgreSQL
 -   **Auth**: Auth.js
--   **Storage**: UploadThing
+-   **Image Storage**: S3 Bucket
 
 Made with ❤️ by Mytsu
