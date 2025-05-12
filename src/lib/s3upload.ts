@@ -73,27 +73,10 @@ export const validateFile = (blob: Blob): Promise<boolean> => {
         return Promise.resolve(false);
     }
 
-    try {
-        return new Promise((resolve) => {
-            const img = new Image();
-            const url = URL.createObjectURL(blob);
-
-            img.onload = () => {
-                URL.revokeObjectURL(url);
-
-                const valid = img.width > 0 && img.height > 0;
-                const validSize = blob.size <= 4 * 1024 * 1024;
-                resolve(valid && validSize);
-            };
-
-            img.onerror = () => {
-                URL.revokeObjectURL(url);
-                resolve(false);
-            };
-
-            img.src = url;
-        });
-    } catch (error) {
+    const validSize = blob.size <= 4 * 1024 * 1024;
+    if (!validSize) {
         return Promise.resolve(false);
     }
+
+    return Promise.resolve(true);
 };
