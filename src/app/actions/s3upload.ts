@@ -1,7 +1,7 @@
 "use server";
 
 import { Bingo, CellLocalImage, OtherLocalImage, ImageUploadResponse } from "@/types/types";
-import { uploadFile } from "@/lib/s3upload";
+import { validateFile, uploadFile } from "@/lib/s3upload";
 import { auth } from "@/lib/auth";
 
 export async function uploadPendingImages(state: Bingo): Promise<ImageUploadResponse> {
@@ -27,6 +27,11 @@ export async function uploadPendingImages(state: Bingo): Promise<ImageUploadResp
                 // For base64 data URLs
                 const response = await fetch(image.url);
                 const blob = await response.blob();
+                const isValid = await validateFile(blob);
+                if (!isValid) {
+                    throw new Error("Invalid file type");
+                }
+
                 const file = new File([blob], image.fileInfo.name, { type: image.fileInfo.type });
 
                 // Upload to S3
@@ -49,6 +54,10 @@ export async function uploadPendingImages(state: Bingo): Promise<ImageUploadResp
         try {
             const response = await fetch(backgroundImage.url);
             const blob = await response.blob();
+            const isValid = await validateFile(blob);
+            if (!isValid) {
+                throw new Error("Invalid file type");
+            }
             const file = new File([blob], backgroundImage.fileInfo.name, { type: backgroundImage.fileInfo.type });
 
             // Upload to S3
@@ -75,6 +84,10 @@ export async function uploadPendingImages(state: Bingo): Promise<ImageUploadResp
         try {
             const response = await fetch(stampImage.url);
             const blob = await response.blob();
+            const isValid = await validateFile(blob);
+            if (!isValid) {
+                throw new Error("Invalid file type");
+            }
             const file = new File([blob], stampImage.fileInfo.name, { type: stampImage.fileInfo.type });
 
             // Upload to S3
