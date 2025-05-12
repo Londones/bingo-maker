@@ -8,7 +8,7 @@ import { useBingoStorage } from "@/hooks/useBingoStorage";
 import { toast } from "sonner";
 import { APIError } from "@/lib/errors";
 import { motion } from "framer-motion";
-import { uploadPendingImages } from "@/app/actions/uploadthing";
+import { uploadPendingImages } from "@/app/actions/s3upload";
 import { useQueryClient } from "@tanstack/react-query";
 import { Bingo, BingoPatch } from "@/types/types";
 import { useEditorRoutePersistence } from "@/hooks/useEditorRoutePersistence";
