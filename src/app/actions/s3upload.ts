@@ -4,8 +4,8 @@ import { Bingo, CellLocalImage, OtherLocalImage, ImageUploadResponse } from "@/t
 import { validateFile, uploadFile } from "@/lib/s3upload";
 import { auth } from "@/lib/auth";
 
-export async function uploadPendingImages(state: Bingo): Promise<ImageUploadResponse> {
-    if (!state.localImages?.length) return {};
+export async function uploadPendingImages(localImages: LocalImage[]): Promise<ImageUploadResponse> {
+    if (!localImages?.length) return {};
 
     const session = await auth();
 
@@ -15,9 +15,9 @@ export async function uploadPendingImages(state: Bingo): Promise<ImageUploadResp
 
     const result: ImageUploadResponse = {};
 
-    const cellImages = state.localImages.filter((img): img is CellLocalImage => img.type === "cell");
-    const backgroundImage = state.localImages.find((img): img is OtherLocalImage => img.type === "background");
-    const stampImage = state.localImages.find((img): img is OtherLocalImage => img.type === "stamp");
+    const cellImages = localImages.filter((img): img is CellLocalImage => img.type === "cell");
+    const backgroundImage = localImages.find((img): img is OtherLocalImage => img.type === "background");
+    const stampImage = localImages.find((img): img is OtherLocalImage => img.type === "stamp");
 
     // Process cell images
     if (cellImages.length > 0) {

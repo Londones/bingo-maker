@@ -33,6 +33,18 @@ export async function GET(req: Request, { params }: { params: ParamsType }) {
             throw new APIError("Bingo not found", APIErrorCode.BINGO_NOT_FOUND, 444);
         }
 
+        if (bingo) {
+            bingo.cells.forEach((cell) => {
+                if (cell.cellStyle?.cellBackgroundImage && !/%[\dA-Fa-f]{2}/.test(cell.cellStyle.cellBackgroundImage)) {
+                    cell.cellStyle.cellBackgroundImage = encodeURI(cell.cellStyle.cellBackgroundImage);
+                }
+            });
+
+            if (bingo.background?.backgroundImage && !/%[\dA-Fa-f]{2}/.test(bingo.background.backgroundImage)) {
+                bingo.background.backgroundImage = encodeURI(bingo.background.backgroundImage);
+            }
+        }
+
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { authorToken, ...bingoWithoutToken } = bingo;
 

@@ -43,7 +43,7 @@ export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving }: Con
         }
 
         try {
-            const uploadResult = await uploadPendingImages(currentState);
+            const uploadResult = await uploadPendingImages(currentState.localImages);
 
             actions.setImageUrls(uploadResult);
 

@@ -24,7 +24,11 @@ export const uploadFile = async (file: File, key: string) => {
         // Convert File to Buffer before sending to S3
         const fileBuffer = await fileToBuffer(file);
 
-        const uniqueKey = `${Date.now()}-${key}`;
+        const sanitizedKey = key
+            .replace(/[^a-zA-Z0-9-_]/g, "-")
+            .toLowerCase()
+            .replace(/[^a-z0-9\-_.]/g, "");
+        const uniqueKey = `${Date.now()}-${sanitizedKey}`;
 
         const sendRes = await s3Client.send(
             new PutObjectCommand({
