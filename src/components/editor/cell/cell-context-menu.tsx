@@ -5,15 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Bold, Italic, Type, Square, Palette, RotateCcw } from "lucide-react";
-import { cn, convertFileToBase64 } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { HexColorPicker } from "react-colorful";
-import { LocalImage, PopoverType } from "@/types/types";
+import { PopoverType } from "@/types/types";
 import { FONT_SIZES, FONT_FAMILIES } from "@/utils/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from "@/components/ui/context-menu";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { uploadImagesToBingo } from "@/lib/client-s3upload";
+import { deleteImageFromS3 } from "@/app/actions/delete-image";
 
 type CellContextMenuProps = {
     index: number;
@@ -23,6 +25,7 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
     const { state, actions } = useEditor();
     const [activePopover, setActivePopover] = useState<PopoverType>(null);
     const cellStyle = useMemo(() => state.cells[index]?.cellStyle ?? undefined, [state.cells, index]);
+    const [isUploading, setIsUploading] = useState(false);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const [position, setPosition] = useState(() => {
@@ -41,10 +44,13 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
     // This ref will store the animation frame ID
     const animationFrameRef = useRef<number | null>(null);
 
-    useEffect(() => {
-        if (!cellStyle?.cellBackgroundImagePosition) return;
+    // Add state for tracking image upload status
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
-        const posStr = cellStyle.cellBackgroundImagePosition;
+    useEffect(() => {
+        if (!cellStyle?.cellBackgroundImage) return;
+
+        const posStr = cellStyle.cellBackgroundImage;
         const [x, y] = posStr.split(" ").map((val) => parseInt(val));
         const newPosition = {
             x: isNaN(x!) ? 50 : x,
@@ -53,7 +59,7 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
 
         setPosition(newPosition);
         currentPositionRef.current = newPosition;
-    }, [cellStyle?.cellBackgroundImagePosition]);
+    }, [cellStyle?.cellBackgroundImage]);
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
@@ -131,7 +137,6 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
         },
         [position.x, position.y]
     );
-
     const handleImageClick = useCallback(
         (e: React.MouseEvent) => {
             if (!containerRef.current) return;
@@ -157,15 +162,11 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
     }, []);
 
     const handleRemoveStyling = useCallback(() => {
-        const localCellImage = state.localImages?.find((image) => image.position === index);
-        if (localCellImage) {
-            actions.removeCellLocalImage(index);
-        }
         // Set cellStyle to null explicitly to indicate deletion
         actions.updateCell(index, {
             cellStyle: null,
         });
-    }, [state.localImages, actions, index]);
+    }, [actions, index]);
 
     const handleFileSelect = useCallback(
         async (e: ChangeEvent<HTMLInputElement>) => {
@@ -184,47 +185,94 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
                 return;
             }
 
-            const base64Data = await convertFileToBase64(file);
+            try {
+                setIsUploading(true);
 
-            const localImage: LocalImage = {
-                url: base64Data,
-                type: "cell",
-                position: index,
-                fileInfo: {
-                    name: file.name,
-                    type: file.type,
-                    size: file.size,
-                },
-            };
+                // Setup for direct S3 upload without using local image preview
+                const files = new Map<
+                    string,
+                    {
+                        file: File;
+                        type: "cell" | "background" | "stamp";
+                        position?: number;
+                    }
+                >();
+                files.set(`cell-${index}`, {
+                    file,
+                    type: "cell",
+                    position: index,
+                });
 
-            actions.updateCell(index, {
-                cellStyle: {
-                    ...cellStyle,
-                },
-            });
+                // Upload the image directly to S3
+                const uploadedImages = await uploadImagesToBingo(files);
 
-            actions.setLocalImage(localImage);
+                // Update cell with the S3 URL
+                if (uploadedImages && uploadedImages.length > 0) {
+                    const uploadedImage = uploadedImages.find((img) => img.position === index);
+                    if (uploadedImage) {
+                        actions.updateCell(index, {
+                            cellStyle: {
+                                ...cellStyle,
+                                cellBackgroundImage: uploadedImage.url,
+                                cellBackgroundImageOpacity: 100,
+                                cellBackgroundImagePosition: "50% 50%",
+                                cellBackgroundImageSize: 100,
+                            },
+                        });
+
+                        toast.success("Image uploaded successfully");
+                    }
+                }
+            } catch (error) {
+                console.error("Error uploading image:", error);
+                errorToast(`Upload failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+            } finally {
+                setIsUploading(false);
+            }
         },
         [actions, errorToast, index, cellStyle]
     );
-
     const handleRemoveImage = useCallback(() => {
         if (cellStyle?.cellBackgroundImage) {
-            actions.updateCell(index, {
-                cellStyle: {
-                    ...cellStyle,
-                    cellBackgroundImage: null, // Use null instead of undefined
-                    cellBackgroundImageOpacity: null,
-                    cellBackgroundImagePosition: null,
-                    cellBackgroundImageSize: null,
-                },
-            });
-            const localCellImage = state.localImages?.find((image) => image.position === index);
-            if (localCellImage) {
-                actions.removeCellLocalImage(index);
-            }
+            const removeImage = async () => {
+                try {
+                    // Delete the image from S3 first - ensure we have a valid URL
+                    if (typeof cellStyle.cellBackgroundImage === "string") {
+                        await deleteImageFromS3({ url: cellStyle.cellBackgroundImage });
+                        toast.success("Image deleted successfully");
+                    }
+
+                    // Then update the UI
+                    actions.updateCell(index, {
+                        cellStyle: {
+                            ...cellStyle,
+                            cellBackgroundImage: null, // Use null instead of undefined
+                            cellBackgroundImageOpacity: null,
+                            cellBackgroundImagePosition: null,
+                            cellBackgroundImageSize: null,
+                        },
+                    });
+                } catch (error) {
+                    console.error("Error deleting image:", error);
+                    errorToast(`Failed to delete image: ${error instanceof Error ? error.message : "Unknown error"}`);
+
+                    // Still clear the UI even if server deletion fails
+                    actions.updateCell(index, {
+                        cellStyle: {
+                            ...cellStyle,
+                            cellBackgroundImage: null,
+                            cellBackgroundImageOpacity: null,
+                            cellBackgroundImagePosition: null,
+                            cellBackgroundImageSize: null,
+                        },
+                    });
+                }
+            };
+
+            // Execute the async function
+            void removeImage();
         }
-    }, [cellStyle, actions, index, state.localImages]);
+    }, [cellStyle, actions, index, errorToast]);
 
     return (
         <div>
@@ -542,7 +590,15 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
                                 </Button>
                             </div>
                         ) : (
-                            <Input type='file' onChange={(e) => void handleFileSelect(e)} />
+                            <div className='space-y-2'>
+                                <Input type='file' onChange={(e) => void handleFileSelect(e)} disabled={isUploading} />
+                                {isUploading && (
+                                    <div className='flex items-center justify-center'>
+                                        <div className='animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary mr-2'></div>
+                                        <span className='text-xs text-muted-foreground'>Uploading...</span>
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </div>
                 </TabsContent>

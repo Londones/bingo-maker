@@ -1,17 +1,20 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
+// Create the S3 client without direct credentials - these will be obtained from a server action
 const s3Client = new S3Client({
     region: process.env.NEXT_PUBLIC_AWS_S3_REGION!,
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-    },
+    // Remove hardcoded credentials as they're not accessible on the client
+    // We'll use presigned URLs or server actions instead
 });
 
 // Helper function to convert File to Buffer
 const fileToBuffer = async (file: File): Promise<Buffer> => {
     const arrayBuffer = await file.arrayBuffer();
     return Buffer.from(arrayBuffer);
+};
+
+export const getPublicUrl = (key: string): string => {
+    return `https://${process.env.NEXT_PUBLIC_AWS_S3_BUCKET}.s3.${process.env.NEXT_PUBLIC_AWS_S3_REGION}.amazonaws.com/${key}`;
 };
 
 export const uploadFile = async (file: File, key: string) => {

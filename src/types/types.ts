@@ -64,7 +64,6 @@ export interface Bingo {
     stamp: Stamp;
     authorToken?: string;
     userId?: string;
-    localImages?: LocalImage[];
 }
 
 export interface BingoPatch {
@@ -153,27 +152,6 @@ export interface EditorState {
     canSave: boolean;
     changes?: ChangeTracker;
 }
-
-export interface BaseLocalImage {
-    url: string;
-    fileInfo: {
-        name: string;
-        size: number;
-        type: string;
-    };
-}
-
-export interface CellLocalImage extends BaseLocalImage {
-    type: "cell";
-    position: number;
-}
-
-export interface OtherLocalImage extends BaseLocalImage {
-    type: "background" | "stamp";
-    position?: never;
-}
-
-export type LocalImage = CellLocalImage | OtherLocalImage;
 
 export type PopoverType = "textColor" | "borderColor" | "cellBackgroundColor" | null;
 
