@@ -1,7 +1,7 @@
 "use server";
 
 import { ZodError } from "zod";
-import { signUpSchema, signInSchema } from "@/schemas";
+import { signUpSchema, signInSchema } from "@/schemas/schemas";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { APIError, APIErrorCode } from "@/lib/errors";
 import { handleAPIError } from "@/lib/api-utils";
 import { BingoCell } from "@/types/types";
-import { bingoSchema } from "@/schemas";
+import { bingoSchema } from "@/schemas/schemas";
 import { ZodError } from "zod";
 
 export async function POST(req: Request): Promise<NextResponse> {
