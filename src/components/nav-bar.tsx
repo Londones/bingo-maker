@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,16 +13,12 @@ import {
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Menu } from "lucide-react";
-import { useIsAuth } from "@/hooks/useIsAuth";
+import { useSession } from "next-auth/react";
 
 const NavBar = () => {
-  const isAuth = useIsAuth();
-  const [isLoggedIn, setIsLoggedIn] = useState(isAuth);
+  const { status } = useSession();
+  const isLoggedIn = status === "authenticated";
   const router = useRouter();
-
-  useEffect(() => {
-    setIsLoggedIn(isAuth);
-  }, [isAuth]);
 
   const StarIcon = ({ size = "sm" }: { size?: "sm" | "lg" }) => {
     const sizes = {
