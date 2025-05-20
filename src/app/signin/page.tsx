@@ -1,18 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useCallback } from "react";
+import { useActionState, useCallback } from "react";
 import { authenticate, authenticateGoogle } from "@/app/actions/auth";
-import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useBingoStorage } from "@/hooks/useBingoStorage";
-import { useRouter } from "next/navigation";
 
 const Page = () => {
   const { authorToken, isClient } = useBingoStorage();
-  const router = useRouter();
 
   const getBingoIdsFromStorage = useCallback(() => {
     if (isClient) {
@@ -27,11 +24,16 @@ const Page = () => {
     }
     return undefined;
   }, [isClient]);
-
   const customFormAction = useCallback(
     async (state: string | undefined, formData: FormData) => {
       const bingoIds = getBingoIdsFromStorage();
-      return authenticate(state, formData, bingoIds, authorToken || undefined);
+      const result = await authenticate(state, formData, bingoIds, authorToken || undefined);
+
+      if (typeof result === "string" && !result.includes("Invalid") && !result.includes("wrong")) {
+        window.location.href = result;
+      }
+
+      return result;
     },
     [authorToken, getBingoIdsFromStorage]
   );
@@ -43,17 +45,6 @@ const Page = () => {
     const bingoIds = getBingoIdsFromStorage();
     void authenticateGoogle(bingoIds, authorToken || undefined);
   }, [getBingoIdsFromStorage, authorToken]);
-
-  useEffect(() => {
-    if (result && typeof result === "string" && !result.includes("Invalid") && !result.includes("wrong")) {
-      router.push(result);
-    }
-  }, [result, router]);
-
-  if (result === "Invalid credentials" || result === "Something went wrong") {
-    const errorMessage = result === "Invalid credentials" ? "Invalid email or password" : "Something went wrong";
-    toast.error(errorMessage);
-  }
 
   return (
     <div className="flex h-[70vh] items-center justify-center px-4">
@@ -78,6 +69,8 @@ const Page = () => {
               id="password"
             />
           </div>
+
+          {result === "Invalid credentials" && <p className="text-sm text-red-500">Invalid email or password</p>}
 
           <Button disabled={isPending} className="w-full rounded-md" type="submit">
             {isPending ? "Signing in..." : "Sign in"}

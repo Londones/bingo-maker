@@ -8,11 +8,11 @@ import { useBingoStorage } from "@/hooks/useBingoStorage";
 import { toast } from "sonner";
 import { APIError } from "@/lib/errors";
 import { motion } from "framer-motion";
-import { uploadPendingImages } from "@/app/actions/s3upload";
 import { useQueryClient } from "@tanstack/react-query";
 import { Bingo, BingoPatch } from "@/types/types";
 import { useEditorRoutePersistence } from "@/hooks/useEditorRoutePersistence";
 import { useRouter } from "next/navigation";
+import { cleanupOrphanedImages } from "@/lib/image-tracker";
 
 interface ControlsProps {
     isPanelOpen?: boolean;
@@ -36,59 +36,11 @@ export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving }: Con
             setJustSaved(false);
         }
     }, [canSave, justSaved]);
-
-    const prepareStateForSave = async (currentState: Bingo): Promise<Bingo> => {
-        if (!currentState.localImages?.length) {
-            return currentState;
-        }
-
-        try {
-            const uploadResult = await uploadPendingImages(currentState);
-
-            actions.setImageUrls(uploadResult);
-
-            const updatedState = {
-                ...currentState,
-                background: {
-                    ...currentState.background,
-                    backgroundImage: uploadResult.backgroundImage || currentState.background.backgroundImage,
-                },
-                cells: currentState.cells.map((cell) => {
-                    const uploadedImage = uploadResult.cellImages?.find((img) => img.position === cell.position);
-                    if (uploadedImage) {
-                        return {
-                            ...cell,
-                            cellStyle: {
-                                ...(cell.cellStyle || {}),
-                                cellBackgroundImage: uploadedImage.url,
-                            },
-                        };
-                    }
-                    return {
-                        ...cell,
-                        cellStyle: cell.cellStyle ? { ...cell.cellStyle } : undefined,
-                    };
-                }),
-                stamp: uploadResult.stampImage
-                    ? {
-                          ...currentState.stamp,
-                          value: uploadResult.stampImage,
-                      }
-                    : currentState.stamp,
-                localImages: undefined,
-            };
-
-            return updatedState;
-        } catch (error) {
-            throw error;
-        }
-    };
-
     const handleSaveNew = async () => {
         if (isSaving) return;
 
         // Prevent saving if there are no changes
-        if (!canSave && !state.localImages?.length) {
+        if (!canSave) {
             toast.info("No changes to save");
             return;
         }
@@ -97,15 +49,20 @@ export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving }: Con
         setSaving?.(true);
 
         try {
-            const preparedState = await prepareStateForSave(state);
-
             actions.clearFutureHistory();
 
-            const savedBingo = await useSaveBingo.mutateAsync(preparedState);
-
+            const savedBingo = await useSaveBingo.mutateAsync(state);
             actions.setBingo(savedBingo);
             toast.success("Bingo saved successfully");
             setJustSaved(true);
+
+            // Clean up any orphaned images after successful save
+            try {
+                await cleanupOrphanedImages(savedBingo);
+            } catch (cleanupError) {
+                console.error("Error cleaning up orphaned images:", cleanupError);
+                // Don't show this error to user since the save was successful
+            }
 
             clearEditorState();
             if (savedBingo.id) {
@@ -123,69 +80,23 @@ export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving }: Con
             setIsSaving(false);
         }
     };
-
     const handleUpdate = async () => {
         if (isSaving) return;
 
         // Prevent updating if there are no changes
-        if (!canSave && !state.localImages?.length) {
+        if (!canSave) {
             return;
         }
 
         setIsSaving(true);
 
         try {
-            const preparedState = await prepareStateForSave(state);
-
             actions.clearFutureHistory();
 
             const changes = actions.extractChanges();
-
             const updateData: BingoPatch = {
                 ...changes,
             };
-            if (state.localImages?.length) {
-                if (preparedState.background.backgroundImage !== state.background.backgroundImage) {
-                    updateData.background = {
-                        ...updateData.background,
-                        backgroundImage: preparedState.background.backgroundImage,
-                        backgroundImageOpacity: preparedState.background.backgroundImageOpacity,
-                    };
-                }
-
-                if (preparedState.stamp.value !== state.stamp.value) {
-                    updateData.stamp = {
-                        ...updateData.stamp,
-                        value: preparedState.stamp.value,
-                    };
-                }
-
-                const cellsWithImageChanges = preparedState.cells
-                    .filter(
-                        (cell, i) =>
-                            cell.cellStyle?.cellBackgroundImage !== state.cells[i]?.cellStyle?.cellBackgroundImage
-                    )
-                    .map((cell) => ({
-                        ...cell,
-                    }));
-
-                if (cellsWithImageChanges.length > 0) {
-                    if (updateData.cells) {
-                        const existingCellUpdates = new Map(updateData.cells.map((cell) => [cell.position, cell]));
-
-                        cellsWithImageChanges.forEach((cell) => {
-                            existingCellUpdates.set(cell.position, {
-                                ...existingCellUpdates.get(cell.position),
-                                ...cell,
-                            });
-                        });
-
-                        updateData.cells = Array.from(existingCellUpdates.values());
-                    } else {
-                        updateData.cells = cellsWithImageChanges;
-                    }
-                }
-            }
 
             if (Object.keys(updateData).length === 0) {
                 toast.info("No changes to update");
@@ -230,9 +141,16 @@ export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving }: Con
             if (!state.id) {
                 clearEditorState();
             }
-
             actions.setBingo(updatedBingo);
             toast.success("Bingo updated successfully");
+
+            // Clean up any orphaned images after successful update
+            try {
+                await cleanupOrphanedImages(updatedBingo);
+            } catch (cleanupError) {
+                console.error("Error cleaning up orphaned images:", cleanupError);
+                // Don't show this error to user since the update was successful
+            }
         } catch (error) {
             if (error instanceof APIError) {
                 toast.error(error.message);
@@ -342,12 +260,7 @@ export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving }: Con
                                 void (state.id ? handleUpdate() : handleSaveNew());
                             }}
                             title='Save'
-                            disabled={
-                                saveStatus === "pending" ||
-                                isSaving ||
-                                (!canSave && !state.localImages?.length) ||
-                                justSaved
-                            }
+                            disabled={saveStatus === "pending" || isSaving || !canSave || justSaved}
                             variant='outline'
                         >
                             {saveStatus === "pending" || isSaving ? (

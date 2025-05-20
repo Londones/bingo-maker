@@ -4,16 +4,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { useEditor } from "@/hooks/useEditor";
-import { convertFileToBase64 } from "@/lib/utils";
-import { LocalImage } from "@/types/types";
 import { useState, useRef, useEffect, ChangeEvent, useCallback, memo, useMemo } from "react";
 import { toast } from "sonner";
+import { uploadImagesToBingo } from "@/lib/client-s3upload";
+import { deleteImageFromS3 } from "@/app/actions/delete-image";
+import { UploadError } from "@/lib/errors";
+import { useIsAuth } from "@/hooks/useIsAuth";
 
 const ImageControls = () => {
   const { state, actions } = useEditor();
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
   const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const opacityValueRef = useRef<number>(state.background.backgroundImageOpacity ?? 100);
+  const sizeValueRef = useRef<number>(state.background.backgroundImageSize ?? 100);
+  const isAuth = useIsAuth();
+
+  // State for tracking uploads and refreshing
+  const [isUploading, setIsUploading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [position, setPosition] = useState(() => {
     const posStr = state.background.backgroundImagePosition || "50% 50%";
@@ -113,6 +122,7 @@ const ImageControls = () => {
       window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDragging, actions, position, updatePositionWithRaf, debouncedUpdatePosition]);
+
   const startDrag = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -154,26 +164,34 @@ const ImageControls = () => {
     });
   }, []);
 
-  const handleRemoveImage = useCallback(() => {
+  const handleRemoveImage = useCallback(async () => {
     if (state.background.backgroundImage) {
-      actions.updateBackground({
-        ...state.background,
-        backgroundImage: undefined,
-        backgroundImageOpacity: undefined,
-        backgroundImagePosition: undefined,
-        backgroundImageSize: undefined,
-      });
+      try {
+        if (typeof state.background.backgroundImage === "string") {
+          await deleteImageFromS3({ url: state.background.backgroundImage });
+        }
 
-      const localBackgroundImage = state.localImages?.find((image) => image.type === "background");
-
-      if (localBackgroundImage) {
-        actions.removeLocalBackgroundImage();
+        // Update state to remove the background image
+        actions.updateBackground({
+          backgroundImage: null,
+          backgroundImageOpacity: null,
+          backgroundImagePosition: null,
+          backgroundImageSize: null,
+        });
+        toast.success("Background image removed");
+      } catch (error) {
+        console.error("Error removing background image:", error);
+        errorToast("Failed to remove background image");
       }
     }
-  }, [state.background, state.localImages, actions]);
+  }, [state.background.backgroundImage, actions, errorToast]);
 
   const handleFileSelect = useCallback(
     async (e: ChangeEvent<HTMLInputElement>) => {
+      if (!isAuth) {
+        errorToast("You must be logged in to upload images");
+        return;
+      }
       const file = e.target.files?.[0];
       if (!file) return;
 
@@ -189,33 +207,57 @@ const ImageControls = () => {
         return;
       }
 
-      const base64Data = await convertFileToBase64(file);
+      try {
+        setIsUploading(true); // Show loading indicator for better user feedback
+        setIsUploading(true);
 
-      const localImage: LocalImage = {
-        url: base64Data,
-        type: "background",
-        fileInfo: {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-        },
-      };
+        // 2. Set up files for direct S3 upload with caching
+        const files = new Map<
+          string,
+          {
+            file: File;
+            type: "cell" | "background" | "stamp";
+            position?: number;
+          }
+        >();
 
-      actions.setLocalImage(localImage);
+        files.set("background", {
+          file,
+          type: "background",
+        });
+
+        // 3. Upload directly to S3
+        const uploadedImages = await uploadImagesToBingo(files); // 4. Update background with the S3 URL
+        if (uploadedImages && uploadedImages.length > 0) {
+          const uploadedImage = uploadedImages.find((img) => img.type === "background");
+
+          if (uploadedImage) {
+            // Update background with S3 URL immediately - no delay
+            actions.updateBackground({
+              backgroundImage: uploadedImage.url,
+              backgroundImageOpacity: 100,
+              backgroundImagePosition: "50% 50%",
+              backgroundImageSize: 100,
+            });
+
+            toast.success("Background image uploaded successfully");
+          }
+        }
+      } catch (error) {
+        console.error("Error uploading background image:", error);
+        errorToast(`Upload failed: ${error instanceof UploadError ? error.message : "Unknown error"}`);
+      } finally {
+        setIsUploading(false);
+      }
     },
-    [actions, errorToast]
-  ); // Use refs for tracking slider values during interaction
-  const opacityValueRef = useRef<number>(state.background.backgroundImageOpacity ?? 100);
-  const sizeValueRef = useRef<number>(state.background.backgroundImageSize ?? 100);
-
-  // Update refs when state changes externally
-  useEffect(() => {
-    opacityValueRef.current = state.background.backgroundImageOpacity ?? 100;
-  }, [state.background.backgroundImageOpacity]);
+    [actions, errorToast, isAuth]
+  );
 
   useEffect(() => {
     sizeValueRef.current = state.background.backgroundImageSize ?? 100;
-  }, [state.background.backgroundImageSize]); // Responsive opacity handler with immediate visual feedback
+    opacityValueRef.current = state.background.backgroundImageOpacity ?? 100;
+  }, [state.background.backgroundImageSize, state.background.backgroundImageOpacity]);
+
   const handleOpacityChange = useCallback(
     (value: number[]) => {
       // Ensure we have a valid number
@@ -315,7 +357,6 @@ const ImageControls = () => {
               step={1}
               onValueChange={handleOpacityChange}
             />
-
             <Label>Zoom</Label>
             <Slider
               value={[state.background.backgroundImageSize ?? 100]}
@@ -324,14 +365,20 @@ const ImageControls = () => {
               step={1}
               onValueChange={handleSizeChange}
             />
-
-            <Button variant="destructive" onClick={handleRemoveImage}>
+            <Button variant="destructive" onClick={() => void handleRemoveImage()} disabled={isRefreshing}>
               Remove Image
             </Button>
           </div>
         </div>
       ) : (
-        <Input type="file" onChange={(e) => void handleFileSelect(e)} />
+        <div className="space-y-2">
+          <Input type="file" onChange={(e) => void handleFileSelect(e)} disabled={isUploading} />
+          {isUploading && (
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-muted-foreground">Uploading image...</span>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

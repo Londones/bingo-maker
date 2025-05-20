@@ -2,14 +2,14 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useEditor } from "@/hooks/useEditor";
-import { convertFileToBase64 } from "@/lib/utils";
 import ImageControls from "@/components/editor/background/image-controls";
 import { Button, Input, Label, Slider } from "@/__mocks__/components/ui-components";
+import { uploadImagesToBingo } from "@/lib/client-s3upload";
 
 // Use mocks
 jest.mock("@/hooks/useEditor");
-jest.mock("@/lib/utils", () => ({
-  convertFileToBase64: jest.fn().mockResolvedValue("data:image/jpeg;base64,mockBase64Data"),
+jest.mock("@/lib/client-s3upload", () => ({
+  uploadImagesToBingo: jest.fn().mockResolvedValue([{ type: "background", url: "https://example.com/image.jpg" }]),
 }));
 jest.mock("sonner", () => ({
   toast: {
@@ -32,8 +32,6 @@ jest.mock("@/components/ui/button", () => ({
 describe("ImageControls", () => {
   // Setup mock data and functions
   const mockUpdateBackground = jest.fn();
-  const mockSetLocalImage = jest.fn();
-  const mockRemoveLocalBackgroundImage = jest.fn();
 
   beforeEach(() => {
     // Reset mocks
@@ -48,12 +46,9 @@ describe("ImageControls", () => {
           backgroundImageSize: 100,
           backgroundImagePosition: "50% 50%",
         },
-        localImages: [],
       },
       actions: {
         updateBackground: mockUpdateBackground,
-        setLocalImage: mockSetLocalImage,
-        removeLocalBackgroundImage: mockRemoveLocalBackgroundImage,
       },
     });
 
@@ -75,7 +70,6 @@ describe("ImageControls", () => {
     render(<ImageControls />);
     expect(screen.getByTestId("mock-input")).toBeInTheDocument();
   });
-
   test("renders image controls when background image is set", () => {
     // Update mock to include background image
     (useEditor as jest.Mock).mockReturnValue({
@@ -86,12 +80,9 @@ describe("ImageControls", () => {
           backgroundImageSize: 100,
           backgroundImagePosition: "50% 50%",
         },
-        localImages: [],
       },
       actions: {
         updateBackground: mockUpdateBackground,
-        setLocalImage: mockSetLocalImage,
-        removeLocalBackgroundImage: mockRemoveLocalBackgroundImage,
       },
     });
 
@@ -104,9 +95,7 @@ describe("ImageControls", () => {
     // Check for remove button
     expect(screen.getByText("Remove Image")).toBeInTheDocument();
   });
-
   test("handles file selection", async () => {
-    //const user = userEvent.setup();
     render(<ImageControls />);
 
     const fileInput = screen.getByTestId("mock-input");
@@ -120,16 +109,8 @@ describe("ImageControls", () => {
     // Wait for the async function to complete
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(convertFileToBase64).toHaveBeenCalledWith(file);
-    expect(mockSetLocalImage).toHaveBeenCalledWith({
-      url: "data:image/jpeg;base64,mockBase64Data",
-      type: "background",
-      fileInfo: {
-        name: "test-image.jpg",
-        type: "image/jpeg",
-        size: expect.any(Number),
-      },
-    });
+    // Verify upload was triggered (implementation details have changed)
+    expect(uploadImagesToBingo).toHaveBeenCalled();
   });
 
   test("handles removing image", async () => {
@@ -142,12 +123,9 @@ describe("ImageControls", () => {
           backgroundImageSize: 100,
           backgroundImagePosition: "50% 50%",
         },
-        localImages: [{ type: "background", url: "data:image/jpeg;base64,mockImageData" }],
       },
       actions: {
         updateBackground: mockUpdateBackground,
-        setLocalImage: mockSetLocalImage,
-        removeLocalBackgroundImage: mockRemoveLocalBackgroundImage,
       },
     });
 
@@ -156,9 +134,7 @@ describe("ImageControls", () => {
 
     const removeButton = screen.getByText("Remove Image");
     await user.click(removeButton);
-
     expect(mockUpdateBackground).toHaveBeenCalled();
-    expect(mockRemoveLocalBackgroundImage).toHaveBeenCalled();
   });
 
   test("handles opacity slider change", () => {
@@ -171,12 +147,9 @@ describe("ImageControls", () => {
           backgroundImageSize: 100,
           backgroundImagePosition: "50% 50%",
         },
-        localImages: [],
       },
       actions: {
         updateBackground: mockUpdateBackground,
-        setLocalImage: mockSetLocalImage,
-        removeLocalBackgroundImage: mockRemoveLocalBackgroundImage,
       },
     });
 
@@ -203,12 +176,9 @@ describe("ImageControls", () => {
           backgroundImageSize: 100,
           backgroundImagePosition: "50% 50%",
         },
-        localImages: [],
       },
       actions: {
         updateBackground: mockUpdateBackground,
-        setLocalImage: mockSetLocalImage,
-        removeLocalBackgroundImage: mockRemoveLocalBackgroundImage,
       },
     });
 

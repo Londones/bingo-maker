@@ -1,7 +1,7 @@
 "use server";
 
 import { ZodError } from "zod";
-import { signUpSchema } from "@/schemas";
+import { signUpSchema, signInSchema } from "@/schemas/schemas";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
@@ -19,9 +19,14 @@ export async function authenticate(
   authorToken?: string
 ) {
   try {
-    await signIn("credentials", {
+    // Validate the form data
+    const { email, password } = await signInSchema.parseAsync({
       email: formData.get("email"),
       password: formData.get("password"),
+    });
+    await signIn("credentials", {
+      email: email,
+      password: password,
       redirect: false,
     });
 

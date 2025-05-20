@@ -14,16 +14,13 @@ import {
     toggleStamp,
     resetEditor,
     resetEditorState,
-    setLocalImage,
     setImageUrls,
     extractChanges,
-    removeCellLocalImage,
-    removeLocalBackgroundImage,
     clearFutureHistory,
     selectChanges,
     resetValidatedCells,
 } from "@/store/slices/editorSlice";
-import { Bingo, BingoCell, Style, Background, Stamp, LocalImage, ImageUploadResponse, BingoPatch } from "@/types/types";
+import { Bingo, BingoCell, Style, Background, Stamp, ImageUploadResponse, BingoPatch } from "@/types/types";
 
 export const useEditor = () => {
     const dispatch = useDispatch();
@@ -47,9 +44,6 @@ export const useEditor = () => {
             updateBackground: (background: Partial<Background>) => dispatch(updateBackground(background)),
             updateStamp: (stamp: Partial<Stamp>) => dispatch(updateStamp(stamp)),
             toggleStamp: (index: number) => dispatch(toggleStamp(index)),
-            setLocalImage: (image: LocalImage | undefined) => dispatch(setLocalImage(image)),
-            removeCellLocalImage: (index: number) => dispatch(removeCellLocalImage(index)),
-            removeLocalBackgroundImage: () => dispatch(removeLocalBackgroundImage()),
             setImageUrls: (urls: ImageUploadResponse) => dispatch(setImageUrls(urls)),
             extractChanges: (): BingoPatch => {
                 const changes = selectChanges(editorState);

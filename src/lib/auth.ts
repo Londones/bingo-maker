@@ -4,69 +4,69 @@ import NextAuth from "next-auth";
 import { cache } from "react";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
-import { signInSchema } from "@/schemas";
+import { signInSchema } from "@/schemas/schemas";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 declare module "next-auth" {
-    interface Session extends DefaultSession {
-        user: {
-            id: string;
-        } & DefaultSession["user"];
-    }
+  interface Session extends DefaultSession {
+    user: {
+      id: string;
+    } & DefaultSession["user"];
+  }
 }
 
 const authOptions = {
-    adapter: PrismaAdapter(prisma),
-    trustHost: true,
-    providers: [
-        Credentials({
-            credentials: {
-                email: { label: "Email", type: "email" },
-                password: { label: "Password", type: "password" },
-            },
-            authorize: async (credentials) => {
-                try {
-                    const { email, password } = await signInSchema.parseAsync(credentials);
+  adapter: PrismaAdapter(prisma),
+  trustHost: true,
+  providers: [
+    Credentials({
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      authorize: async (credentials) => {
+        try {
+          const { email, password } = await signInSchema.parseAsync(credentials);
 
-                    const user = await prisma.user.findUnique({
-                        where: { email },
-                    });
+          const user = await prisma.user.findUnique({
+            where: { email },
+          });
 
-                    let passwordMatch = false;
+          let passwordMatch = false;
 
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                    passwordMatch = await bcrypt.compare(password, user?.password ?? "");
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+          passwordMatch = await bcrypt.compare(password, user?.password ?? "");
 
-                    if (!passwordMatch) {
-                        return null;
-                    }
+          if (!passwordMatch) {
+            return null;
+          }
 
-                    return user;
-                } catch (error) {
-                    return null;
-                }
-            },
-        }),
-        Google({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        }),
-    ],
-    session: {
-        strategy: "jwt",
-    },
-    callbacks: {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        session: ({ session, token }) => ({
-            ...session,
-            user: {
-                ...session.user,
-                id: token.sub,
-            },
-        }),
-    },
+          return user;
+        } catch (error) {
+          return null;
+        }
+      },
+    }),
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
+  ],
+  session: {
+    strategy: "jwt",
+  },
+  callbacks: {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    session: ({ session, token }) => ({
+      ...session,
+      user: {
+        ...session.user,
+        id: token.sub,
+      },
+    }),
+  },
 } satisfies NextAuthConfig;
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-argument

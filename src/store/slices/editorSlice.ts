@@ -1,7 +1,6 @@
 import { ImageUploadResponse, BingoPatch } from "./../../types/types";
-import { isCellLocalImage } from "@/lib/utils";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import type { Bingo, BingoCell, Style, Background, Stamp, EditorState, LocalImage, ChangeTracker } from "@/types/types";
+import type { Bingo, BingoCell, Style, Background, Stamp, EditorState, ChangeTracker } from "@/types/types";
 import { DEFAULT_STYLE, DEFAULT_STAMP, DEFAULT_GRADIENT_CONFIG_STRING } from "@/utils/constants";
 
 const initialBingoState: Bingo = {
@@ -231,73 +230,6 @@ export const editorSlice = createSlice({
                 };
             }
         },
-        setLocalImage: (state, action: PayloadAction<LocalImage | undefined>) => {
-            pushToHistory(state);
-            if (!action.payload) {
-                state.history.present.localImages = action.payload;
-            } else if (action.payload) {
-                state.history.present.localImages = [...(state.history.present.localImages || []), action.payload];
-                const image = action.payload;
-
-                if (isCellLocalImage(image)) {
-                    const cell = state.history.present.cells[image.position];
-                    if (!cell) {
-                        console.error(`Cell at position ${image.position} does not exist`);
-                        return;
-                    } else {
-                        cell.cellStyle = {
-                            ...cell.cellStyle,
-                            cellBackgroundImage: image.url,
-                            cellBackgroundOpacity: state.history.present.background.backgroundImageOpacity
-                                ? state.history.present.background.backgroundImageOpacity
-                                : 100,
-                            cellBackgroundImageSize: 100,
-                            cellBackgroundImagePosition: "50% 50%",
-                        };
-                    }
-                } else if (image.type === "background") {
-                    state.history.present.background = {
-                        ...state.history.present.background,
-                        backgroundImage: image.url,
-                        backgroundImageOpacity: state.history.present.background.backgroundImageOpacity
-                            ? state.history.present.background.backgroundImageOpacity
-                            : 100,
-                        backgroundImageSize: 100,
-                        backgroundImagePosition: "50% 50%",
-                    };
-                } else if (image.type === "stamp") {
-                    state.history.present.stamp = {
-                        ...state.history.present.stamp,
-                        value: image.url,
-                    };
-                }
-            }
-        },
-        removeCellLocalImage: (state, action: PayloadAction<number>) => {
-            const cell = state.history.present.cells[action.payload];
-            if (cell && cell.cellStyle) {
-                cell.cellStyle = {
-                    ...cell.cellStyle,
-                    cellBackgroundImage: undefined,
-                    cellBackgroundImageOpacity: undefined,
-                };
-            }
-
-            state.history.present.localImages = state.history.present.localImages?.filter(
-                (img) => !isCellLocalImage(img) || img.position !== action.payload
-            );
-        },
-        removeLocalBackgroundImage: (state) => {
-            pushToHistory(state);
-            state.history.present.background = {
-                ...state.history.present.background,
-                backgroundImage: undefined,
-                backgroundImageOpacity: undefined,
-            };
-            state.history.present.localImages = state.history.present.localImages?.filter(
-                (img) => img.type !== "background"
-            );
-        },
         setImageUrls: (state, action: PayloadAction<ImageUploadResponse>) => {
             const { cellImages, backgroundImage, stampImage } = action.payload;
             if (cellImages && cellImages.length > 0) {
@@ -318,10 +250,6 @@ export const editorSlice = createSlice({
                         cellBackgroundOpacity: cell.cellStyle.cellBackgroundOpacity || 1,
                     };
                 }
-
-                state.history.present.localImages = state.history.present.localImages?.filter(
-                    (img) => !isCellLocalImage(img)
-                );
             }
 
             if (backgroundImage) {
@@ -330,9 +258,6 @@ export const editorSlice = createSlice({
                     backgroundImage: backgroundImage,
                     backgroundImageOpacity: state.history.present.background.backgroundImageOpacity || 1,
                 };
-                state.history.present.localImages = state.history.present.localImages?.filter(
-                    (img) => img.type !== "background"
-                );
             }
 
             if (stampImage) {
@@ -340,13 +265,6 @@ export const editorSlice = createSlice({
                     ...state.history.present.stamp,
                     value: stampImage,
                 };
-                state.history.present.localImages = state.history.present.localImages?.filter(
-                    (img) => img.type !== "stamp"
-                );
-            }
-
-            if (state.history.present.localImages?.length === 0) {
-                state.history.present.localImages = undefined;
             }
         },
         setHoveredCell: (state, action: PayloadAction<number>) => {
@@ -457,9 +375,6 @@ export const {
     updateBackground,
     updateStamp,
     toggleStamp,
-    setLocalImage,
-    removeCellLocalImage,
-    removeLocalBackgroundImage,
     setImageUrls,
     setHoveredCell,
     resetValidatedCells,

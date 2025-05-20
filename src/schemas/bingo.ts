@@ -71,22 +71,6 @@ const bingoBaseSchema = z.object({
     stamp: stampSchema,
     authorToken: z.string().optional(),
     userId: z.string().optional(),
-    localImages: z
-        .array(
-            z.object({
-                url: z.string(),
-                fileInfo: z.object({
-                    name: z.string(),
-                    size: z.number(),
-                    type: z.string(),
-                }),
-                type: z.union([
-                    z.object({ type: z.literal("cell"), position: z.number() }),
-                    z.object({ type: z.union([z.literal("background"), z.literal("stamp")]) }),
-                ]),
-            })
-        )
-        .optional(),
 });
 
 // Full Bingo Schema with conditional validation

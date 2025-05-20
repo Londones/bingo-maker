@@ -89,22 +89,6 @@ export const bingoSchema = z.object({
     stamp: stampSchema,
     authorToken: z.string().optional(),
     userId: z.string().optional(),
-    localImages: z
-        .array(
-            z.object({
-                url: z.string(),
-                fileInfo: z.object({
-                    name: z.string(),
-                    size: z.number(),
-                    type: z.string(),
-                }),
-                type: z.union([
-                    z.literal("cell").and(z.object({ position: z.number() })),
-                    z.union([z.literal("background"), z.literal("stamp")]),
-                ]),
-            })
-        )
-        .optional(),
 });
 
 // Partial schemas for PATCH requests
