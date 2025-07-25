@@ -20,8 +20,6 @@ export async function GET(req: NextRequest, { params }: { params: ParamsType }):
             throw new APIError("Bingo not found", APIErrorCode.BINGO_NOT_FOUND, 444);
         }
 
-        console.log("Creating SSE connection for bingo:", bingoId);
-
         const headers = new Headers({
             "Content-Type": "text/event-stream",
             "Cache-Control": "no-cache",
@@ -36,11 +34,9 @@ export async function GET(req: NextRequest, { params }: { params: ParamsType }):
 
         // Store connection for broadcasting
         connections.set(connectionId, { writer, bingoId });
-        console.log(`Stored connection ${connectionId} for bingo ${bingoId}. Total connections: ${connections.size}`);
 
         // Cleanup on disconnect
         req.signal.addEventListener("abort", () => {
-            console.log(`Connection ${connectionId} disconnected for bingo ${bingoId}`);
             connections.delete(connectionId);
             try {
                 void writer.close();
@@ -53,23 +49,16 @@ export async function GET(req: NextRequest, { params }: { params: ParamsType }):
         setImmediate(() => {
             writer
                 .write(`data: ${JSON.stringify({ type: "connected", bingoId, timestamp: Date.now() })}\n\n`)
-                .then(() => {
-                    console.log("Initial connection message sent for bingo:", bingoId);
-                })
                 .catch((error) => {
-                    console.error("Failed to send initial connection message:", error);
                     connections.delete(connectionId);
                 });
         });
-
-        console.log("Returning SSE response for bingo:", bingoId);
 
         return new Response(stream.readable, {
             headers,
             status: 200,
         });
     } catch (error) {
-        console.error("Error in SSE GET handler:", error);
         return handleAPIError(error);
     }
 }

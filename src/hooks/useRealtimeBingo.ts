@@ -18,7 +18,6 @@ export function useRealtimeBingo(bingoId: string) {
         if (!bingoId) return;
 
         const connect = () => {
-            console.log("Connecting to real-time updates for bingo:", bingoId);
             // Clean up existing connection
             if (eventSourceRef.current) {
                 eventSourceRef.current.close();
@@ -28,10 +27,6 @@ export function useRealtimeBingo(bingoId: string) {
                 // Create EventSource connection
                 const eventSource = new EventSource(`/api/bingo/${bingoId}/updates`);
                 eventSourceRef.current = eventSource;
-
-                eventSource.onopen = () => {
-                    console.log("Connected to real-time updates for bingo:", bingoId);
-                };
 
                 eventSource.onmessage = (event) => {
                     try {
@@ -59,12 +54,10 @@ export function useRealtimeBingo(bingoId: string) {
                                             stamp: updateEvent.data!.stamp || oldData.stamp,
                                         };
                                     });
-                                    console.log("Bingo updated via real-time");
                                 }
                                 break;
 
                             case "delete":
-                                console.log("Bingo deleted via real-time");
                                 // Optionally invalidate the query or redirect
                                 queryClient.removeQueries({ queryKey: ["bingo", bingoId] });
                                 break;
@@ -75,15 +68,12 @@ export function useRealtimeBingo(bingoId: string) {
                 };
 
                 eventSource.onerror = (error) => {
-                    console.error("EventSource error:", error);
-
                     // Attempt to reconnect after a delay
                     if (reconnectTimeoutRef.current) {
                         clearTimeout(reconnectTimeoutRef.current);
                     }
 
                     reconnectTimeoutRef.current = setTimeout(() => {
-                        console.log("Attempting to reconnect to real-time updates...");
                         connect();
                     }, 5000); // Reconnect after 5 seconds
                 };
