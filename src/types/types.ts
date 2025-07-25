@@ -78,6 +78,13 @@ export interface BingoPatch {
     authorToken?: string;
 }
 
+export interface BingoUpdateEvent {
+    type: "connected" | "update" | "delete";
+    bingoId: string;
+    timestamp: number;
+    data?: Bingo;
+}
+
 export interface RadialGradientStop {
     position: {
         x: number;

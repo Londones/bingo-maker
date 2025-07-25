@@ -2,19 +2,9 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { APIError, APIErrorCode } from "@/lib/errors";
 import { handleAPIError } from "@/lib/api-utils";
-import { Bingo } from "@/types/types";
+import { connections } from "@/lib/utils";
 
 type ParamsType = Promise<{ id: string }>;
-
-interface BingoUpdateEvent {
-    type: "connected" | "update" | "delete";
-    bingoId: string;
-    timestamp: number;
-    data?: Bingo;
-}
-
-// Store active connections for broadcasting
-const connections = new Map<string, { writer: WritableStreamDefaultWriter; bingoId: string }>();
 
 export async function GET(req: NextRequest, { params }: { params: ParamsType }): Promise<Response> {
     const { id: bingoId } = await params;
@@ -82,34 +72,4 @@ export async function GET(req: NextRequest, { params }: { params: ParamsType }):
         console.error("Error in SSE GET handler:", error);
         return handleAPIError(error);
     }
-}
-
-// Function to broadcast updates to all connected clients for a specific bingo
-export async function broadcastBingoUpdate(bingoId: string, event: BingoUpdateEvent) {
-    console.log(`Broadcasting update for bingo ${bingoId}. Total connections: ${connections.size}`);
-
-    const connectionsToNotify = Array.from(connections.entries()).filter(
-        ([_, connection]) => connection.bingoId === bingoId
-    );
-
-    console.log(`Found ${connectionsToNotify.length} connections for bingo ${bingoId}`);
-
-    if (connectionsToNotify.length === 0) {
-        console.log("No connections to notify for bingo:", bingoId);
-        return;
-    }
-
-    const promises = connectionsToNotify.map(async ([connectionId, connection]) => {
-        try {
-            await connection.writer.write(`data: ${JSON.stringify(event)}\n\n`);
-            console.log(`Successfully sent update to connection ${connectionId}`);
-        } catch (error) {
-            console.error(`Failed to send update to connection ${connectionId}:`, error);
-            // Remove failed connection
-            connections.delete(connectionId);
-        }
-    });
-
-    await Promise.allSettled(promises);
-    console.log(`Finished broadcasting update for bingo ${bingoId}`);
 }

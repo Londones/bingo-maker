@@ -7,7 +7,7 @@ import { handleAPIError } from "@/lib/api-utils";
 import { Bingo, BingoPatch } from "@/types/types";
 import { bingoPatchSchema } from "@/schemas/schemas";
 import { ZodError } from "zod";
-import { broadcastBingoUpdate } from "@/app/api/bingo/[id]/updates/route";
+import { broadcastBingoUpdate } from "@/lib/utils";
 
 type ParamsType = Promise<{ id: string }>;
 
