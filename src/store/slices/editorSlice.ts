@@ -276,10 +276,24 @@ export const editorSlice = createSlice({
         resetValidatedCells: (state) => {
             pushToHistory(state);
             state.history.present.cells = state.history.present.cells.map((cell) => {
-                return {
+                const updatedCell = {
                     ...cell,
                     validated: false,
                 };
+
+                // Track cell changes for cells that have IDs (exist in database)
+                if (state.changes && cell.id) {
+                    if (!state.changes.cells) {
+                        state.changes.cells = {};
+                    }
+                    state.changes.cells[cell.id] = {
+                        ...state.changes.cells[cell.id],
+                        validated: false,
+                        position: cell.position,
+                    };
+                }
+
+                return updatedCell;
             });
         },
         extractChanges: {
@@ -293,23 +307,62 @@ export const editorSlice = createSlice({
             },
         },
         resetEditor: (state) => {
+            pushToHistory(state);
             const currentId = state.history.present.id;
             const currentStatus = state.history.present.status;
+            const existingCells = state.history.present.cells;
+
+            // Create new cells but preserve IDs for existing cells if we're editing an existing bingo
+            const newCells = Array(state.history.present.gridSize * state.history.present.gridSize)
+                .fill(null)
+                .map((_, index) => {
+                    const baseCell: BingoCell = {
+                        content: "",
+                        position: index,
+                        validated: false,
+                    };
+
+                    // If we're editing an existing bingo and this cell exists, preserve its ID
+                    if (currentId && existingCells[index]?.id) {
+                        baseCell.id = existingCells[index].id;
+                    }
+
+                    return baseCell;
+                });
 
             state.history = {
                 past: [...state.history.past, state.history.present],
                 present: {
                     ...initialBingoState,
-                    // If we had an ID, preserve it so we're still editing the same document
+                    // Preserve ID and status so we're still editing the same document
                     id: currentId,
                     status: currentStatus,
+                    cells: newCells,
                 },
                 future: [],
             };
             state.canUndo = true;
             state.canRedo = false;
             state.canSave = true; // Set to true since we've made changes that need to be saved
-            state.changes = {} as ChangeTracker;
+
+            // Track all cell changes for existing bingo
+            if (currentId) {
+                const cellChanges: Record<string, BingoCell> = {};
+                newCells.forEach((cell) => {
+                    if (cell.id) {
+                        cellChanges[cell.id] = {
+                            content: "",
+                            validated: false,
+                            position: cell.position,
+                        };
+                    }
+                });
+                state.changes = {
+                    cells: cellChanges,
+                } as ChangeTracker;
+            } else {
+                state.changes = {} as ChangeTracker;
+            }
         },
         resetEditorState: (state) => {
             state.history = {
