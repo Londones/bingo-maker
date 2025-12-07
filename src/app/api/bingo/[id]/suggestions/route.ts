@@ -2,14 +2,14 @@ import { auth } from "@/lib/auth";
 import { APIError, APIErrorCode } from "@/lib/errors";
 import { handleAPIError } from "@/lib/api-utils";
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { SuggestionPatchRequest } from "@/types/types";
 import { Suggestion } from "@prisma/client";
 
-type ParamsType = Promise<{ bingoId: string }>;
+type ParamsType = Promise<{ id: string }>;
 
 export async function GET(req: NextRequest, { params }: { params: ParamsType }): Promise<Response> {
-  const { bingoId: id } = await params;
+  const { id } = await params;
 
   try {
     const headers = new Headers({
@@ -69,7 +69,7 @@ export async function GET(req: NextRequest, { params }: { params: ParamsType }):
 }
 
 export async function POST(req: Request, { params }: { params: ParamsType }): Promise<NextResponse> {
-  const { bingoId: id } = await params;
+  const { id } = await params;
 
   try {
     const { content } = (await req.json()) as Partial<Suggestion>;
@@ -96,7 +96,7 @@ export async function POST(req: Request, { params }: { params: ParamsType }): Pr
 }
 
 export async function PATCH(req: Request, { params }: { params: ParamsType }): Promise<NextResponse> {
-  const { bingoId: id } = await params;
+  const { id } = await params;
 
   try {
     const session = await auth();
