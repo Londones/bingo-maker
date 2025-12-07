@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { APIError, APIErrorCode } from "@/lib/errors";
 import { handleAPIError } from "@/lib/api-utils";
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { SuggestionPatchRequest } from "@/types/types";
 import { Suggestion } from "@prisma/client";
 
