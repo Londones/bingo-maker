@@ -3,7 +3,6 @@ import LayoutClient from "@/components/layout-client";
 import QueryProvider from "@/lib/query-provider";
 import "@/app/globals.css";
 import { Metadata } from "next";
-import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -48,7 +47,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
         <QueryProvider>
           <LayoutClient>{children}</LayoutClient>
         </QueryProvider>
-        <Analytics />
       </body>
     </html>
   );
