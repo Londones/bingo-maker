@@ -1,6 +1,5 @@
 "use client";
 
-import { uploadFileToS3 } from "@/app/actions/client-upload";
 import { UploadedImageInfo } from "@/types/types";
 import { toast } from "sonner";
 import { trackImage } from "./image-tracker";
@@ -143,6 +142,7 @@ export const uploadImagesToBingo = async (
       } else {
         // For smaller files, continue using the server action approach
         const fileBuffer = await file.arrayBuffer();
+        const { uploadFileToS3 } = await import("@/app/actions/client-upload");
         const pUrl = await uploadFileToS3(fileBuffer, fileName, file.type);
         if (pUrl) {
           publicUrl = pUrl;

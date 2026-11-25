@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
-import { useEditor } from "@/hooks/useEditor";
+import { useEditorActions, useEditorStamp } from "@/hooks/useEditor";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -48,7 +48,8 @@ const getEmojiImageUrl = (unified: string, style: EmojiStyle): string => {
 };
 
 const StampControls = () => {
-  const { state, actions } = useEditor();
+  const stamp = useEditorStamp();
+  const actions = useEditorActions();
   const [emojiStyle, setEmojiStyle] = useState<EmojiStyle>(EmojiStyle.NATIVE);
   const [currentEmoji, setCurrentEmoji] = useState<EmojiClickData | undefined>(undefined);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -60,12 +61,12 @@ const StampControls = () => {
       const imageUrl = style === EmojiStyle.NATIVE ? "" : getEmojiImageUrl(emoji.unified, style);
 
       actions.updateStamp({
-        ...state.stamp,
+        ...stamp,
         type: style === EmojiStyle.NATIVE ? "text" : "image",
         value: style === EmojiStyle.NATIVE ? emoji.native : imageUrl,
       });
     },
-    [state.stamp, actions]
+    [stamp, actions]
   );
 
   // Single effect to handle both emoji and style changes
@@ -108,10 +109,10 @@ const StampControls = () => {
               role="button"
               tabIndex={0}
             >
-              {state.stamp.type === "text" ? (
-                state.stamp.value
+              {stamp.type === "text" ? (
+                stamp.value
               ) : (
-                <Image src={state.stamp.value} alt="Stamp" width={24} height={24} />
+                <Image src={stamp.value} alt="Stamp" width={24} height={24} />
               )}
             </div>
           </PopoverTrigger>
@@ -142,10 +143,10 @@ const StampControls = () => {
         <Label htmlFor="Stamp opacity">Opacity</Label>
         <Input
           type="number"
-          defaultValue={state.stamp.opacity * 100}
+          defaultValue={stamp.opacity * 100}
           onChange={(e) =>
             actions.updateStamp({
-              ...state.stamp,
+              ...stamp,
               opacity: Number(e.target.value) / 100,
             })
           }

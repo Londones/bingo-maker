@@ -38,8 +38,13 @@ const initialState: EditorState = {
     changes: {} as ChangeTracker, // Track changes for partial updates
 };
 
+const MAX_HISTORY_LENGTH = 50;
+
 const pushToHistory = (state: EditorState) => {
     state.history.past.push({ ...state.history.present });
+    if (state.history.past.length > MAX_HISTORY_LENGTH) {
+        state.history.past.shift();
+    }
     state.canUndo = true;
     state.history.future = [];
     state.canRedo = false;
@@ -88,7 +93,7 @@ export const editorSlice = createSlice({
             state.canSave = false;
         },
         setBingo: (state, action: PayloadAction<Bingo>) => {
-            const sortedCells = action.payload.cells.sort((a, b) => a.position - b.position);
+            const sortedCells = [...action.payload.cells].sort((a, b) => a.position - b.position);
             state.history.present = {
                 ...action.payload,
                 cells: sortedCells,

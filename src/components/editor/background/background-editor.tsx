@@ -1,8 +1,10 @@
 "use client";
 import React, { memo } from "react";
+import dynamic from "next/dynamic";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import GradientEditor from "@/components/editor/background/gradient-editor";
-import ImageControls from "@/components/editor/background/image-controls";
+
+const ImageControls = dynamic(() => import("@/components/editor/background/image-controls"), { ssr: false });
 
 const TabContent = memo(({ value, children }: { value: string; children: React.ReactNode }) => (
   <TabsContent value={value}>{children}</TabsContent>
@@ -18,11 +20,15 @@ const BackgroundEditor = () => {
           {" "}
           <TabsTrigger
             value="gradient"
-            className=" data-[state=active]:bg-gradient-to-r from-[hsla(339,100%,55%,1)] to-[hsla(197,100%,64%,1)]"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:via-rose-500 data-[state=active]:to-orange-400 data-[state=active]:text-white"
           >
             Gradient
           </TabsTrigger>
-          <TabsTrigger value="image" className="" id="image-tab">
+          <TabsTrigger
+            value="image"
+            id="image-tab"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:via-rose-500 data-[state=active]:to-orange-400 data-[state=active]:text-white"
+          >
             Image
           </TabsTrigger>
         </TabsList>

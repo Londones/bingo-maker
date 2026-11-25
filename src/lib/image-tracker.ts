@@ -1,6 +1,5 @@
 "use client";
 
-import { deleteImageFromS3 } from "@/app/actions/delete-image";
 import { Bingo, BingoCell } from "@/types/types";
 
 // Interface for tracking uploaded images
@@ -94,6 +93,8 @@ export async function cleanupOrphanedImages(bingoState: Bingo): Promise<void> {
     if (orphanedImages.length === 0) return;
 
     console.log(`Cleaning up ${orphanedImages.length} orphaned images`);
+
+    const { deleteImageFromS3 } = await import("@/app/actions/delete-image");
 
     // Delete each orphaned image
     const deletePromises = orphanedImages.map(async (img) => {

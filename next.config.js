@@ -2,6 +2,10 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  serverExternalPackages: ["@aws-sdk/client-s3", "@aws-sdk/s3-request-presigner"],
+  experimental: {
+    optimizePackageImports: ["lucide-react", "framer-motion", "date-fns"],
+  },
   images: {
     remotePatterns: [
       {

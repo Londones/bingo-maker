@@ -1,5 +1,5 @@
-import React, { useCallback } from "react";
-import { useEditor } from "@/hooks/useEditor";
+import React, { useCallback, useEffect, useRef } from "react";
+import { useEditorActions, useEditorGridSize, useEditorStamp, useEditorStyle } from "@/hooks/useEditor";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -11,20 +11,40 @@ import { PopoverType } from "@/types/types";
 import { FONT_SIZES, FONT_FAMILIES } from "@/utils/constants";
 
 const CellsToolbar = React.memo(() => {
-    const { state, actions } = useEditor();
+    const style = useEditorStyle();
+    const gridSize = useEditorGridSize();
+    const stamp = useEditorStamp();
+    const actions = useEditorActions();
     const [activePopover, setActivePopover] = React.useState<PopoverType>(null);
+    const colorDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (colorDebounceRef.current) clearTimeout(colorDebounceRef.current);
+        };
+    }, []);
+
+    const debouncedStyleUpdate = useCallback(
+        (patch: Parameters<typeof actions.updateStyle>[0]) => {
+            if (colorDebounceRef.current) clearTimeout(colorDebounceRef.current);
+            colorDebounceRef.current = setTimeout(() => {
+                actions.updateStyle(patch);
+            }, 120);
+        },
+        [actions]
+    );
 
     React.useEffect(() => {
-        if (state.style.cellSize > (state.gridSize === 3 ? 350 : 200)) {
+        if (style.cellSize > (gridSize === 3 ? 350 : 200)) {
             actions.updateStyle({
-                cellSize: state.gridSize === 3 ? 350 : 200,
+                cellSize: gridSize === 3 ? 350 : 200,
             });
             actions.updateStamp({
-                ...state.stamp,
-                size: state.gridSize === 3 ? 330 : 180,
+                ...stamp,
+                size: gridSize === 3 ? 330 : 180,
             });
         }
-    }, [state.style.cellSize, state.gridSize, actions, state.stamp]);
+    }, [style.cellSize, gridSize, actions, stamp]);
 
     const handleFontFamilyChange = useCallback(
         (value: string) => {
@@ -42,23 +62,21 @@ const CellsToolbar = React.memo(() => {
 
     const handleToggleBold = useCallback(() => {
         actions.updateStyle({
-            fontWeight: state.style.fontWeight === "bold" ? "normal" : "bold",
+            fontWeight: style.fontWeight === "bold" ? "normal" : "bold",
         });
-    }, [actions, state.style.fontWeight]);
+    }, [actions, style.fontWeight]);
 
     const handleToggleItalic = useCallback(() => {
         actions.updateStyle({
-            fontStyle: state.style.fontStyle === "italic" ? "normal" : "italic",
+            fontStyle: style.fontStyle === "italic" ? "normal" : "italic",
         });
-    }, [actions, state.style.fontStyle]);
+    }, [actions, style.fontStyle]);
 
     const handleTextColorChange = useCallback(
         (color: string) => {
-            actions.updateStyle({
-                color: color,
-            });
+            debouncedStyleUpdate({ color });
         },
-        [actions]
+        [debouncedStyleUpdate]
     );
 
     const handleBackgroundOpacityChange = useCallback(
@@ -77,11 +95,11 @@ const CellsToolbar = React.memo(() => {
                 cellSize: newSize,
             });
             actions.updateStamp({
-                ...state.stamp,
+                ...stamp,
                 size: newSize - 20,
             });
         },
-        [actions, state.stamp]
+        [actions, stamp]
     );
 
     const handleGapChange = useCallback(
@@ -95,20 +113,16 @@ const CellsToolbar = React.memo(() => {
 
     const handleCellBackgroundColorChange = useCallback(
         (color: string) => {
-            actions.updateStyle({
-                cellBackgroundColor: color,
-            });
+            debouncedStyleUpdate({ cellBackgroundColor: color });
         },
-        [actions]
+        [debouncedStyleUpdate]
     );
 
     const handleBorderColorChange = useCallback(
         (color: string) => {
-            actions.updateStyle({
-                cellBorderColor: color,
-            });
+            debouncedStyleUpdate({ cellBorderColor: color });
         },
-        [actions]
+        [debouncedStyleUpdate]
     );
 
     const handleBorderWidthChange = useCallback(
@@ -124,7 +138,7 @@ const CellsToolbar = React.memo(() => {
         <div className='flex flex-col items-center gap-1 p-2'>
             <div className='flex items-center justify-between w-full'>
                 <span>Font Family</span>
-                <Select value={state.style.fontFamily} onValueChange={handleFontFamilyChange}>
+                <Select value={style.fontFamily} onValueChange={handleFontFamilyChange}>
                     <SelectTrigger className='w-auto'>
                         <Type className='h-4 w-4 mr-2' />
                         <SelectValue />
@@ -141,7 +155,7 @@ const CellsToolbar = React.memo(() => {
 
             <div className='flex items-center justify-between w-full'>
                 <span>Font Size</span>
-                <Select value={state.style.fontSize.toString()} onValueChange={handleFontSizeChange}>
+                <Select value={style.fontSize.toString()} onValueChange={handleFontSizeChange}>
                     <SelectTrigger className='w-[80px]'>
                         <SelectValue />
                     </SelectTrigger>
@@ -160,7 +174,7 @@ const CellsToolbar = React.memo(() => {
                 <Button
                     variant='ghost'
                     size='icon'
-                    className={cn(state.style.fontWeight === "bold" && "bg-accent")}
+                    className={cn(style.fontWeight === "bold" && "bg-accent")}
                     onClick={handleToggleBold}
                 >
                     <Bold className='h-4 w-4' />
@@ -172,7 +186,7 @@ const CellsToolbar = React.memo(() => {
                 <Button
                     variant='ghost'
                     size='icon'
-                    className={cn(state.style.fontStyle === "italic" && "bg-accent")}
+                    className={cn(style.fontStyle === "italic" && "bg-accent")}
                     onClick={handleToggleItalic}
                 >
                     <Italic className='h-4 w-4' />
@@ -191,7 +205,9 @@ const CellsToolbar = React.memo(() => {
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className='p-0'>
-                        <HexColorPicker color={state.style.color} onChange={handleTextColorChange} />
+                        {activePopover === "textColor" && (
+                            <HexColorPicker color={style.color} onChange={handleTextColorChange} />
+                        )}
                     </PopoverContent>
                 </Popover>
             </div>
@@ -202,7 +218,7 @@ const CellsToolbar = React.memo(() => {
                     <Blend className='h-4 w-4' />
                     <Input
                         type='number'
-                        value={state.style.cellBackgroundOpacity}
+                        value={style.cellBackgroundOpacity}
                         onChange={handleBackgroundOpacityChange}
                         min={0}
                         max={100}
@@ -218,10 +234,10 @@ const CellsToolbar = React.memo(() => {
                     <Maximize2 className='h-4 w-4' />
                     <Input
                         type='number'
-                        value={state.style.cellSize}
+                        value={style.cellSize}
                         onChange={handleCellSizeChange}
                         min={100}
-                        max={state.gridSize === 3 ? 350 : 200}
+                        max={gridSize === 3 ? 350 : 200}
                         step={1}
                         className='w-20'
                     />
@@ -234,7 +250,7 @@ const CellsToolbar = React.memo(() => {
                     <Grid className='h-4 w-4' />
                     <Input
                         type='number'
-                        value={state.style.gap}
+                        value={style.gap}
                         onChange={handleGapChange}
                         min={0}
                         step={1}
@@ -255,10 +271,12 @@ const CellsToolbar = React.memo(() => {
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className='p-0 w-auto'>
-                        <HexColorPicker
-                            color={state.style.cellBackgroundColor}
-                            onChange={handleCellBackgroundColorChange}
-                        />
+                        {activePopover === "cellBackgroundColor" && (
+                            <HexColorPicker
+                                color={style.cellBackgroundColor}
+                                onChange={handleCellBackgroundColorChange}
+                            />
+                        )}
                     </PopoverContent>
                 </Popover>
             </div>
@@ -275,7 +293,9 @@ const CellsToolbar = React.memo(() => {
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className='p-0'>
-                        <HexColorPicker color={state.style.cellBorderColor} onChange={handleBorderColorChange} />
+                        {activePopover === "borderColor" && (
+                            <HexColorPicker color={style.cellBorderColor} onChange={handleBorderColorChange} />
+                        )}
                     </PopoverContent>
                 </Popover>
             </div>
@@ -286,7 +306,7 @@ const CellsToolbar = React.memo(() => {
                     <Square className='h-4 w-4' />
                     <Input
                         type='number'
-                        value={state.style.cellBorderWidth}
+                        value={style.cellBorderWidth}
                         onChange={handleBorderWidthChange}
                         min={0}
                         step={1}
