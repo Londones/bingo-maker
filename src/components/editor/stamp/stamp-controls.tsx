@@ -1,19 +1,17 @@
 import React, { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { useEditor } from "@/hooks/useEditor";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Image from "next/image";
-import data from "@emoji-mart/data";
-import Picker from "@emoji-mart/react";
+import type { EmojiMartClickData } from "./emoji-picker";
 
-// Define the type for emoji-mart click data
-type EmojiMartClickData = {
-  native: string;
-  unified: string;
-  names: string[];
-};
+const LazyEmojiPicker = dynamic(() => import("./emoji-picker"), {
+  ssr: false,
+  loading: () => <div className="w-[352px] h-[350px] flex items-center justify-center text-xs text-muted-foreground">Loading emojis...</div>,
+});
 
 // Define the emoji style enum
 export enum EmojiStyle {
@@ -53,6 +51,7 @@ const StampControls = () => {
   const { state, actions } = useEditor();
   const [emojiStyle, setEmojiStyle] = useState<EmojiStyle>(EmojiStyle.NATIVE);
   const [currentEmoji, setCurrentEmoji] = useState<EmojiClickData | undefined>(undefined);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   const lastEmojiRef = React.useRef<{ emoji?: EmojiClickData; style?: EmojiStyle }>({});
   // Process emoji updates when either the emoji or style changes
@@ -102,7 +101,7 @@ const StampControls = () => {
     <div className="flex flex-col p-2 gap-4">
       <div className="flex items-center justify-between gap-4">
         <span>Stamp</span>
-        <Popover>
+        <Popover open={isPickerOpen} onOpenChange={setIsPickerOpen}>
           <PopoverTrigger asChild>
             <div
               className="px-4 py-2 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-secondary text-secondary-foreground hover:bg-secondary/80 cursor-pointer"
@@ -115,19 +114,9 @@ const StampControls = () => {
                 <Image src={state.stamp.value} alt="Stamp" width={24} height={24} />
               )}
             </div>
-          </PopoverTrigger>{" "}
+          </PopoverTrigger>
           <PopoverContent className="p-1">
-            <Picker
-              data={data}
-              onEmojiSelect={handleEmojiSelect}
-              set="native"
-              theme="auto"
-              previewPosition="none"
-              skinTonePosition="none"
-              autoFocus={true}
-              navPosition="top"
-              maxFrequentRows={0}
-            />
+            {isPickerOpen && <LazyEmojiPicker onEmojiSelect={handleEmojiSelect} />}
           </PopoverContent>
         </Popover>
         <Select

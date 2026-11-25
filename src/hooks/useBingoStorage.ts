@@ -164,8 +164,10 @@ export function useBingoStorage() {
 
       return response.json() as Promise<Bingo>;
     },
-    onSuccess: async (data: Bingo) => {
-      await queryClient.invalidateQueries({ queryKey: ["bingo", data.id] });
+    onSuccess: (data: Bingo) => {
+      queryClient.setQueryData<Bingo & { isAuthor?: boolean }>(["bingo", data.id], (old) =>
+        old ? { ...old, ...data, isAuthor: old.isAuthor } : data
+      );
     },
   });
 

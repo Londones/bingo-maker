@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { driver, DriveStep } from "driver.js";
+import type { DriveStep } from "driver.js";
 import "driver.js/dist/driver.css";
 
 const TUTORIAL_SHOWN_KEY = "bingo-maker-tutorial-shown";
@@ -257,35 +257,39 @@ const EditorTutorial = ({ enabled = true, onComplete }: EditorTutorialProps) => 
       return;
     }
 
+    let driverInstance: { destroy: () => void } | null = null;
+    let cancelled = false;
+
     const timeoutId = setTimeout(() => {
-      try {
-        const driverInstance = driver({
-          showProgress: true,
-          steps: steps,
-          overlayColor: "#000",
-          animate: true,
-          allowClose: true,
-          onDestroyed: () => {
-            // Mark tutorial as shown
-            localStorage.setItem(TUTORIAL_SHOWN_KEY, "true");
-            if (onComplete) {
-              onComplete();
-            }
-          },
+      void import("driver.js")
+        .then(({ driver }) => {
+          if (cancelled) return;
+          const instance = driver({
+            showProgress: true,
+            steps: steps,
+            overlayColor: "#000",
+            animate: true,
+            allowClose: true,
+            onDestroyed: () => {
+              localStorage.setItem(TUTORIAL_SHOWN_KEY, "true");
+              if (onComplete) {
+                onComplete();
+              }
+            },
+          });
+
+          driverInstance = instance;
+          instance.drive();
+        })
+        .catch((error) => {
+          console.error("Failed to initialize tutorial:", error);
         });
-
-        driverInstance.drive();
-
-        return () => {
-          driverInstance.destroy();
-        };
-      } catch (error) {
-        console.error("Failed to initialize tutorial:", error);
-      }
     }, 1000);
 
     return () => {
+      cancelled = true;
       clearTimeout(timeoutId);
+      driverInstance?.destroy();
     };
   }, [enabled, hasBeenShown, onComplete]);
 

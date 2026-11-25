@@ -35,20 +35,32 @@ export default function EditorPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isMainEditorPage]);
 
-    useEffect(() => {
-        if (!isMainEditorPage || !state) return;
+    const latestStateRef = useRef(state);
+    latestStateRef.current = state;
 
-        if (!isSavingRef.current && !state.id) {
-            saveEditorState(state);
-        }
+    useEffect(() => {
+        if (!isMainEditorPage || !state || isSavingRef.current || state.id) return;
+
+        const timer = setTimeout(() => {
+            if (!isSavingRef.current && !latestStateRef.current.id) {
+                saveEditorState(latestStateRef.current);
+            }
+        }, 400);
 
         return () => {
-            if (!isSavingRef.current && !state.id) {
-                saveEditorState(state);
-            }
+            clearTimeout(timer);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isMainEditorPage, state]);
+
+    useEffect(() => {
+        return () => {
+            if (isMainEditorPage && !isSavingRef.current && !latestStateRef.current.id) {
+                saveEditorState(latestStateRef.current);
+            }
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isMainEditorPage]);
 
     return <Editor setSaving={setSaving} />;
 }

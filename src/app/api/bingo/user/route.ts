@@ -27,37 +27,38 @@ export async function GET(req: Request): Promise<NextResponse> {
   }
 
   try {
-    const bingos: BingoPreview[] = await prisma.bingo.findMany({
-      where: {
-        userId: userId,
-      },
-      select: {
-        id: true,
-        title: true,
-        background: {
-          select: {
-            value: true,
-            backgroundImage: true,
-            backgroundImageOpacity: true,
-            backgroundImagePosition: true,
-            backgroundImageSize: true,
-          },
+    const [bingos, totalCount] = await Promise.all([
+      prisma.bingo.findMany({
+        where: {
+          userId: userId,
         },
-        createdAt: true,
-      },
-      orderBy: { createdAt: "desc" },
-      skip,
-      take: ITEMS_PER_PAGE,
-    });
-
-    const totalCount = await prisma.bingo.count({
-      where: {
-        userId: userId,
-      },
-    });
+        select: {
+          id: true,
+          title: true,
+          background: {
+            select: {
+              value: true,
+              backgroundImage: true,
+              backgroundImageOpacity: true,
+              backgroundImagePosition: true,
+              backgroundImageSize: true,
+            },
+          },
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: ITEMS_PER_PAGE,
+      }),
+      prisma.bingo.count({
+        where: {
+          userId: userId,
+        },
+      }),
+    ]);
 
     const responseData: BingoPreviewResponse = {
-      bingos,
+      bingos: bingos as BingoPreview[],
       totalPages: Math.ceil(totalCount / ITEMS_PER_PAGE),
       hasMore: skip + bingos.length < totalCount,
     };

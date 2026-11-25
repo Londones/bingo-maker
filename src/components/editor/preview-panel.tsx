@@ -8,8 +8,10 @@ import { motion } from "framer-motion";
 import { ContextMenu, ContextMenuTrigger, ContextMenuContent } from "@/components/ui/context-menu";
 import CellContextMenu from "@/components/editor/cell/cell-context-menu";
 import { useWindowSize } from "@/hooks/useWindowSize";
+import dynamic from "next/dynamic";
 import { useBingoPatterns } from "@/hooks/useBingoPatterns";
-import ReactConfetti from "react-confetti";
+
+const ReactConfetti = dynamic(() => import("react-confetti"), { ssr: false });
 
 type PreviewPanelProps = {
     ref: React.RefObject<HTMLDivElement>;

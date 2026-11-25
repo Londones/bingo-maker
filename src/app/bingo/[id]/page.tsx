@@ -1,13 +1,15 @@
 "use client";
-import React, { useEffect, useState, useMemo, use } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useBingoStorage } from "@/hooks/useBingoStorage";
 import BingoPreview from "@/components/bingo-preview";
-import { BingoCell } from "@/types/types";
+import { Bingo, BingoCell } from "@/types/types";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRealtimeBingo } from "@/hooks/useRealtimeBingo";
+import { toast } from "sonner";
 
 const LoadingComponent = () => (
     <div className='w-full h-screen flex items-center justify-center'>
@@ -15,36 +17,43 @@ const LoadingComponent = () => (
     </div>
 );
 
+type BingoWithAuthor = Bingo & { isAuthor?: boolean };
+
 const BingoContent = ({ id }: { id: string }) => {
     const { data: session } = useSession();
-    const { useGetBingo, useCheckOwnership } = useBingoStorage();
+    const queryClient = useQueryClient();
+    const { useGetBingo, useCheckOwnership, useUpdateBingo } = useBingoStorage();
     const [isClientSide, setIsClientSide] = useState(false);
 
     useRealtimeBingo(id);
 
     const { data: bingoData, isLoading: isBingoLoading, error } = useGetBingo(id);
+    const typedBingoData = bingoData as BingoWithAuthor | undefined;
 
     const isOwnerOfBingo = useMemo(
-        () => session?.user?.id === bingoData?.userId,
-        [session?.user?.id, bingoData?.userId]
+        () =>
+            !!typedBingoData?.isAuthor ||
+            (!!session?.user?.id && session.user.id === typedBingoData?.userId),
+        [session?.user?.id, typedBingoData?.userId, typedBingoData?.isAuthor]
     );
 
+    // Only check anonymous authorToken ownership if not already confirmed as owner
     const { data: ownershipData } = useCheckOwnership(id, {
-        enabled: !isOwnerOfBingo,
+        enabled: isClientSide && !!typedBingoData && !isOwnerOfBingo,
     });
 
     const isAuthor = useMemo(
-        () => (!!session?.user?.id && bingoData?.userId === session.user.id) || !!ownershipData?.isOwner,
-        [session?.user?.id, bingoData?.userId, ownershipData?.isOwner]
+        () => isOwnerOfBingo || !!ownershipData?.isOwner,
+        [isOwnerOfBingo, ownershipData?.isOwner]
     );
 
     const bingo = useMemo(() => {
-        if (!bingoData) return null;
+        if (!typedBingoData) return null;
 
-        const result = { ...bingoData };
-        const orderedCells: BingoCell[] = Array(bingoData.gridSize ** 2).fill(null);
+        const result = { ...typedBingoData };
+        const orderedCells: BingoCell[] = Array(typedBingoData.gridSize ** 2).fill(null);
 
-        bingoData.cells.forEach((cell) => {
+        typedBingoData.cells.forEach((cell) => {
             if (cell && typeof cell.position === "number") {
                 orderedCells[cell.position] = cell;
             }
@@ -52,7 +61,43 @@ const BingoContent = ({ id }: { id: string }) => {
 
         result.cells = orderedCells;
         return result;
-    }, [bingoData]);
+    }, [typedBingoData]);
+
+    const handleToggleCell = useCallback(
+        (cell: BingoCell) => {
+            if (!isAuthor || !cell.id || !id) return;
+
+            const nextValidated = !cell.validated;
+            const previousBingo = queryClient.getQueryData<BingoWithAuthor>(["bingo", id]);
+
+            // Optimistically update React Query cache for instant stamp feedback
+            queryClient.setQueryData<BingoWithAuthor>(["bingo", id], (old) => {
+                if (!old) return old;
+                return {
+                    ...old,
+                    cells: old.cells.map((c) => (c.id === cell.id ? { ...c, validated: nextValidated } : c)),
+                };
+            });
+
+            useUpdateBingo.mutate(
+                {
+                    bingoId: id,
+                    updates: {
+                        cells: [{ id: cell.id, validated: nextValidated }],
+                    },
+                },
+                {
+                    onError: () => {
+                        if (previousBingo) {
+                            queryClient.setQueryData(["bingo", id], previousBingo);
+                        }
+                        toast.error("Failed to update square");
+                    },
+                }
+            );
+        },
+        [isAuthor, id, queryClient, useUpdateBingo]
+    );
 
     useEffect(() => {
         setIsClientSide(true);
@@ -73,7 +118,7 @@ const BingoContent = ({ id }: { id: string }) => {
                     <h1 className='text-5xl font-bold'>{bingo.title}</h1>
                 </div>
             </div>
-            <BingoPreview bingo={bingo} />
+            <BingoPreview bingo={bingo} canEdit={isAuthor} onToggleCell={handleToggleCell} />
             {isAuthor ? (
                 <Link href={`/editor/${bingo.id}`} className='flex items-center justify-center'>
                     <Button variant='outline' className='mt-4'>

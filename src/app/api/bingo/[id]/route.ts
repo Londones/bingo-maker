@@ -12,8 +12,7 @@ import { broadcastBingoUpdate } from "@/lib/utils";
 type ParamsType = Promise<{ id: string }>;
 
 export async function GET(req: Request, { params }: { params: ParamsType }) {
-    const { id } = await params;
-    const session = await auth();
+    const [{ id }, session] = await Promise.all([params, auth()]);
 
     if (!id) {
         throw new APIError("Missing ID", APIErrorCode.MISSING_ID_OR_SHARE_TOKEN, 445);
@@ -64,9 +63,8 @@ export async function PATCH(req: Request, { params }: { params: ParamsType }) {
     const { id } = await params;
 
     try {
-        // Get session and raw data
-        const session = await auth();
-        const rawData = await req.json();
+        // Get session and raw data in parallel
+        const [session, rawData] = await Promise.all([auth(), req.json()]);
 
         try {
             // First get the existing bingo to get current gridSize
@@ -129,8 +127,8 @@ export async function PATCH(req: Request, { params }: { params: ParamsType }) {
                 },
             });
 
-            // Broadcast the update to all connected clients
-            await broadcastBingoUpdate(id, {
+            // Broadcast the update asynchronously so the HTTP response isn't blocked
+            void broadcastBingoUpdate(id, {
                 type: "update",
                 bingoId: id,
                 timestamp: Date.now(),

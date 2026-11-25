@@ -11,30 +11,31 @@ import MigrationToast from "@/components/migration-toast";
 const getUserPreviewBingos = async (userId: string, page: number = 1) => {
   const skip = (page - 1) * ITEMS_PER_PAGE;
 
-  const bingos = await prisma.bingo.findMany({
-    where: { userId },
-    select: {
-      id: true,
-      title: true,
-      background: {
-        select: {
-          value: true,
-          backgroundImage: true,
-          backgroundImageOpacity: true,
-          backgroundImagePosition: true,
-          backgroundImageSize: true,
+  const [bingos, totalCount] = await Promise.all([
+    prisma.bingo.findMany({
+      where: { userId },
+      select: {
+        id: true,
+        title: true,
+        background: {
+          select: {
+            value: true,
+            backgroundImage: true,
+            backgroundImageOpacity: true,
+            backgroundImagePosition: true,
+            backgroundImageSize: true,
+          },
         },
+        createdAt: true,
       },
-      createdAt: true,
-    },
-    orderBy: { createdAt: "desc" },
-    skip,
-    take: ITEMS_PER_PAGE,
-  });
-
-  const totalCount = await prisma.bingo.count({
-    where: { userId },
-  });
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: ITEMS_PER_PAGE,
+    }),
+    prisma.bingo.count({
+      where: { userId },
+    }),
+  ]);
 
   return {
     bingos,
