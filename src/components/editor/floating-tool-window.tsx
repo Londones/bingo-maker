@@ -5,14 +5,21 @@ import { motion } from "framer-motion";
 import { GripHorizontal, X } from "lucide-react";
 import { EditorToolId, renderEditorTool } from "@/components/editor/variants/editor-panels";
 
+export interface WindowOffset {
+  x: number;
+  y: number;
+}
+
 interface FloatingToolWindowProps {
   id: EditorToolId;
   title: string;
   icon: React.ComponentType<{ className?: string }>;
   initialPositionClass: string;
+  savedOffset?: WindowOffset;
   zIndex: number;
   onFocus: () => void;
   onClose: () => void;
+  onPositionCommit: (offset: WindowOffset) => void;
 }
 
 const VIEWPORT_PADDING = 8;
@@ -22,12 +29,14 @@ export default function FloatingToolWindow({
   title,
   icon: Icon,
   initialPositionClass,
+  savedOffset,
   zIndex,
   onFocus,
   onClose,
+  onPositionCommit,
 }: FloatingToolWindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [offset, setOffset] = useState<WindowOffset>(() => savedOffset ?? { x: 0, y: 0 });
   const offsetRef = useRef(offset);
   offsetRef.current = offset;
 
@@ -43,6 +52,51 @@ export default function FloatingToolWindow({
   } | null>(null);
 
   const [isDragging, setIsDragging] = useState(false);
+
+  // Sync if savedOffset arrives after hydration from localStorage
+  useEffect(() => {
+    if (savedOffset) {
+      setOffset(savedOffset);
+    }
+  }, [savedOffset]);
+
+  // Clamp window inside viewport on mount and on window resize (responsiveness)
+  const clampToViewport = useCallback(() => {
+    const el = windowRef.current;
+    if (!el) return;
+
+    const rect = el.getBoundingClientRect();
+    let adjustX = 0;
+    let adjustY = 0;
+
+    if (rect.left < VIEWPORT_PADDING) {
+      adjustX = VIEWPORT_PADDING - rect.left;
+    } else if (rect.right > window.innerWidth - VIEWPORT_PADDING) {
+      adjustX = window.innerWidth - VIEWPORT_PADDING - rect.right;
+    }
+
+    if (rect.top < VIEWPORT_PADDING) {
+      adjustY = VIEWPORT_PADDING - rect.top;
+    } else if (rect.bottom > window.innerHeight - VIEWPORT_PADDING) {
+      adjustY = window.innerHeight - VIEWPORT_PADDING - rect.bottom;
+    }
+
+    if (adjustX !== 0 || adjustY !== 0) {
+      setOffset((prev) => ({
+        x: Math.round(prev.x + adjustX),
+        y: Math.round(prev.y + adjustY),
+      }));
+    }
+  }, []);
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(clampToViewport);
+    window.addEventListener("resize", clampToViewport);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", clampToViewport);
+    };
+  }, [clampToViewport]);
 
   const handleTitlebarPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -83,14 +137,15 @@ export default function FloatingToolWindow({
       const clampedDy = Math.max(drag.minDy, Math.min(drag.maxDy, rawDy));
 
       setOffset({
-        x: drag.startOffsetX + clampedDx,
-        y: drag.startOffsetY + clampedDy,
+        x: Math.round(drag.startOffsetX + clampedDx),
+        y: Math.round(drag.startOffsetY + clampedDy),
       });
     };
 
     const handlePointerUp = () => {
       dragStateRef.current = null;
       setIsDragging(false);
+      onPositionCommit(offsetRef.current);
     };
 
     window.addEventListener("pointermove", handlePointerMove);
@@ -102,7 +157,7 @@ export default function FloatingToolWindow({
       window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("pointercancel", handlePointerUp);
     };
-  }, [isDragging]);
+  }, [isDragging, onPositionCommit]);
 
   return (
     <div
@@ -112,7 +167,7 @@ export default function FloatingToolWindow({
         zIndex,
         transform: `translate3d(${offset.x}px, ${offset.y}px, 0)`,
       }}
-      className={`fixed ${initialPositionClass} w-[316px] max-w-[calc(100vw-2rem)] h-fit max-h-[calc(100vh-8.5rem)] will-change-transform`}
+      className={`fixed ${initialPositionClass} w-[316px] max-w-[calc(100vw-1rem)] h-fit max-h-[calc(100vh-8.5rem)] will-change-transform`}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}

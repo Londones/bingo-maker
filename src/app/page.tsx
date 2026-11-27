@@ -15,21 +15,13 @@ async function getInitialLatestBingos(): Promise<LatestBingosData> {
         id: true,
         title: true,
         status: true,
-        background: {
-          select: {
-            value: true,
-            backgroundImage: true,
-            backgroundImageOpacity: true,
-            backgroundImagePosition: true,
-            backgroundImageSize: true,
-          },
-        },
+        background: true,
         createdAt: true,
       },
     });
 
     const hasMore = bingos.length > limit;
-    const items = hasMore ? bingos.slice(0, limit) : bingos;
+    const items = (hasMore ? bingos.slice(0, limit) : bingos) as LatestBingosData["items"];
     const nextCursor = hasMore ? items[items.length - 1]?.id : undefined;
 
     return {

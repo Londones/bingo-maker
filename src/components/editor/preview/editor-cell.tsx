@@ -1,13 +1,15 @@
 "use client";
 
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import dynamic from "next/dynamic";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from "@/components/ui/context-menu";
-import { useEditorActions, useEditorCell, useEditorStamp, useEditorStyle } from "@/hooks/useEditor";
-
-const CellContextMenu = dynamic(() => import("@/components/editor/cell/cell-context-menu"), { ssr: false });
+import {
+    useEditorActions,
+    useEditorCell,
+    useEditorSelectedCell,
+    useEditorStamp,
+    useEditorStyle,
+} from "@/hooks/useEditor";
 
 function pxToRem(px: number): string {
     return `${px / 16}rem`;
@@ -34,11 +36,12 @@ const EditorCell = memo(({ index }: EditorCellProps) => {
     const cell = useEditorCell(index);
     const style = useEditorStyle();
     const stamp = useEditorStamp();
+    const selectedCellIndex = useEditorSelectedCell();
     const actions = useEditorActions();
 
+    const isSelected = selectedCellIndex === index;
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState("");
-    const [menuOpen, setMenuOpen] = useState(false);
 
     const cellRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -47,19 +50,26 @@ const EditorCell = memo(({ index }: EditorCellProps) => {
 
     const cellStyle = cell?.cellStyle;
 
-    const handleCellClick = useCallback(() => {
-        if (isEditing || !cell) return;
-        setEditContent(cell.content);
-        setIsEditing(true);
+    const handleCellClick = useCallback(
+        (e: React.MouseEvent) => {
+            e.stopPropagation();
+            if (!cell) return;
+            actions.setSelectedCell(index);
 
-        requestAnimationFrame(() => {
-            if (inputRef.current) {
-                inputRef.current.focus();
-                const len = cell.content.length;
-                inputRef.current.setSelectionRange(len, len);
-            }
-        });
-    }, [isEditing, cell]);
+            if (isEditing) return;
+            setEditContent(cell.content);
+            setIsEditing(true);
+
+            requestAnimationFrame(() => {
+                if (inputRef.current) {
+                    inputRef.current.focus();
+                    const len = cell.content.length;
+                    inputRef.current.setSelectionRange(len, len);
+                }
+            });
+        },
+        [isEditing, cell, actions, index]
+    );
 
     const handleBlur = useCallback(() => {
         if (!isEditing) return;
@@ -68,6 +78,20 @@ const EditorCell = memo(({ index }: EditorCellProps) => {
         }
         setIsEditing(false);
     }, [isEditing, cell, editContent, actions, index]);
+
+    const handleKeyDown = useCallback(
+        (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+            if (e.key === "Escape") {
+                e.preventDefault();
+                if (cell && editContent !== cell.content) {
+                    actions.updateCell(index, { content: editContent });
+                }
+                setIsEditing(false);
+                actions.setSelectedCell(null);
+            }
+        },
+        [actions, cell, editContent, index]
+    );
 
     const checkOverflow = useCallback(
         (el: HTMLTextAreaElement | HTMLDivElement) => {
@@ -179,79 +203,72 @@ const EditorCell = memo(({ index }: EditorCellProps) => {
     if (!cell) return null;
 
     return (
-        <ContextMenu onOpenChange={setMenuOpen}>
-            <ContextMenuTrigger>
-                <div
-                    ref={cellRef}
-                    data-index={index}
-                    className='relative items-center justify-center rounded-md backdrop-blur-sm transition-all cursor-pointer bingo-cell hover:shadow-md'
-                    data-testid={`cell-${index} bingo-cell`}
+        <div
+            ref={cellRef}
+            data-index={index}
+            className={`relative items-center justify-center rounded-md backdrop-blur-sm transition-all cursor-pointer bingo-cell hover:shadow-md ${
+                isSelected ? "ring-2 ring-pink-500 ring-offset-1 ring-offset-background/40 z-10" : ""
+            }`}
+            data-testid={`cell-${index} bingo-cell`}
+            style={{
+                ...baseStyles,
+                ...backgroundStyles,
+            }}
+            onClick={handleCellClick}
+        >
+            {isEditing ? (
+                <textarea
+                    ref={inputRef}
+                    className='w-full bg-transparent h-fit p-1 rounded-md text-center content-center resize-none whitespace-pre-wrap break-words overflow-auto outline-none'
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    onBlur={handleBlur}
+                    onKeyDown={handleKeyDown}
+                    autoFocus
                     style={{
                         ...baseStyles,
-                        ...backgroundStyles,
+                        backgroundColor: "transparent",
                     }}
-                    onClick={handleCellClick}
+                />
+            ) : (
+                <div className='p-1 w-full h-full text-center whitespace-pre-wrap content-center break-words overflow-auto relative'>
+                    {cellBackgroundImageStyle && (
+                        <div className='absolute inset-0 pointer-events-none' style={cellBackgroundImageStyle} />
+                    )}
+                    <div className='relative'>{cell.content}</div>
+                </div>
+            )}
+
+            {cell.validated && (
+                <motion.div
+                    className='absolute inset-0 flex items-center justify-center pointer-events-none'
+                    style={{
+                        fontSize: pxToRem(stamp.size),
+                        opacity: stamp.opacity,
+                        fontStyle: "normal",
+                    }}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
                 >
-                    {isEditing ? (
-                        <textarea
-                            ref={inputRef}
-                            className='w-full bg-transparent h-fit p-1 rounded-md text-center content-center resize-none whitespace-pre-wrap break-words overflow-auto'
-                            value={editContent}
-                            onChange={(e) => setEditContent(e.target.value)}
-                            onBlur={handleBlur}
-                            autoFocus
+                    {stamp.type === "text" ? (
+                        stamp.value
+                    ) : (
+                        <Image
+                            src={stamp.value}
+                            alt='stamp'
+                            className='w-full h-full object-contain'
+                            width={stamp.size}
+                            height={stamp.size}
                             style={{
-                                ...baseStyles,
-                                backgroundColor: "transparent",
+                                maxWidth: stamp.size,
+                                maxHeight: stamp.size,
                             }}
                         />
-                    ) : (
-                        <div className='p-1 w-full h-full text-center whitespace-pre-wrap content-center break-words overflow-auto relative'>
-                            {cellBackgroundImageStyle && (
-                                <div
-                                    className='absolute inset-0 pointer-events-none'
-                                    style={cellBackgroundImageStyle}
-                                />
-                            )}
-                            <div className='relative'>{cell.content}</div>
-                        </div>
                     )}
-
-                    {cell.validated && (
-                        <motion.div
-                            className='absolute inset-0 flex items-center justify-center pointer-events-none'
-                            style={{
-                                fontSize: pxToRem(stamp.size),
-                                opacity: stamp.opacity,
-                                fontStyle: "normal",
-                            }}
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            exit={{ scale: 0 }}
-                        >
-                            {stamp.type === "text" ? (
-                                stamp.value
-                            ) : (
-                                <Image
-                                    src={stamp.value}
-                                    alt='stamp'
-                                    className='w-full h-full object-contain'
-                                    width={stamp.size}
-                                    height={stamp.size}
-                                    style={{
-                                        maxWidth: stamp.size,
-                                        maxHeight: stamp.size,
-                                    }}
-                                />
-                            )}
-                        </motion.div>
-                    )}
-                </div>
-            </ContextMenuTrigger>
-            <ContextMenuContent className='bg-background/90 backdrop-blur-md overflow-visible'>
-                {menuOpen && <CellContextMenu index={index} />}
-            </ContextMenuContent>
-        </ContextMenu>
+                </motion.div>
+            )}
+        </div>
     );
 });
 

@@ -35,15 +35,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         select: {
           id: true,
           title: true,
-          background: {
-            select: {
-              value: true,
-              backgroundImage: true,
-              backgroundImageOpacity: true,
-              backgroundImagePosition: true,
-              backgroundImageSize: true,
-            },
-          },
+          background: true,
           createdAt: true,
         },
         orderBy: { createdAt: "desc" },
@@ -58,7 +50,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     ]);
 
     const responseData: BingoPreviewResponse = {
-      bingos: bingos as BingoPreview[],
+      bingos: bingos as unknown as BingoPreview[],
       totalPages: Math.ceil(totalCount / ITEMS_PER_PAGE),
       hasMore: skip + bingos.length < totalCount,
     };

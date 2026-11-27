@@ -158,6 +158,7 @@ export interface EditorState {
     canRedo: boolean;
     canSave: boolean;
     changes?: ChangeTracker;
+    selectedCellIndex?: number | null;
 }
 
 export type PopoverType = "textColor" | "borderColor" | "cellBackgroundColor" | null;

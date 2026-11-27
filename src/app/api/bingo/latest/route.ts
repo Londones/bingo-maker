@@ -47,15 +47,7 @@ export async function GET(req: Request): Promise<NextResponse> {
           id: true,
           title: true,
           status: true,
-          background: {
-            select: {
-              value: true,
-              backgroundImage: true,
-              backgroundImageOpacity: true,
-              backgroundImagePosition: true,
-              backgroundImageSize: true,
-            },
-          },
+          background: true,
           createdAt: true,
         },
       });
@@ -74,9 +66,11 @@ export async function GET(req: Request): Promise<NextResponse> {
       }
 
       totalCount = countResult;
-      bingos = await findManyQuery();
+      bingos = (await findManyQuery()) as unknown as BingoPreview[];
     } else {
-      [totalCount, bingos] = await Promise.all([prisma.bingo.count({ where: whereClause }), findManyQuery()]);
+      const [countResult, foundBingos] = await Promise.all([prisma.bingo.count({ where: whereClause }), findManyQuery()]);
+      totalCount = countResult;
+      bingos = foundBingos as unknown as BingoPreview[];
     }
 
     if (!bingos?.length && totalCount > 0) {

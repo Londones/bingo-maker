@@ -4,10 +4,8 @@ import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBingoStorage } from "@/hooks/useBingoStorage";
-import BingoPreview from "@/components/bingo-preview";
+import BingoView from "@/components/bingo/bingo-view";
 import { Bingo, BingoCell } from "@/types/types";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { useRealtimeBingo } from "@/hooks/useRealtimeBingo";
 import { toast } from "sonner";
 
@@ -111,23 +109,7 @@ const BingoContent = ({ id }: { id: string }) => {
         return <div className='w-full text-center mt-10'>Bingo not found</div>;
     }
 
-    return (
-        <div className='w-full'>
-            <div>
-                <div className='text-foreground/50 mb-4'>
-                    <h1 className='text-5xl font-bold'>{bingo.title}</h1>
-                </div>
-            </div>
-            <BingoPreview bingo={bingo} canEdit={isAuthor} onToggleCell={handleToggleCell} />
-            {isAuthor ? (
-                <Link href={`/editor/${bingo.id}`} className='flex items-center justify-center'>
-                    <Button variant='outline' className='mt-4'>
-                        Edit Bingo
-                    </Button>
-                </Link>
-            ) : null}
-        </div>
-    );
+    return <BingoView bingo={bingo} isAuthor={isAuthor} onToggleCell={handleToggleCell} />;
 };
 
 const BingoPage = () => {

@@ -155,19 +155,21 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
     const cellIndices = useMemo(() => Array.from({ length: gridSize * gridSize }, (_, i) => i), [gridSize]);
 
     return (
-        <div ref={ref} className='flex flex-col items-center overflow-visible justify-center h-full w-full'>
+        <div className='flex flex-col items-center overflow-visible justify-center h-full w-full'>
             {showConfetti && (
-                <ReactConfetti
-                    width={windowSize.width}
-                    height={windowSize.height}
-                    recycle={false}
-                    numberOfPieces={100}
-                    gravity={0.3}
-                    onConfettiComplete={() => setShowConfetti(false)}
-                    style={{ position: "fixed", top: 0, left: 0, zIndex: 100 }}
-                />
+                <div className='fixed inset-0 pointer-events-none overflow-hidden z-[100]'>
+                    <ReactConfetti
+                        width={windowSize.width}
+                        height={windowSize.height}
+                        recycle={false}
+                        numberOfPieces={100}
+                        gravity={0.3}
+                        onConfettiComplete={() => setShowConfetti(false)}
+                    />
+                </div>
             )}
             <div
+                ref={ref}
                 className='h-fit flex flex-col p-8 rounded-lg overflow-hidden relative custom-scrollbar'
                 style={getBackground}
             >

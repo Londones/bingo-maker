@@ -5,7 +5,11 @@ import { deserializeGradientConfig } from "@/lib/utils";
 import { RadialGradientStop, Bingo, BingoCell } from "@/types/types";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { Download, Loader } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useWindowSize } from "@/hooks/useWindowSize";
+import { exportBoardToPng } from "@/lib/export-bingo";
+import { toast } from "sonner";
 
 const ReactConfetti = dynamic(() => import("react-confetti"), { ssr: false });
 
@@ -13,11 +17,36 @@ type BingoPreviewProps = {
     bingo: Bingo;
     canEdit?: boolean;
     onToggleCell?: (cell: BingoCell) => void;
+    boardRef?: React.RefObject<HTMLDivElement>;
+    hideActions?: boolean;
 };
 
-const BingoPreview = ({ bingo, canEdit = false, onToggleCell }: BingoPreviewProps) => {
+const BingoPreview = ({
+    bingo,
+    canEdit = false,
+    onToggleCell,
+    boardRef: externalBoardRef,
+    hideActions = false,
+}: BingoPreviewProps) => {
     const [showConfetti, setShowConfetti] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     const prevCompletedCountRef = useRef<number | null>(null);
+    const internalBoardRef = useRef<HTMLDivElement>(null);
+    const activeBoardRef = externalBoardRef ?? internalBoardRef;
+
+    const handleDownloadPng = useCallback(async () => {
+        if (!activeBoardRef.current || isExporting) return;
+        setIsExporting(true);
+        try {
+            await exportBoardToPng(activeBoardRef.current, bingo.title);
+            toast.success("PNG downloaded");
+        } catch (error) {
+            console.error("Failed to export PNG:", error);
+            toast.error("Failed to export PNG");
+        } finally {
+            setIsExporting(false);
+        }
+    }, [activeBoardRef, bingo.title, isExporting]);
 
     const windowSize = useWindowSize();
 
@@ -139,21 +168,23 @@ const BingoPreview = ({ bingo, canEdit = false, onToggleCell }: BingoPreviewProp
     );
 
     return (
-        <div className='flex flex-col items-center space-y-4'>
+        <div className='flex flex-col items-center'>
             {showConfetti && (
-                <ReactConfetti
-                    width={windowSize.width}
-                    height={windowSize.height}
-                    recycle={false}
-                    numberOfPieces={100}
-                    gravity={0.3}
-                    onConfettiComplete={() => {
-                        setShowConfetti(false);
-                    }}
-                    style={{ position: "fixed", top: 0, left: 0, zIndex: 100 }}
-                />
+                <div className='fixed inset-0 pointer-events-none overflow-hidden z-[100]'>
+                    <ReactConfetti
+                        width={windowSize.width}
+                        height={windowSize.height}
+                        recycle={false}
+                        numberOfPieces={100}
+                        gravity={0.3}
+                        onConfettiComplete={() => {
+                            setShowConfetti(false);
+                        }}
+                    />
+                </div>
             )}
             <div
+                ref={activeBoardRef}
                 className='mx-auto h-fit flex items-center flex-col justify-center p-8 rounded-lg shadow-lg overflow-hidden relative'
                 style={getBackground}
             >
@@ -263,8 +294,27 @@ const BingoPreview = ({ bingo, canEdit = false, onToggleCell }: BingoPreviewProp
                     </small>
                 </div>
             </div>
-            {canEdit && (
-                <p className='text-xs text-muted-foreground'>Click any square to stamp or unstamp it live.</p>
+            {!hideActions && (
+                <div className='flex flex-col items-center gap-2 mt-4'>
+                    {canEdit && (
+                        <p className='text-xs text-muted-foreground'>Click any square to stamp or unstamp it live.</p>
+                    )}
+                    <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        disabled={isExporting}
+                        onClick={() => void handleDownloadPng()}
+                        className='rounded-lg'
+                    >
+                        {isExporting ? (
+                            <Loader className='h-4 w-4 mr-2 animate-spin' />
+                        ) : (
+                            <Download className='h-4 w-4 mr-2' />
+                        )}
+                        {isExporting ? "Exporting..." : "Download PNG"}
+                    </Button>
+                </div>
             )}
         </div>
     );

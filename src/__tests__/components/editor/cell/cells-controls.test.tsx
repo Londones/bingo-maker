@@ -1,7 +1,12 @@
 import React from "react";
-import { screen, fireEvent } from "@testing-library/react";
+import { screen, fireEvent, act } from "@testing-library/react";
 import CellsToolbar from "@/components/editor/cell/cells-controls";
+import { setSelectedCell } from "@/store/slices/editorSlice";
 import { renderWithEditorStore } from "../../../../../jest/helpers/render-with-editor";
+
+jest.mock("@/hooks/useIsAuth", () => ({
+  useIsAuth: jest.fn(() => true),
+}));
 
 jest.mock("react-colorful", () => ({
   HexColorPicker: ({ onChange }: { onChange: (c: string) => void }) => (
@@ -21,7 +26,7 @@ describe("CellsToolbar (real Redux store)", () => {
     expect(screen.getByText(/border width/i)).toBeInTheDocument();
   });
 
-  test("toggles bold and italic in Redux store", () => {
+  test("toggles bold and italic globally in Redux store", () => {
     const { store } = renderWithEditorStore(<CellsToolbar />);
 
     const boldButton = screen.getByText("Bold").nextElementSibling as HTMLButtonElement;
@@ -57,5 +62,25 @@ describe("CellsToolbar (real Redux store)", () => {
     const borderWidthInput = screen.getByDisplayValue("1");
     fireEvent.change(borderWidthInput, { target: { value: "3" } });
     expect(store.getState().editor.history.present.style.cellBorderWidth).toBe(3);
+  });
+
+  test("styles an individual cell when selected and resets its overrides", () => {
+    const { store } = renderWithEditorStore(<CellsToolbar />);
+
+    act(() => {
+      store.dispatch(setSelectedCell(2));
+    });
+
+    expect(screen.getByText("Cell #3")).toBeInTheDocument();
+    const boldButton = screen.getByText("Bold").nextElementSibling as HTMLButtonElement;
+    fireEvent.click(boldButton);
+
+    const present = store.getState().editor.history.present;
+    expect(present.cells[2]?.cellStyle?.fontWeight).toBe("bold");
+    expect(present.cells[0]?.cellStyle).toBeUndefined();
+    expect(present.style.fontWeight).toBe("normal");
+
+    fireEvent.click(screen.getByLabelText("Reset cell style"));
+    expect(store.getState().editor.history.present.cells[2]?.cellStyle).toBeNull();
   });
 });

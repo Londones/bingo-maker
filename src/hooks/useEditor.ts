@@ -16,6 +16,7 @@ import {
     resetEditor,
     resetEditorState,
     setImageUrls,
+    setSelectedCell,
     extractChanges,
     clearFutureHistory,
     selectChanges,
@@ -40,6 +41,7 @@ export const useEditorActions = () => {
             updateBackground: (background: Partial<Background>) => dispatch(updateBackground(background)),
             updateStamp: (stamp: Partial<Stamp>) => dispatch(updateStamp(stamp)),
             toggleStamp: (index: number) => dispatch(toggleStamp(index)),
+            setSelectedCell: (index: number | null) => dispatch(setSelectedCell(index)),
             setImageUrls: (urls: ImageUploadResponse) => dispatch(setImageUrls(urls)),
             resetEditor: () => dispatch(resetEditor()),
             resetEditorState: () => dispatch(resetEditorState()),
@@ -61,6 +63,9 @@ export const useEditorCells = () => useSelector((state: RootState) => state.edit
 
 export const useEditorCell = (index: number) =>
     useSelector((state: RootState) => state.editor.history.present.cells[index]);
+
+export const useEditorSelectedCell = () =>
+    useSelector((state: RootState) => state.editor.selectedCellIndex ?? null);
 
 export const useEditorTitle = () =>
     useSelector(

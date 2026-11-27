@@ -36,6 +36,7 @@ const initialState: EditorState = {
     canRedo: false,
     canSave: false,
     changes: {} as ChangeTracker, // Track changes for partial updates
+    selectedCellIndex: null,
 };
 
 const MAX_HISTORY_LENGTH = 50;
@@ -105,6 +106,10 @@ export const editorSlice = createSlice({
             state.canRedo = false;
             state.canUndo = false;
             state.changes = {} as ChangeTracker;
+            state.selectedCellIndex = null;
+        },
+        setSelectedCell: (state, action: PayloadAction<number | null>) => {
+            state.selectedCellIndex = action.payload;
         },
         setTitle: (state, action: PayloadAction<string>) => {
             pushToHistory(state);
@@ -435,6 +440,7 @@ export const {
     toggleStamp,
     setImageUrls,
     setHoveredCell,
+    setSelectedCell,
     resetValidatedCells,
     resetEditor,
     resetEditorState,

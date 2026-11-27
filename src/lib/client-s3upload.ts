@@ -102,54 +102,39 @@ export const uploadImagesToBingo = async (
         fileName = `stamp-${fileName}`;
       }
 
-      let publicUrl: string;
+      // Step 1: Get a pre-signed URL from our API endpoint
+      const response = await fetch("/api/s3-presigned-url", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fileName,
+          contentType: file.type,
+        }),
+      });
 
-      // For files larger than 3MB, use pre-signed URL approach
-      if (file.size > 3 * 1024 * 1024) {
-        // Step 1: Get a pre-signed URL from our API endpoint
-        const response = await fetch("/api/s3-presigned-url", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            fileName,
-            contentType: file.type,
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(`Failed to get upload URL: ${errorData.error || response.statusText}`);
-        }
-
-        const { uploadURL, publicUrl: signedPublicUrl } = await response.json();
-
-        // Step 2: Upload directly to S3 using the pre-signed URL
-        const uploadResponse = await fetch(uploadURL as string, {
-          method: "PUT",
-          headers: {
-            "Content-Type": file.type,
-          },
-          body: file,
-        });
-
-        if (!uploadResponse.ok) {
-          throw new Error(`Failed to upload file to S3: ${uploadResponse.statusText}`);
-        }
-
-        publicUrl = signedPublicUrl;
-      } else {
-        // For smaller files, continue using the server action approach
-        const fileBuffer = await file.arrayBuffer();
-        const { uploadFileToS3 } = await import("@/app/actions/client-upload");
-        const pUrl = await uploadFileToS3(fileBuffer, fileName, file.type);
-        if (pUrl) {
-          publicUrl = pUrl;
-        } else {
-          throw new Error("Failed to upload file to S3");
-        }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to get upload URL: ${errorData.error || response.statusText}`);
       }
+
+      const { uploadURL, publicUrl: signedPublicUrl } = await response.json();
+
+      // Step 2: Upload directly to S3 using the pre-signed URL
+      const uploadResponse = await fetch(uploadURL as string, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type,
+        },
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Failed to upload file to S3: ${uploadResponse.statusText}`);
+      }
+
+      const publicUrl: string = signedPublicUrl;
 
       // Cache the successful upload
       const cacheKey = computeCacheKey(file, type, position);

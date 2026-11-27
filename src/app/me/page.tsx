@@ -17,15 +17,7 @@ const getUserPreviewBingos = async (userId: string, page: number = 1) => {
       select: {
         id: true,
         title: true,
-        background: {
-          select: {
-            value: true,
-            backgroundImage: true,
-            backgroundImageOpacity: true,
-            backgroundImagePosition: true,
-            backgroundImageSize: true,
-          },
-        },
+        background: true,
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },
@@ -38,7 +30,7 @@ const getUserPreviewBingos = async (userId: string, page: number = 1) => {
   ]);
 
   return {
-    bingos,
+    bingos: bingos as import("@/types/types").BingoPreview[],
     totalPages: Math.ceil(totalCount / ITEMS_PER_PAGE),
     hasMore: skip + bingos.length < totalCount,
   };

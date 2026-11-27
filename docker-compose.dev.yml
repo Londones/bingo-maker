@@ -1,0 +1,37 @@
+services:
+  bingo-dev-db:
+    image: postgres:16-alpine
+    container_name: bingo-dev-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: bingo_maker_dev
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - ./.pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bingo_maker_dev"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  bingo-dev-app:
+    image: node:20-slim
+    container_name: bingo-dev-app
+    restart: unless-stopped
+    working_dir: /app
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - .:/app
+    depends_on:
+      bingo-dev-db:
+        condition: service_healthy
+    command: >
+      sh -c "
+        command -v openssl >/dev/null 2>&1 || (apt-get update -qq && apt-get install -y -qq openssl ca-certificates >/dev/null);
+        npx prisma db push --skip-generate &&
+        npm run dev
+      "
