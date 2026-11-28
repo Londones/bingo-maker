@@ -7,18 +7,50 @@ import { useBingoStorage } from "@/hooks/useBingoStorage";
 import BingoView from "@/components/bingo/bingo-view";
 import { Bingo, BingoCell } from "@/types/types";
 import { useRealtimeBingo } from "@/hooks/useRealtimeBingo";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
 const LoadingComponent = () => (
-    <div className='w-full h-screen flex items-center justify-center'>
-        <div className='animate-pulse text-foreground/50'>Loading bingo...</div>
+    <div className='max-w-5xl mx-auto px-4 pt-2 pb-16 space-y-6'>
+        {/* Header Bar Skeleton */}
+        <div className='flex flex-col sm:flex-row sm:items-end justify-between gap-4'>
+            <div className='space-y-2'>
+                <Skeleton className='h-4 w-28 rounded-md' />
+                <Skeleton className='h-10 w-64 sm:w-80 rounded-lg' />
+            </div>
+            <div className='flex items-center gap-2'>
+                <Skeleton className='h-10 w-24 rounded-xl' />
+                <Skeleton className='h-10 w-24 rounded-xl' />
+            </div>
+        </div>
+
+        {/* Progress Strip Skeleton */}
+        <div className='rounded-xl border border-border/80 bg-card/70 backdrop-blur-md px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
+            <div className='flex items-center gap-4'>
+                <Skeleton className='h-4 w-24 rounded-md' />
+                <Skeleton className='h-4 w-40 rounded-md' />
+            </div>
+            <Skeleton className='w-full sm:w-48 h-2 rounded-sm' />
+        </div>
+
+        {/* Board Skeleton */}
+        <div className='flex justify-center py-2'>
+            <div className='rounded-lg border border-border/60 bg-card/40 p-8 space-y-6'>
+                <Skeleton className='h-9 w-52 mx-auto rounded-lg' />
+                <div className='grid grid-cols-3 gap-3'>
+                    {Array.from({ length: 9 }).map((_, idx) => (
+                        <Skeleton key={idx} className='h-24 w-24 sm:h-28 sm:w-28 rounded-md' />
+                    ))}
+                </div>
+            </div>
+        </div>
     </div>
 );
 
 type BingoWithAuthor = Bingo & { isAuthor?: boolean };
 
 const BingoContent = ({ id }: { id: string }) => {
-    const { data: session } = useSession();
+    const { data: session, status: sessionStatus } = useSession();
     const queryClient = useQueryClient();
     const { useGetBingo, useCheckOwnership, useUpdateBingo } = useBingoStorage();
     const [isClientSide, setIsClientSide] = useState(false);
@@ -28,22 +60,22 @@ const BingoContent = ({ id }: { id: string }) => {
     const { data: bingoData, isLoading: isBingoLoading, error } = useGetBingo(id);
     const typedBingoData = bingoData as BingoWithAuthor | undefined;
 
-    const isOwnerOfBingo = useMemo(
-        () =>
-            !!typedBingoData?.isAuthor ||
-            (!!session?.user?.id && session.user.id === typedBingoData?.userId),
-        [session?.user?.id, typedBingoData?.userId, typedBingoData?.isAuthor]
-    );
+    // Account ownership is strictly determined by the live session (never stale cached `isAuthor`)
+    const isAccountOwner = useMemo(() => {
+        if (sessionStatus !== "authenticated") return false;
+        return Boolean(session?.user?.id && typedBingoData?.userId && session.user.id === typedBingoData.userId);
+    }, [sessionStatus, session?.user?.id, typedBingoData?.userId]);
 
-    // Only check anonymous authorToken ownership if not already confirmed as owner
+    // Only check anonymous authorToken if the board has no account owner (userId is null)
     const { data: ownershipData } = useCheckOwnership(id, {
-        enabled: isClientSide && !!typedBingoData && !isOwnerOfBingo,
+        enabled: isClientSide && sessionStatus !== "loading" && !!typedBingoData && !typedBingoData.userId,
     });
 
-    const isAuthor = useMemo(
-        () => isOwnerOfBingo || !!ownershipData?.isOwner,
-        [isOwnerOfBingo, ownershipData?.isOwner]
-    );
+    const isAuthor = useMemo(() => {
+        if (!typedBingoData || sessionStatus === "loading") return false;
+        if (typedBingoData.userId) return isAccountOwner;
+        return Boolean(ownershipData?.isOwner);
+    }, [typedBingoData, sessionStatus, isAccountOwner, ownershipData?.isOwner]);
 
     const bingo = useMemo(() => {
         if (!typedBingoData) return null;

@@ -143,13 +143,16 @@ const StampControls = () => {
         <Label htmlFor="Stamp opacity">Opacity</Label>
         <Input
           type="number"
-          defaultValue={stamp.opacity * 100}
-          onChange={(e) =>
+          value={Math.round(stamp.opacity * 100)}
+          onChange={(e) => {
+            const parsed = Number(e.target.value);
+            if (Number.isNaN(parsed)) return;
+            const clamped = Math.max(0, Math.min(100, parsed));
             actions.updateStamp({
               ...stamp,
-              opacity: Number(e.target.value) / 100,
-            })
-          }
+              opacity: clamped / 100,
+            });
+          }}
           min={0}
           max={100}
           id="Stamp opacity"

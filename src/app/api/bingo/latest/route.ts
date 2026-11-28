@@ -47,7 +47,18 @@ export async function GET(req: Request): Promise<NextResponse> {
           id: true,
           title: true,
           status: true,
+          gridSize: true,
+          style: true,
+          stamp: true,
           background: true,
+          cells: {
+            select: {
+              position: true,
+              content: true,
+              validated: true,
+            },
+            orderBy: { position: "asc" },
+          },
           createdAt: true,
         },
       });

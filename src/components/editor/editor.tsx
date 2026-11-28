@@ -138,7 +138,7 @@ export default function Editor({ setSaving }: EditorProps) {
         onClick={() => actions.setSelectedCell(null)}
         className="relative h-full w-full overflow-auto pt-20 md:pt-24 pb-24 md:pb-28 px-3 md:px-8 custom-scrollbar"
       >
-        <div className="min-h-full flex items-center justify-center">
+        <div className="min-h-full min-w-full w-max flex">
           <PreviewPanel ref={previewRef} />
         </div>
       </div>
@@ -200,7 +200,7 @@ export default function Editor({ setSaving }: EditorProps) {
       )}
 
       {/* Floating Bottom Tool Dock (shared on Desktop & Mobile) */}
-      <div className="fixed bottom-3 md:bottom-5 left-1/2 -translate-x-1/2 z-[49] max-w-[96vw]">
+      <div id="editor-tool-dock" className="fixed bottom-3 md:bottom-5 left-1/2 -translate-x-1/2 z-[49] max-w-[96vw]">
         <div className="flex items-center gap-1 md:gap-1.5 p-1.5 rounded-xl border border-border/80 bg-background/90 backdrop-blur-xl shadow-xl shadow-black/15 dark:shadow-black/50">
           {EDITOR_TOOLS.map(({ id, shortLabel, icon: Icon }) => {
             const isOpen = isMobile ? mobileTool === id : openTools.includes(id);

@@ -15,7 +15,18 @@ async function getInitialLatestBingos(): Promise<LatestBingosData> {
         id: true,
         title: true,
         status: true,
+        gridSize: true,
+        style: true,
+        stamp: true,
         background: true,
+        cells: {
+          select: {
+            position: true,
+            content: true,
+            validated: true,
+          },
+          orderBy: { position: "asc" },
+        },
         createdAt: true,
       },
     });

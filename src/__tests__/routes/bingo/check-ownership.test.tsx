@@ -57,7 +57,31 @@ describe("Check Ownership API Route", () => {
       expect(data.isOwner).toBe(true);
     });
 
-    it("should return true when authorToken matches", async () => {
+    it("should return true when authorToken matches an unclaimed guest bingo", async () => {
+      // Arrange
+      (auth as jest.Mock).mockResolvedValue(null);
+      (prisma.bingo.findUnique as jest.Mock).mockResolvedValue({
+        ...mockBingo,
+        userId: null,
+      });
+      const asyncParams = Promise.resolve({ id: "1" });
+
+      // Act
+      const response = await POST(
+        new NextRequest(`${TEST_URL}/api/bingo/1/check-ownership`, {
+          method: "POST",
+          body: JSON.stringify({ authorToken: "valid-token" }),
+        }),
+        { params: asyncParams }
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.isOwner).toBe(true);
+    });
+
+    it("should return false when bingo is owned by an account even if authorToken matches", async () => {
       // Arrange
       (auth as jest.Mock).mockResolvedValue(null);
       (prisma.bingo.findUnique as jest.Mock).mockResolvedValue(mockBingo);
@@ -75,7 +99,7 @@ describe("Check Ownership API Route", () => {
       // Assert
       expect(response.status).toBe(200);
       const data = await response.json();
-      expect(data.isOwner).toBe(true);
+      expect(data.isOwner).toBe(false);
     });
 
     it("should return false when not owner", async () => {

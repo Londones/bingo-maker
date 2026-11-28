@@ -38,22 +38,25 @@ const Page = () => {
   }
 
   return (
-    <div className="flex h-[70vh] items-center justify-center px-4">
-      <div className="w-full max-w-sm space-y-6">
-        <h1 className="text-center text-2xl font-semibold">Sign up</h1>
+    <div className="flex min-h-[75vh] items-center justify-center px-4">
+      <div className="w-full max-w-sm rounded-2xl border border-border/80 bg-card/80 backdrop-blur-xl p-7 shadow-xl shadow-black/10 dark:shadow-black/40 space-y-6">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Create an account</h1>
+          <p className="text-sm text-muted-foreground">Save your boards, upload images, and edit anytime.</p>
+        </div>
         <form action={formAction} className="space-y-4">
-          <div className="relative h-fit">
+          <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" className="w-full rounded-md" type="email" name="email" required />
+            <Input id="email" className="w-full rounded-xl h-10" type="email" name="email" required />
           </div>
-          <div className="relative h-fit">
+          <div className="space-y-1.5">
             <Label htmlFor="username">Username</Label>
-            <Input id="username" className="w-full rounded-md" type="text" name="username" required />
+            <Input id="username" className="w-full rounded-xl h-10" type="text" name="username" required />
           </div>
-          <div className="relative h-fit">
+          <div className="space-y-1.5">
             <Label htmlFor="password">Password</Label>
             <Input
-              className="w-full rounded-md border"
+              className="w-full rounded-xl h-10 border"
               type="password"
               name="password"
               required
@@ -61,9 +64,13 @@ const Page = () => {
               id="password"
             />
           </div>
-          <Button disabled={isPending} className="w-full rounded-md">
+          <button
+            disabled={isPending}
+            type="submit"
+            className="w-full h-11 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-pink-500 via-rose-500 to-orange-400 shadow-[0_3px_0_0_rgba(190,24,93,0.75)] active:translate-y-[1px] disabled:opacity-50 transition-all"
+          >
             {isPending ? "Signing up..." : "Sign up"}
-          </Button>
+          </button>
           <div className="flex items-center justify-center gap-1">
             <div className="flex w-full items-center">
               <span className="border-t w-full" />

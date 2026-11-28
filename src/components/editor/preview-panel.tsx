@@ -142,20 +142,21 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
         [gridSize, style.cellSize, style.gap]
     );
 
-    const titleStyle = useMemo(
-        () => ({
+    const titleStyle = useMemo(() => {
+        const gridWidthPx = gridSize * style.cellSize + (gridSize - 1) * style.gap;
+        return {
             fontFamily: style.fontFamily,
             color: style.color,
             fontStyle: style.fontStyle,
             width: titleWidth ? pxToRem(titleWidth) : undefined,
-        }),
-        [style.fontFamily, style.color, style.fontStyle, titleWidth]
-    );
+            maxWidth: pxToRem(titleWidth || gridWidthPx),
+        };
+    }, [style.fontFamily, style.color, style.fontStyle, style.cellSize, style.gap, gridSize, titleWidth]);
 
     const cellIndices = useMemo(() => Array.from({ length: gridSize * gridSize }, (_, i) => i), [gridSize]);
 
     return (
-        <div className='flex flex-col items-center overflow-visible justify-center h-full w-full'>
+        <div className='m-auto shrink-0 flex flex-col items-center'>
             {showConfetti && (
                 <div className='fixed inset-0 pointer-events-none overflow-hidden z-[100]'>
                     <ReactConfetti
@@ -170,17 +171,17 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
             )}
             <div
                 ref={ref}
-                className='h-fit flex flex-col p-8 rounded-lg overflow-hidden relative custom-scrollbar'
+                className='w-fit h-fit shrink-0 flex flex-col p-8 rounded-lg overflow-hidden relative'
                 style={getBackground}
             >
                 {getBackgroundImage && (
                     <div className='absolute inset-0 pointer-events-none' style={getBackgroundImage} />
                 )}
-                <div className='relative z-10 max-w-full'>
+                <div className='relative z-10 w-fit'>
                     {editingTitle ? (
                         <textarea
                             ref={titleRef}
-                            className='text-center w-full z-10 resize-none overflow-hidden text-4xl text-wrap bg-transparent font-bold rounded-lg'
+                            className='text-center w-full z-10 resize-none overflow-hidden text-4xl text-wrap break-words bg-transparent font-bold rounded-lg'
                             value={localTitle}
                             style={titleStyle}
                             onChange={handleTitleChange}
@@ -191,7 +192,7 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
                     ) : (
                         <h1
                             id='bingo-title'
-                            className='text-center z-10 text-4xl font-bold'
+                            className='text-center z-10 text-4xl font-bold break-words mx-auto'
                             style={titleStyle}
                             onClick={() => setEditingTitle(true)}
                         >

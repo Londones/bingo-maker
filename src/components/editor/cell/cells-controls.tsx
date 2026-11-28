@@ -141,23 +141,30 @@ const CellsToolbar = React.memo(() => {
 
     const handleBackgroundOpacityChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
-            applyPatch({ cellBackgroundOpacity: parseInt(e.target.value, 10) });
+            const parsed = parseInt(e.target.value, 10);
+            if (Number.isNaN(parsed)) return;
+            applyPatch({ cellBackgroundOpacity: Math.max(0, Math.min(100, parsed)) });
         },
         [applyPatch]
     );
 
     const handleCellSizeChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
-            const newSize = parseInt(e.target.value, 10);
-            actions.updateStyle({ cellSize: newSize });
-            actions.updateStamp({ ...stamp, size: newSize - 20 });
+            const parsed = parseInt(e.target.value, 10);
+            if (Number.isNaN(parsed)) return;
+            const maxSize = gridSize === 3 ? 350 : 200;
+            const clamped = Math.max(100, Math.min(maxSize, parsed));
+            actions.updateStyle({ cellSize: clamped });
+            actions.updateStamp({ ...stamp, size: Math.max(20, clamped - 20) });
         },
-        [actions, stamp]
+        [actions, stamp, gridSize]
     );
 
     const handleGapChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
-            actions.updateStyle({ gap: parseInt(e.target.value, 10) });
+            const parsed = parseInt(e.target.value, 10);
+            if (Number.isNaN(parsed)) return;
+            actions.updateStyle({ gap: Math.max(0, Math.min(80, parsed)) });
         },
         [actions]
     );
@@ -174,7 +181,9 @@ const CellsToolbar = React.memo(() => {
 
     const handleBorderWidthChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
-            applyPatch({ cellBorderWidth: parseInt(e.target.value, 10) });
+            const parsed = parseInt(e.target.value, 10);
+            if (Number.isNaN(parsed)) return;
+            applyPatch({ cellBorderWidth: Math.max(0, Math.min(20, parsed)) });
         },
         [applyPatch]
     );
@@ -277,11 +286,11 @@ const CellsToolbar = React.memo(() => {
                 </div>
             )}
 
-            <div className='flex items-center justify-between w-full'>
-                <span className='text-sm'>Font Family</span>
+            <div className='flex items-center justify-between gap-2 w-full'>
+                <span className='text-sm whitespace-nowrap'>Font Family</span>
                 <Select value={effectiveFontFamily} onValueChange={handleFontFamilyChange}>
-                    <SelectTrigger className='w-auto'>
-                        <Type className='h-4 w-4 mr-2' />
+                    <SelectTrigger className='w-[152px] shrink-0'>
+                        <Type className='h-4 w-4 mr-1.5 shrink-0' />
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -294,10 +303,10 @@ const CellsToolbar = React.memo(() => {
                 </Select>
             </div>
 
-            <div className='flex items-center justify-between w-full'>
-                <span className='text-sm'>Font Size</span>
+            <div className='flex items-center justify-between gap-2 w-full'>
+                <span className='text-sm whitespace-nowrap'>Font Size</span>
                 <Select value={effectiveFontSize.toString()} onValueChange={handleFontSizeChange}>
-                    <SelectTrigger className='w-[80px]'>
+                    <SelectTrigger className='w-[88px] shrink-0'>
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -310,8 +319,8 @@ const CellsToolbar = React.memo(() => {
                 </Select>
             </div>
 
-            <div className='flex items-center justify-between w-full'>
-                <span className='text-sm'>Bold</span>
+            <div className='flex items-center justify-between gap-2 w-full'>
+                <span className='text-sm whitespace-nowrap'>Bold</span>
                 <Button
                     variant='ghost'
                     size='icon'
@@ -322,8 +331,8 @@ const CellsToolbar = React.memo(() => {
                 </Button>
             </div>
 
-            <div className='flex items-center justify-between w-full'>
-                <span className='text-sm'>Italic</span>
+            <div className='flex items-center justify-between gap-2 w-full'>
+                <span className='text-sm whitespace-nowrap'>Italic</span>
                 <Button
                     variant='ghost'
                     size='icon'
@@ -334,18 +343,22 @@ const CellsToolbar = React.memo(() => {
                 </Button>
             </div>
 
-            <div className='flex items-center justify-between w-full'>
-                <span className='text-sm'>Text Color</span>
+            <div className='flex items-center justify-between gap-2 w-full'>
+                <span className='text-sm whitespace-nowrap'>Text Color</span>
                 <Popover
                     open={activePopover === "textColor"}
                     onOpenChange={(isOpen) => setActivePopover(isOpen ? "textColor" : null)}
                 >
                     <PopoverTrigger asChild>
-                        <Button variant='ghost' size='icon'>
-                            <Type className='h-4 w-4' />
+                        <Button variant='outline' size='sm' className='h-8 px-2 gap-1.5 shrink-0'>
+                            <span
+                                className='h-4 w-4 rounded-[4px] border border-border shrink-0'
+                                style={{ backgroundColor: effectiveColor }}
+                            />
+                            <Type className='h-3.5 w-3.5 text-muted-foreground' />
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent className='p-0'>
+                    <PopoverContent className='p-2 w-auto' side='bottom' align='end'>
                         {activePopover === "textColor" && (
                             <HexColorPicker color={effectiveColor} onChange={handleTextColorChange} />
                         )}
@@ -353,10 +366,10 @@ const CellsToolbar = React.memo(() => {
                 </Popover>
             </div>
 
-            <div className='flex items-center justify-between w-full'>
-                <span className='text-sm'>Cell Background Opacity</span>
-                <div className='flex items-center ml-2 gap-2'>
-                    <Blend className='h-4 w-4' />
+            <div className='flex items-center justify-between gap-2 w-full'>
+                <span className='text-sm whitespace-nowrap'>Cell Opacity</span>
+                <div className='flex items-center gap-2 shrink-0'>
+                    <Blend className='h-4 w-4 text-muted-foreground' />
                     <Input
                         type='number'
                         value={effectiveBgOpacity}
@@ -364,17 +377,17 @@ const CellsToolbar = React.memo(() => {
                         min={0}
                         max={100}
                         step={1}
-                        className='w-20'
+                        className='w-20 h-8'
                     />
                 </div>
             </div>
 
             {!isCellScope && (
                 <>
-                    <div className='flex items-center justify-between w-full'>
-                        <span className='text-sm'>Cell Size</span>
-                        <div className='flex items-center ml-2 gap-2'>
-                            <Maximize2 className='h-4 w-4' />
+                    <div className='flex items-center justify-between gap-2 w-full'>
+                        <span className='text-sm whitespace-nowrap'>Cell Size</span>
+                        <div className='flex items-center gap-2 shrink-0'>
+                            <Maximize2 className='h-4 w-4 text-muted-foreground' />
                             <Input
                                 type='number'
                                 value={style.cellSize}
@@ -382,40 +395,45 @@ const CellsToolbar = React.memo(() => {
                                 min={100}
                                 max={gridSize === 3 ? 350 : 200}
                                 step={1}
-                                className='w-20'
+                                className='w-20 h-8'
                             />
                         </div>
                     </div>
 
-                    <div className='flex items-center justify-between w-full'>
-                        <span className='text-sm'>Cell Gap</span>
-                        <div className='flex items-center gap-2'>
-                            <Grid className='h-4 w-4' />
+                    <div className='flex items-center justify-between gap-2 w-full'>
+                        <span className='text-sm whitespace-nowrap'>Cell Gap</span>
+                        <div className='flex items-center gap-2 shrink-0'>
+                            <Grid className='h-4 w-4 text-muted-foreground' />
                             <Input
                                 type='number'
                                 value={style.gap}
                                 onChange={handleGapChange}
                                 min={0}
+                                max={80}
                                 step={1}
-                                className='w-20'
+                                className='w-20 h-8'
                             />
                         </div>
                     </div>
                 </>
             )}
 
-            <div className='flex items-center justify-between w-full'>
-                <span className='text-sm'>Cell Background Color</span>
+            <div className='flex items-center justify-between gap-2 w-full'>
+                <span className='text-sm whitespace-nowrap'>Cell Bg Color</span>
                 <Popover
                     open={activePopover === "cellBackgroundColor"}
                     onOpenChange={(isOpen) => setActivePopover(isOpen ? "cellBackgroundColor" : null)}
                 >
                     <PopoverTrigger asChild>
-                        <Button variant='ghost' size='icon'>
-                            <Palette className='h-4 w-4' />
+                        <Button variant='outline' size='sm' className='h-8 px-2 gap-1.5 shrink-0'>
+                            <span
+                                className='h-4 w-4 rounded-[4px] border border-border shrink-0'
+                                style={{ backgroundColor: effectiveBgColor }}
+                            />
+                            <Palette className='h-3.5 w-3.5 text-muted-foreground' />
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent className='p-0 w-auto'>
+                    <PopoverContent className='p-2 w-auto' side='bottom' align='end'>
                         {activePopover === "cellBackgroundColor" && (
                             <HexColorPicker color={effectiveBgColor} onChange={handleCellBackgroundColorChange} />
                         )}
@@ -423,18 +441,22 @@ const CellsToolbar = React.memo(() => {
                 </Popover>
             </div>
 
-            <div className='flex items-center justify-between w-full'>
-                <span className='text-sm'>Border Color</span>
+            <div className='flex items-center justify-between gap-2 w-full'>
+                <span className='text-sm whitespace-nowrap'>Border Color</span>
                 <Popover
                     open={activePopover === "borderColor"}
                     onOpenChange={(isOpen) => setActivePopover(isOpen ? "borderColor" : null)}
                 >
                     <PopoverTrigger asChild>
-                        <Button variant='ghost' size='icon'>
-                            <Square className='h-4 w-4' />
+                        <Button variant='outline' size='sm' className='h-8 px-2 gap-1.5 shrink-0'>
+                            <span
+                                className='h-4 w-4 rounded-[4px] border border-border shrink-0'
+                                style={{ backgroundColor: effectiveBorderColor }}
+                            />
+                            <Square className='h-3.5 w-3.5 text-muted-foreground' />
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent className='p-0'>
+                    <PopoverContent className='p-2 w-auto' side='bottom' align='end'>
                         {activePopover === "borderColor" && (
                             <HexColorPicker color={effectiveBorderColor} onChange={handleBorderColorChange} />
                         )}
@@ -442,17 +464,18 @@ const CellsToolbar = React.memo(() => {
                 </Popover>
             </div>
 
-            <div className='flex items-center justify-between w-full'>
-                <span className='text-sm'>Border Width</span>
-                <div className='flex items-center gap-2'>
-                    <Square className='h-4 w-4' />
+            <div className='flex items-center justify-between gap-2 w-full'>
+                <span className='text-sm whitespace-nowrap'>Border Width</span>
+                <div className='flex items-center gap-2 shrink-0'>
+                    <Square className='h-4 w-4 text-muted-foreground' />
                     <Input
                         type='number'
                         value={effectiveBorderWidth}
                         onChange={handleBorderWidthChange}
                         min={0}
+                        max={20}
                         step={1}
-                        className='w-20'
+                        className='w-20 h-8'
                     />
                 </div>
             </div>

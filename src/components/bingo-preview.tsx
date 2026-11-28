@@ -220,10 +220,10 @@ const BingoPreview = ({
                                               }
                                             : undefined
                                     }
-                                    className={`relative items-center justify-center rounded-md backdrop-blur-sm transition-all select-none ${
+                                    className={`relative items-center justify-center rounded-md backdrop-blur-sm ${
                                         canEdit
-                                            ? "cursor-pointer hover:ring-2 hover:ring-white/70 active:scale-[0.97]"
-                                            : ""
+                                            ? "transition-all select-none cursor-pointer hover:ring-2 hover:ring-white/70 active:scale-[0.97]"
+                                            : "cursor-default select-text"
                                     }`}
                                     style={{
                                         ...baseStyles,

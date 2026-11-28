@@ -169,16 +169,31 @@ export interface ImageUploadResponse {
     stampImage?: string;
 }
 
+export interface BingoPreviewCell {
+    position: number;
+    content: string;
+    validated: boolean;
+}
+
 export interface BingoPreview {
     id: string;
     title: string;
     status?: string;
+    gridSize?: number;
+    style?: Partial<Style> | null;
+    stamp?: {
+        type: string;
+        value: string;
+        size?: number;
+        opacity?: number;
+    } | null;
+    cells?: BingoPreviewCell[];
     background: {
         value: string;
-        backgroundImage: string | null;
-        backgroundImageOpacity: number | null;
-        backgroundImagePosition: string | null;
-        backgroundImageSize: number | null;
+        backgroundImage?: string | null;
+        backgroundImageOpacity?: number | null;
+        backgroundImagePosition?: string | null;
+        backgroundImageSize?: number | null;
     } | null;
     createdAt: Date;
 }

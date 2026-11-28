@@ -11,6 +11,8 @@ export async function GET(req: Request): Promise<NextResponse> {
   const { searchParams } = new URL(req.url);
   const page = parseInt(searchParams.get("page") || "1", 10) || 1;
   const userId = searchParams.get("userId") || session?.user?.id;
+  const statusParam = searchParams.get("status");
+  const status = statusParam === "published" || statusParam === "draft" ? statusParam : undefined;
   const skip = (page - 1) * ITEMS_PER_PAGE;
 
   if (!userId) {
@@ -27,15 +29,30 @@ export async function GET(req: Request): Promise<NextResponse> {
   }
 
   try {
+    const whereClause = {
+      userId: userId,
+      ...(status ? { status } : {}),
+    };
+
     const [bingos, totalCount] = await Promise.all([
       prisma.bingo.findMany({
-        where: {
-          userId: userId,
-        },
+        where: whereClause,
         select: {
           id: true,
           title: true,
+          status: true,
+          gridSize: true,
+          style: true,
+          stamp: true,
           background: true,
+          cells: {
+            select: {
+              position: true,
+              content: true,
+              validated: true,
+            },
+            orderBy: { position: "asc" },
+          },
           createdAt: true,
         },
         orderBy: { createdAt: "desc" },
@@ -43,9 +60,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         take: ITEMS_PER_PAGE,
       }),
       prisma.bingo.count({
-        where: {
-          userId: userId,
-        },
+        where: whereClause,
       }),
     ]);
 

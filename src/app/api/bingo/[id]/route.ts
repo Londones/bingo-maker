@@ -47,7 +47,7 @@ export async function GET(req: Request, { params }: { params: ParamsType }) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { authorToken, ...bingoWithoutToken } = bingo;
 
-        const isAuthor = session?.user?.id === bingo.userId || false;
+        const isAuthor = Boolean(session?.user?.id && bingo.userId === session.user.id);
 
         return NextResponse.json({
             ...bingoWithoutToken,
@@ -95,9 +95,9 @@ export async function PATCH(req: Request, { params }: { params: ParamsType }) {
             const data: BingoPatch = bingoPatchSchema.parse(rawData);
             const clientToken = data.authorToken;
 
-            const isOwner =
-                (session?.user?.id && existingBingo.userId === session.user.id) ||
-                (clientToken && existingBingo.authorToken === clientToken);
+            const isOwner = existingBingo.userId
+                ? Boolean(session?.user?.id && existingBingo.userId === session.user.id)
+                : Boolean(clientToken && existingBingo.authorToken === clientToken);
 
             if (!isOwner) {
                 throw new APIError("Unauthorized", APIErrorCode.UNAUTHORIZED, 401);

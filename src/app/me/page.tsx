@@ -4,20 +4,31 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ITEMS_PER_PAGE } from "@/utils/constants";
-import UserBingoList from "@/components/user-bingo-list";
-import SignOutButton from "@/components/sign-out-button";
-import MigrationToast from "@/components/migration-toast";
+import MeDashboard from "@/components/me/me-dashboard";
+import { BingoPreview } from "@/types/types";
 
 const getUserPreviewBingos = async (userId: string, page: number = 1) => {
   const skip = (page - 1) * ITEMS_PER_PAGE;
 
-  const [bingos, totalCount] = await Promise.all([
+  const [bingos, totalCount, publishedCount] = await Promise.all([
     prisma.bingo.findMany({
       where: { userId },
       select: {
         id: true,
         title: true,
+        status: true,
+        gridSize: true,
+        style: true,
+        stamp: true,
         background: true,
+        cells: {
+          select: {
+            position: true,
+            content: true,
+            validated: true,
+          },
+          orderBy: { position: "asc" },
+        },
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },
@@ -27,20 +38,22 @@ const getUserPreviewBingos = async (userId: string, page: number = 1) => {
     prisma.bingo.count({
       where: { userId },
     }),
+    prisma.bingo.count({
+      where: { userId, status: "published" },
+    }),
   ]);
 
   return {
-    bingos: bingos as import("@/types/types").BingoPreview[],
-    totalPages: Math.ceil(totalCount / ITEMS_PER_PAGE),
+    bingos: bingos as unknown as BingoPreview[],
+    totalCount,
+    publishedCount,
+    draftCount: Math.max(0, totalCount - publishedCount),
+    totalPages: Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE)),
     hasMore: skip + bingos.length < totalCount,
   };
 };
 
-/**
- * Migrate bingos from anonymous author token to a logged-in user
- */
 const migrateBingos = async (bingoIds: string[], authorToken: string, userId: string) => {
-  // Check if there are any bingos matching these criteria
   const bingoCount = await prisma.bingo.count({
     where: {
       id: { in: bingoIds },
@@ -86,17 +99,14 @@ export default async function MePage({
     redirect("/signin");
   }
 
-  // Handle migration if bingoIds and authorToken are provided
   const { bingoIds, authorToken, page, migrated } = await searchParams;
-  let migrationResult = null;
 
   if (bingoIds && authorToken) {
     try {
       const bingoIdsArray = JSON.parse(bingoIds) as string[];
       if (bingoIdsArray.length > 0) {
-        migrationResult = await migrateBingos(bingoIdsArray, authorToken, user.id);
+        const migrationResult = await migrateBingos(bingoIdsArray, authorToken, user.id);
 
-        // If we have migrated any bingos, we'll add a success parameter to the redirect
         if (migrationResult.success && migrationResult.migratedCount > 0) {
           const redirectParams = new URLSearchParams();
           if (page) {
@@ -107,27 +117,30 @@ export default async function MePage({
         }
       }
     } catch (error) {
-      // Only catch non-redirect errors
       if (!(error instanceof Error && error.message.includes("NEXT_REDIRECT"))) {
         console.error("Error migrating bingos:", error);
       }
     }
   }
 
-  // Show the migration success message if we have the 'migrated' parameter
   const migratedCount = migrated ? parseInt(migrated) : 0;
-
-  const initialPage = page ? parseInt(page) : 1;
-  const { bingos, hasMore } = await getUserPreviewBingos(user.id, initialPage);
+  const initialPage = page ? Math.max(1, parseInt(page) || 1) : 1;
+  const { bingos, totalPages, totalCount, publishedCount, draftCount } = await getUserPreviewBingos(
+    user.id,
+    initialPage
+  );
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">My Bingos</h1>
-        <SignOutButton />
-      </div>
-      <MigrationToast count={migratedCount} />
-      <UserBingoList initialBingos={bingos} initialPage={initialPage} hasMore={hasMore} userId={user.id} />
-    </div>
+    <MeDashboard
+      initialBingos={bingos}
+      initialPage={initialPage}
+      initialTotalPages={totalPages}
+      totalCount={totalCount}
+      publishedCount={publishedCount}
+      draftCount={draftCount}
+      userId={user.id}
+      userName={user.name}
+      migratedCount={migratedCount}
+    />
   );
 }

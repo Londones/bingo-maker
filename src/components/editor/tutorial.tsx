@@ -7,24 +7,25 @@ const TUTORIAL_SHOWN_KEY = "bingo-maker-tutorial-shown";
 
 const shadcnDriverStyles = `
 .driver-popover {
-  border-radius: 0.5rem !important;
+  border-radius: 0.75rem !important;
   background-color: hsl(var(--background)) !important;
   color: hsl(var(--foreground)) !important;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  box-shadow: 0 18px 36px -8px rgb(0 0 0 / 0.35), 0 6px 12px -4px rgb(0 0 0 / 0.2);
   border: 1px solid hsl(var(--border)) !important;
-  padding: 1.25rem !important;
+  padding: 1.15rem 1.25rem !important;
   font-family: var(--font-sans);
+  max-width: 320px !important;
 }
 
 .driver-popover-title {
-  font-size: 1rem !important;
+  font-size: 0.95rem !important;
   font-weight: 600;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   color: hsl(var(--foreground)) !important;
 }
 
 .driver-popover-description {
-  font-size: 0.875rem;
+  font-size: 0.84rem;
   color: hsl(var(--muted-foreground)) !important;
   line-height: 1.5;
 }
@@ -49,38 +50,33 @@ const shadcnDriverStyles = `
   border-color: hsl(var(--border)) !important;
 }
 
-.driver-popover-progress-container {
-  margin-top: 0.5rem;
-}
-
-.driver-popover-progress {
-  background-color: hsl(var(--primary) / 0.1) !important;
-}
-
-.driver-popover-progress-steps {
-  background-color: hsl(var(--primary)) !important;
+.driver-popover-progress-text {
+  font-size: 0.75rem !important;
+  color: hsl(var(--muted-foreground)) !important;
 }
 
 .driver-popover-prev-btn {
   background-color: hsl(var(--secondary)) !important;
   color: hsl(var(--secondary-foreground)) !important;
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 0.5rem;
   border: none !important;
   font-weight: 500;
+  text-shadow: none !important;
 }
 
 .driver-popover-prev-btn:hover {
-  background-color: hsl(var(--secondary) / 0.9);
+  background-color: hsl(var(--secondary) / 0.85);
 }
 
 .driver-popover-next-btn {
   background-color: hsl(var(--primary)) !important;
   color: hsl(var(--primary-foreground)) !important;
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 0.5rem;
   border: none !important;
   font-weight: 500;
+  text-shadow: none !important;
 }
 
 .driver-popover-next-btn:hover {
@@ -91,132 +87,103 @@ const shadcnDriverStyles = `
   gap: 0.5rem;
 }`;
 
-// Define the tutorial steps
-const steps = [
+// Tutorial steps aligned with the floating Canvas Dock editor UI
+const steps: DriveStep[] = [
   {
     element: "#editor-controls",
     popover: {
-      title: "Editor Controls",
-      description: "These controls allow you to manage your bingo card.",
+      title: "Top Controls",
+      description: "Reset the board, switch between Draft and Published, undo or redo, save, export as PNG, or share.",
       side: "bottom",
       align: "center",
     },
   },
   {
-    element: "#panel-toggle-btn",
-    popover: {
-      title: "Settings Panel Toggle",
-      description: "Click this to show or hide the settings panel on the left.",
-      side: "bottom",
-    },
-  },
-  {
     element: "#publish-switch",
     popover: {
-      title: "Publish Switch",
-      description: "Toggle this switch to make your bingo public or private.",
+      title: "Draft or Published",
+      description: "Keep your board as a private draft while editing, or publish it so anyone with the link can view it.",
       side: "bottom",
-    },
-  },
-  {
-    element: "#undo-btn",
-    popover: {
-      title: "Undo Button",
-      description: "Click to undo your last change.",
-      side: "bottom",
-    },
-  },
-  {
-    element: "#redo-btn",
-    popover: {
-      title: "Redo Button",
-      description: "Click to redo a previously undone change.",
-      side: "bottom",
+      align: "center",
     },
   },
   {
     element: "#save-btn",
     popover: {
-      title: "Save Button",
-      description: "Click to save your bingo card.",
+      title: "Save, Export & Share",
+      description:
+        "Save your changes here. Use the buttons right next to it to download a PNG image or open the shareable board.",
       side: "bottom",
-    },
-  },
-  {
-    element: "#share-btn",
-    popover: {
-      title: "Share Button",
-      description: "Click to copy a link to your bingo card.",
-      side: "bottom",
+      align: "center",
     },
   },
   {
     element: "#bingo-title",
     popover: {
-      title: "Bingo Title",
-      description: "Click on the title to edit it.",
+      title: "Board Title",
+      description: "Click the title directly on the canvas to rename your bingo card.",
       side: "bottom",
+      align: "center",
     },
   },
   {
     element: ".bingo-cell",
     popover: {
-      title: "Bingo Cell",
+      title: "Edit & Style Squares",
       description:
-        "Left-click on a cell to add or edit text. Right-click to open the context menu for styling options.",
+        "Click any square to type its text and select it. While selected, switch to Cell # in the Cells window to style or add an image to just that square.",
       side: "right",
+      align: "center",
+    },
+  },
+  {
+    element: "#editor-tool-dock",
+    popover: {
+      title: "Floating Tool Dock",
+      description:
+        "Open or close inspector windows from this dock. On desktop, drag any window by its top bar to arrange your workspace.",
+      side: "top",
+      align: "center",
     },
   },
   {
     element: "#cells-accordion",
     popover: {
-      title: "Cells Controls",
-      description: "These settings apply to all cells. Change font, size, colors, and more.",
-      side: "left",
-    },
-  },
-  {
-    element: "#stamp-accordion",
-    popover: {
-      title: "Stamp Settings",
-      description: "Customize the stamp that appears when a cell is validated.",
-      side: "left",
+      title: "Cells & Typography",
+      description: "Change fonts, text size, colors, cell size, gap, borders, and individual cell overrides.",
+      side: "top",
+      align: "center",
     },
   },
   {
     element: "#background-accordion",
     popover: {
-      title: "Background Settings",
-      description: "Customize your bingo card's background gradient or image.",
-      side: "left",
-    },
-  },
-  {
-    element: "#gradient-background",
-    popover: {
-      title: "Gradient Editor",
+      title: "Backdrop",
       description:
-        "Left-click to add a new color spot. Drag spots to reposition. Right-click on the background to change its color.",
-      side: "left",
+        "Pick a mesh gradient preset, drag color spots on the pad (double-click to add one), or upload a background image.",
+      side: "top",
+      align: "center",
     },
   },
   {
-    element: "#image-tab",
+    element: "#stamp-accordion",
     popover: {
-      title: "Background Image",
-      description: "Switch to this tab to add a background image (requires login).",
-      side: "left",
+      title: "Stamp",
+      description: "Choose the emoji or mark and opacity shown when squares are stamped.",
+      side: "top",
+      align: "center",
     },
   },
   {
     element: "#grid-accordion",
     popover: {
-      title: "Grid Controls",
-      description: "Choose between 3×3 or 5×5 grid sizes and click on the displayed grid to validate cells.",
-      side: "left",
+      title: "Grid & Marks",
+      description: "Switch between 3x3 and 5x5 grids, and click squares in the mini grid to stamp or clear them.",
+      side: "top",
+      align: "center",
     },
   },
-] as DriveStep[];
+];
 
 interface EditorTutorialProps {
   enabled?: boolean;
@@ -264,9 +231,15 @@ const EditorTutorial = ({ enabled = true, onComplete }: EditorTutorialProps) => 
       void import("driver.js")
         .then(({ driver }) => {
           if (cancelled) return;
+          const activeSteps = steps.filter((step) => {
+            if (typeof step.element !== "string") return true;
+            return document.querySelector(step.element) !== null;
+          });
+          if (activeSteps.length === 0) return;
+
           const instance = driver({
             showProgress: true,
-            steps: steps,
+            steps: activeSteps,
             overlayColor: "#000",
             animate: true,
             allowClose: true,
@@ -284,7 +257,7 @@ const EditorTutorial = ({ enabled = true, onComplete }: EditorTutorialProps) => 
         .catch((error) => {
           console.error("Failed to initialize tutorial:", error);
         });
-    }, 1000);
+    }, 800);
 
     return () => {
       cancelled = true;
