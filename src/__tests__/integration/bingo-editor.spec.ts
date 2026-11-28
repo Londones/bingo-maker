@@ -23,10 +23,8 @@ authTest.describe("Bingo Editor State Management", () => {
       await authenticatedPage.goto("/me", { waitUntil: "domcontentloaded" });
 
       // Wait for the page to be fully loaded and the bingo to appear
-      await authenticatedPage.waitForSelector(`text=${testTitle}`, { state: "visible", timeout: 10000 });
-
-      await expect(authenticatedPage.getByText(testTitle)).toBeVisible();
-      await authenticatedPage.getByText("Create New Bingo").click();
+      await expect(authenticatedPage.getByText(testTitle).first()).toBeVisible({ timeout: 10000 });
+      await authenticatedPage.getByRole("link", { name: "New board" }).click();
 
       // Add a short wait to ensure the page is stable
       await authenticatedPage.waitForTimeout(1000);
@@ -63,10 +61,10 @@ authTest.describe("Bingo Editor State Management", () => {
       await authenticatedPage.waitForURL("**/me");
 
       // Verify that the WIP bingo is listed
-      await expect(authenticatedPage.getByText(testTitle)).toBeVisible();
+      await expect(authenticatedPage.getByText(testTitle).first()).toBeVisible();
 
       // Click on the WIP bingo
-      await authenticatedPage.getByText(testTitle).click();
+      await authenticatedPage.getByText(testTitle).first().click();
 
       await authenticatedPage.waitForTimeout(1000); // Additional wait for any async state restoration
 

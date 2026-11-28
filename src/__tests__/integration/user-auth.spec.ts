@@ -21,9 +21,9 @@ authTest.describe("User Authentication Features", () => {
     await authenticatedPage.getByRole("button", { name: "Save" }).click();
     await authenticatedPage.waitForSelector("text=Bingo saved successfully");
 
-    // Verify it appears in "My Bingos"
+    // Verify it appears in the user's deck
     await authenticatedPage.goto("/me");
-    await expect(authenticatedPage.getByText(testTitle)).toBeVisible();
+    await expect(authenticatedPage.getByText(testTitle).first()).toBeVisible();
   }); // Test the migration feature specifically
   authTest("user can migrate anonymous bingos after login", async ({ anonymousPage }) => {
     // First create an anonymous bingo while anonymous
@@ -65,7 +65,7 @@ authTest.describe("User Authentication Features", () => {
     await anonymousPage.waitForTimeout(2000);
 
     // Verify the migrated bingo is in the user's bingos list with increased timeout
-    await expect(anonymousPage.getByText(title)).toBeVisible({ timeout: 10000 });
+    await expect(anonymousPage.getByText(title).first()).toBeVisible({ timeout: 10000 });
   });
   // Test the scenario where a user with an existing account creates a bingo anonymously and then signs back in
   authTest(
@@ -94,7 +94,7 @@ authTest.describe("User Authentication Features", () => {
       // Ensure we're fully logged in by checking URL and waiting for any post-login redirects
       await anonymousPage.waitForTimeout(1000);
 
-      await expect(anonymousPage.getByRole("heading", { name: "My Bingos" })).toBeVisible({ timeout: 5000 });
+      await expect(anonymousPage.getByRole("heading", { name: /deck/i })).toBeVisible({ timeout: 5000 });
 
       // 2. Sign out
       await anonymousPage.getByRole("button", { name: /sign out/i }).click();
@@ -110,10 +110,10 @@ authTest.describe("User Authentication Features", () => {
       await anonymousPage.getByLabel("Password").fill(password);
       await anonymousPage.getByRole("button", { name: /sign in/i }).click();
 
-      await anonymousPage.waitForSelector("text=My Bingos", { timeout: 5000 });
+      await expect(anonymousPage.getByRole("heading", { name: /deck/i })).toBeVisible({ timeout: 5000 });
 
       // Verify the migrated bingo is in the user's bingos list
-      await expect(anonymousPage.getByText(title)).toBeVisible();
+      await expect(anonymousPage.getByText(title).first()).toBeVisible();
     }
   );
 });
