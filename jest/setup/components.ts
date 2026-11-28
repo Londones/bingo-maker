@@ -10,8 +10,3 @@ global.ResizeObserver = class ResizeObserverMock {
 // Mock URL.createObjectURL which is used in image handling
 global.URL.createObjectURL = jest.fn(() => "mock-url");
 global.URL.revokeObjectURL = jest.fn();
-
-// Common mocks for component tests
-jest.mock("@/hooks/useEditor", () => ({
-  useEditor: jest.fn(),
-}));

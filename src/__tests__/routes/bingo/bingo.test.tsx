@@ -161,6 +161,33 @@ describe("Bingo API Routes", () => {
       const data = (await response.json()) as Error;
       expect(data.code).toBe("UNAUTHORIZED");
     });
+
+    it("should update bingo when authenticated even if authorToken is null", async () => {
+      const mockSession = { user: { id: "1" } };
+      (auth as jest.Mock).mockResolvedValue(mockSession);
+      (prisma.bingo.findUnique as jest.Mock).mockResolvedValue({
+        ...mockBingo,
+        userId: "1",
+        authorToken: "old-guest-token",
+      });
+      (prisma.bingo.update as jest.Mock).mockResolvedValue({
+        ...mockBingo,
+        title: "Updated Title",
+      });
+      const asyncParams = Promise.resolve({ id: "1" });
+
+      const response = await PATCH(
+        new NextRequest(`${TEST_URL}/api/bingo/1`, {
+          method: "PATCH",
+          body: JSON.stringify({ title: "Updated Title", authorToken: null }),
+        }),
+        { params: asyncParams }
+      );
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.title).toBe("Updated Title");
+    });
   });
 
   describe("DELETE /api/bingo/[id]", () => {

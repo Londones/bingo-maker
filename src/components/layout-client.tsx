@@ -3,7 +3,6 @@
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-import { StateProvider } from "@/components/providers/state-provider";
 import NavBar from "@/components/nav-bar";
 
 export default function LayoutClient({
@@ -12,7 +11,7 @@ export default function LayoutClient({
   children: React.ReactNode;
 }) {
   return (
-    <StateProvider>
+    <>
       <ThemeProvider attribute={"class"} defaultTheme="system" enableSystem>
         <AuthProvider>
           <div className="w-full flex-col items-center mx-auto h-screen overflow-x-hidden flex justify-between">
@@ -38,6 +37,6 @@ export default function LayoutClient({
         </AuthProvider>
       </ThemeProvider>
       <Toaster />
-    </StateProvider>
+    </>
   );
 }

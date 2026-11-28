@@ -14,9 +14,9 @@ export async function createBingo(page: Page): Promise<BingoIdAndTitle> {
 
   // Add a title
   const title = `Test Bingo Created ${Date.now()}`;
-  await page.getByRole("heading", { name: "New Bingo" }).dblclick();
-  await page.keyboard.type(title);
-  await page.keyboard.press("Escape"); // Close the title input
+  await page.getByRole("heading", { name: "New Bingo" }).click();
+  await page.locator("textarea").fill(title);
+  await page.locator("textarea").blur();
 
   // Fill one cell with text
   const cells = await page.locator(".bingo-cell").all();
@@ -27,8 +27,9 @@ export async function createBingo(page: Page): Promise<BingoIdAndTitle> {
   // Save the bingo
   await page.getByTitle("Save").click();
 
-  // Wait for save confirmation and get the URL
-  await page.waitForSelector("text=Bingo saved successfully");
+  // Wait for save confirmation and URL update
+  await page.waitForSelector("text=Bingo saved successfully", { timeout: 15000 });
+  await page.waitForURL(/\/editor\/[^/]+/, { timeout: 15000 });
 
   // Extract bingo ID from URL
   const url = page.url();

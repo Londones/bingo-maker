@@ -15,7 +15,7 @@ import { ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from "@/
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { uploadImagesToBingo } from "@/lib/client-s3upload";
-import { deleteImageFromS3 } from "@/app/actions/delete-image";
+import { deleteImageViaApi } from "@/lib/image-tracker";
 import { UploadError } from "@/lib/errors";
 import { useIsAuth } from "@/hooks/useIsAuth";
 
@@ -249,7 +249,7 @@ const CellContextMenu = React.memo(({ index }: CellContextMenuProps) => {
         try {
           // Delete the image from S3 first - ensure we have a valid URL
           if (typeof cellStyle.cellBackgroundImage === "string") {
-            await deleteImageFromS3({ url: cellStyle.cellBackgroundImage });
+            await deleteImageViaApi({ url: cellStyle.cellBackgroundImage });
             toast.success("Image deleted successfully");
           }
 

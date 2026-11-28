@@ -1,50 +1,89 @@
 "use client";
-import React, { useEffect, useState, useMemo, use } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useBingoStorage } from "@/hooks/useBingoStorage";
-import BingoPreview from "@/components/bingo-preview";
-import { BingoCell } from "@/types/types";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import BingoView from "@/components/bingo/bingo-view";
+import { Bingo, BingoCell } from "@/types/types";
 import { useRealtimeBingo } from "@/hooks/useRealtimeBingo";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 const LoadingComponent = () => (
-    <div className='w-full h-screen flex items-center justify-center'>
-        <div className='animate-pulse text-foreground/50'>Loading bingo...</div>
+    <div className='max-w-5xl mx-auto px-4 pt-2 pb-16 space-y-6'>
+        {/* Header Bar Skeleton */}
+        <div className='flex flex-col sm:flex-row sm:items-end justify-between gap-4'>
+            <div className='space-y-2'>
+                <Skeleton className='h-4 w-28 rounded-md' />
+                <Skeleton className='h-10 w-64 sm:w-80 rounded-lg' />
+            </div>
+            <div className='flex items-center gap-2'>
+                <Skeleton className='h-10 w-24 rounded-xl' />
+                <Skeleton className='h-10 w-24 rounded-xl' />
+            </div>
+        </div>
+
+        {/* Progress Strip Skeleton */}
+        <div className='rounded-xl border border-border/80 bg-card/70 backdrop-blur-md px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
+            <div className='flex items-center gap-4'>
+                <Skeleton className='h-4 w-24 rounded-md' />
+                <Skeleton className='h-4 w-40 rounded-md' />
+            </div>
+            <Skeleton className='w-full sm:w-48 h-2 rounded-sm' />
+        </div>
+
+        {/* Board Skeleton */}
+        <div className='flex justify-center py-2'>
+            <div className='rounded-lg border border-border/60 bg-card/40 p-8 space-y-6'>
+                <Skeleton className='h-9 w-52 mx-auto rounded-lg' />
+                <div className='grid grid-cols-3 gap-3'>
+                    {Array.from({ length: 9 }).map((_, idx) => (
+                        <Skeleton key={idx} className='h-24 w-24 sm:h-28 sm:w-28 rounded-md' />
+                    ))}
+                </div>
+            </div>
+        </div>
     </div>
 );
 
+type BingoWithAuthor = Bingo & { isAuthor?: boolean };
+
 const BingoContent = ({ id }: { id: string }) => {
-    const { data: session } = useSession();
-    const { useGetBingo, useCheckOwnership } = useBingoStorage();
+    const { data: session, status: sessionStatus } = useSession();
+    const queryClient = useQueryClient();
+    const { useGetBingo, useCheckOwnership, useUpdateBingo } = useBingoStorage();
     const [isClientSide, setIsClientSide] = useState(false);
 
     useRealtimeBingo(id);
 
     const { data: bingoData, isLoading: isBingoLoading, error } = useGetBingo(id);
+    const typedBingoData = bingoData as BingoWithAuthor | undefined;
 
-    const isOwnerOfBingo = useMemo(
-        () => session?.user?.id === bingoData?.userId,
-        [session?.user?.id, bingoData?.userId]
-    );
+    // Account ownership is strictly determined by the live session (never stale cached `isAuthor`)
+    const isAccountOwner = useMemo(() => {
+        if (sessionStatus !== "authenticated") return false;
+        return Boolean(session?.user?.id && typedBingoData?.userId && session.user.id === typedBingoData.userId);
+    }, [sessionStatus, session?.user?.id, typedBingoData?.userId]);
 
+    // Only check anonymous authorToken if the board has no account owner (userId is null)
     const { data: ownershipData } = useCheckOwnership(id, {
-        enabled: !isOwnerOfBingo,
+        enabled: isClientSide && sessionStatus !== "loading" && !!typedBingoData && !typedBingoData.userId,
     });
 
-    const isAuthor = useMemo(
-        () => (!!session?.user?.id && bingoData?.userId === session.user.id) || !!ownershipData?.isOwner,
-        [session?.user?.id, bingoData?.userId, ownershipData?.isOwner]
-    );
+    const isAuthor = useMemo(() => {
+        if (!typedBingoData || sessionStatus === "loading") return false;
+        if (typedBingoData.userId) return isAccountOwner;
+        return Boolean(ownershipData?.isOwner);
+    }, [typedBingoData, sessionStatus, isAccountOwner, ownershipData?.isOwner]);
 
     const bingo = useMemo(() => {
-        if (!bingoData) return null;
+        if (!typedBingoData) return null;
 
-        const result = { ...bingoData };
-        const orderedCells: BingoCell[] = Array(bingoData.gridSize ** 2).fill(null);
+        const result = { ...typedBingoData };
+        const orderedCells: BingoCell[] = Array(typedBingoData.gridSize ** 2).fill(null);
 
-        bingoData.cells.forEach((cell) => {
+        typedBingoData.cells.forEach((cell) => {
             if (cell && typeof cell.position === "number") {
                 orderedCells[cell.position] = cell;
             }
@@ -52,7 +91,43 @@ const BingoContent = ({ id }: { id: string }) => {
 
         result.cells = orderedCells;
         return result;
-    }, [bingoData]);
+    }, [typedBingoData]);
+
+    const handleToggleCell = useCallback(
+        (cell: BingoCell) => {
+            if (!isAuthor || !cell.id || !id) return;
+
+            const nextValidated = !cell.validated;
+            const previousBingo = queryClient.getQueryData<BingoWithAuthor>(["bingo", id]);
+
+            // Optimistically update React Query cache for instant stamp feedback
+            queryClient.setQueryData<BingoWithAuthor>(["bingo", id], (old) => {
+                if (!old) return old;
+                return {
+                    ...old,
+                    cells: old.cells.map((c) => (c.id === cell.id ? { ...c, validated: nextValidated } : c)),
+                };
+            });
+
+            useUpdateBingo.mutate(
+                {
+                    bingoId: id,
+                    updates: {
+                        cells: [{ id: cell.id, validated: nextValidated }],
+                    },
+                },
+                {
+                    onError: () => {
+                        if (previousBingo) {
+                            queryClient.setQueryData(["bingo", id], previousBingo);
+                        }
+                        toast.error("Failed to update square");
+                    },
+                }
+            );
+        },
+        [isAuthor, id, queryClient, useUpdateBingo]
+    );
 
     useEffect(() => {
         setIsClientSide(true);
@@ -66,23 +141,7 @@ const BingoContent = ({ id }: { id: string }) => {
         return <div className='w-full text-center mt-10'>Bingo not found</div>;
     }
 
-    return (
-        <div className='w-full'>
-            <div>
-                <div className='text-foreground/50 mb-4'>
-                    <h1 className='text-5xl font-bold'>{bingo.title}</h1>
-                </div>
-            </div>
-            <BingoPreview bingo={bingo} />
-            {isAuthor ? (
-                <Link href={`/editor/${bingo.id}`} className='flex items-center justify-center'>
-                    <Button variant='outline' className='mt-4'>
-                        Edit Bingo
-                    </Button>
-                </Link>
-            ) : null}
-        </div>
-    );
+    return <BingoView bingo={bingo} isAuthor={isAuthor} onToggleCell={handleToggleCell} />;
 };
 
 const BingoPage = () => {

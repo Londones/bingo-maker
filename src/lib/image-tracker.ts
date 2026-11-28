@@ -1,6 +1,5 @@
 "use client";
 
-import { deleteImageFromS3 } from "@/app/actions/delete-image";
 import { Bingo, BingoCell } from "@/types/types";
 
 // Interface for tracking uploaded images
@@ -79,6 +78,18 @@ export function getActiveImageUrls(state: Bingo): string[] {
     return urls;
 }
 
+export async function deleteImageViaApi(params: {
+    url: string;
+    force?: boolean;
+}): Promise<{ success: boolean; message?: string }> {
+    const response = await fetch("/api/s3-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+    });
+    return (await response.json()) as { success: boolean; message?: string };
+}
+
 /**
  * Clean up orphaned images that were uploaded but are no longer used
  */
@@ -98,7 +109,7 @@ export async function cleanupOrphanedImages(bingoState: Bingo): Promise<void> {
     // Delete each orphaned image
     const deletePromises = orphanedImages.map(async (img) => {
         try {
-            await deleteImageFromS3({
+            await deleteImageViaApi({
                 url: img.url,
                 force: true, // Force delete even if not found in DB
             });

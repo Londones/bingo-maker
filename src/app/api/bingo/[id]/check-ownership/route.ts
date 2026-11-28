@@ -25,9 +25,9 @@ export async function POST(req: Request, { params }: { params: ParamsType }) {
       throw new APIError("Bingo not found", APIErrorCode.BINGO_NOT_FOUND, 444);
     }
 
-    const isOwner =
-      (session?.user?.id && bingo.userId === session.user.id) ||
-      (authorToken && bingo.authorToken === authorToken);
+    const isOwner = bingo.userId
+      ? Boolean(session?.user?.id && bingo.userId === session.user.id)
+      : Boolean(authorToken && bingo.authorToken === authorToken);
 
     return NextResponse.json({ isOwner });
   } catch (error) {

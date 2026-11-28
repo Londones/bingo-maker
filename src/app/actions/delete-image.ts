@@ -25,45 +25,27 @@ function extractKeyFromS3Url(url: string): string {
  * - For background, cell and stamp images
  */
 async function verifyImageOwnership(url: string, userId: string): Promise<boolean> {
-  // Check if this image is used in any of the user's bingos
-
-  // Check background images
-  const backgroundImage = await prisma.background.findFirst({
-    where: {
-      backgroundImage: url,
-      bingo: {
-        userId: userId,
+  const [bingoMatch, cellMatch] = await Promise.all([
+    prisma.bingo.findFirst({
+      where: {
+        userId,
+        OR: [
+          { background: { path: ["backgroundImage"], equals: url } },
+          { stamp: { path: ["value"], equals: url } },
+        ],
       },
-    },
-  });
-  if (backgroundImage) return true;
-
-  // Check stamp images
-  const stampImage = await prisma.stampConfig.findFirst({
-    where: {
-      value: url,
-      type: "image",
-      bingo: {
-        userId: userId,
+      select: { id: true },
+    }),
+    prisma.bingoCell.findFirst({
+      where: {
+        bingo: { userId },
+        cellStyle: { path: ["cellBackgroundImage"], equals: url },
       },
-    },
-  });
-  if (stampImage) return true;
+      select: { id: true },
+    }),
+  ]);
 
-  // Check cell background images
-  const cellStyle = await prisma.cellStyle.findFirst({
-    where: {
-      cellBackgroundImage: url,
-      bingoCell: {
-        bingo: {
-          userId: userId,
-        },
-      },
-    },
-  });
-  if (cellStyle) return true;
-
-  return false;
+  return Boolean(bingoMatch || cellMatch);
 }
 
 interface DeleteImageRequest {
@@ -144,23 +126,24 @@ export async function cleanupOrphanedImages(
     for (const url of urls) {
       try {
         // Check if image is used in any bingo
-        const isUsedInBackground =
-          (await prisma.background.count({
-            where: { backgroundImage: url },
-          })) > 0;
-
-        const isUsedInStamp =
-          (await prisma.stampConfig.count({
-            where: { value: url, type: "image" },
-          })) > 0;
-
-        const isUsedInCell =
-          (await prisma.cellStyle.count({
-            where: { cellBackgroundImage: url },
-          })) > 0;
+        const [bingoUsageCount, cellUsageCount] = await Promise.all([
+          prisma.bingo.count({
+            where: {
+              OR: [
+                { background: { path: ["backgroundImage"], equals: url } },
+                { stamp: { path: ["value"], equals: url } },
+              ],
+            },
+          }),
+          prisma.bingoCell.count({
+            where: {
+              cellStyle: { path: ["cellBackgroundImage"], equals: url },
+            },
+          }),
+        ]);
 
         // If not used anywhere, delete it
-        if (!isUsedInBackground && !isUsedInStamp && !isUsedInCell) {
+        if (bingoUsageCount === 0 && cellUsageCount === 0) {
           const key = extractKeyFromS3Url(url);
           await deleteFile(key);
           deleted.push(url);

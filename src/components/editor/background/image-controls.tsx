@@ -7,7 +7,7 @@ import { useEditor } from "@/hooks/useEditor";
 import { useState, useRef, useEffect, ChangeEvent, useCallback, memo, useMemo } from "react";
 import { toast } from "sonner";
 import { uploadImagesToBingo } from "@/lib/client-s3upload";
-import { deleteImageFromS3 } from "@/app/actions/delete-image";
+import { deleteImageViaApi } from "@/lib/image-tracker";
 import { UploadError } from "@/lib/errors";
 import { useIsAuth } from "@/hooks/useIsAuth";
 
@@ -168,7 +168,7 @@ const ImageControls = () => {
     if (state.background.backgroundImage) {
       try {
         if (typeof state.background.backgroundImage === "string") {
-          await deleteImageFromS3({ url: state.background.backgroundImage });
+          await deleteImageViaApi({ url: state.background.backgroundImage });
         }
 
         // Update state to remove the background image

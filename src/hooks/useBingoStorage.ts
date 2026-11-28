@@ -81,6 +81,7 @@ export function useBingoStorage() {
       },
       staleTime: 1000 * 60 * 5,
       gcTime: 1000 * 60 * 60,
+      enabled: Boolean(bingoId),
     });
 
   const useSaveBingo = useMutation({
@@ -93,7 +94,7 @@ export function useBingoStorage() {
         },
         body: JSON.stringify({
           ...bingoData,
-          authorToken: authorToken,
+          ...(authorToken ? { authorToken } : {}),
         }),
       });
 
@@ -153,7 +154,7 @@ export function useBingoStorage() {
         },
         body: JSON.stringify({
           ...patchData,
-          authorToken,
+          ...(authorToken ? { authorToken } : {}),
         }),
       });
 
@@ -164,8 +165,10 @@ export function useBingoStorage() {
 
       return response.json() as Promise<Bingo>;
     },
-    onSuccess: async (data: Bingo) => {
-      await queryClient.invalidateQueries({ queryKey: ["bingo", data.id] });
+    onSuccess: (data: Bingo) => {
+      queryClient.setQueryData<Bingo & { isAuthor?: boolean }>(["bingo", data.id], (old) =>
+        old ? { ...old, ...data, isAuthor: old.isAuthor } : data
+      );
     },
   });
 
@@ -204,7 +207,7 @@ export function useBingoStorage() {
 
   const useCheckOwnership = (bingoId: string, options = {}) => {
     return useQuery({
-      queryKey: ["bingo", bingoId, "ownership"],
+      queryKey: ["bingo", bingoId, "ownership", session?.user?.id ?? "anon"],
       queryFn: async (): Promise<{ isOwner: boolean }> => {
         if (!bingoId) return { isOwner: false };
 
@@ -231,13 +234,17 @@ export function useBingoStorage() {
     });
   };
 
-  const useGetUserBingos = (enabled: boolean, options?: { page?: number; userId: string }) =>
+  const useGetUserBingos = (
+    enabled: boolean,
+    options?: { page?: number; userId: string; status?: "published" | "draft" }
+  ) =>
     useQuery<BingoPreviewResponse>({
-      queryKey: ["userBingos", options?.page, options?.userId],
+      queryKey: ["userBingos", options?.page, options?.userId, options?.status ?? "all"],
       queryFn: async () => {
         const params = new URLSearchParams();
         if (options?.page) params.append("page", options.page.toString());
         if (options?.userId) params.append("userId", options.userId);
+        if (options?.status) params.append("status", options.status);
 
         const res = await fetch(`/api/bingo/user?${params.toString()}`);
         if (!res.ok) throw new Error("Failed to fetch user bingos");

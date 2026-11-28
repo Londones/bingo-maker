@@ -3,7 +3,7 @@
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { GRID_SIZES } from "@/utils/constants";
-import { useEditor } from "@/hooks/useEditor";
+import { useEditorActions, useEditorCells, useEditorGridSize } from "@/hooks/useEditor";
 import { Card } from "@/components/ui/card";
 import React, { memo, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,9 @@ const CellItem = memo(
 CellItem.displayName = "CellItem";
 
 const GridControls = () => {
-    const { state, actions } = useEditor();
+    const gridSize = useEditorGridSize();
+    const cells = useEditorCells();
+    const actions = useEditorActions();
 
     const handleGridSizeChange = useCallback(
         (size: string) => {
@@ -61,17 +63,10 @@ const GridControls = () => {
 
     const gridStyle = useMemo(
         () => ({
-            gridTemplateColumns: `repeat(${state.gridSize}, minmax(0, 1fr))`,
+            gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
         }),
-        [state.gridSize]
+        [gridSize]
     );
-
-    // const handleCellHover = useCallback(
-    //   (index: number) => {
-    //     actions.setHoveredCell(index);
-    //   },
-    //   [actions]
-    // );
 
     return (
         <div className='space-y-6'>
@@ -79,7 +74,7 @@ const GridControls = () => {
                 <h1 className='text-lg '>Grid Size</h1>
                 <div className='flex items-center justify-between'>
                     <RadioGroup
-                        value={state.gridSize.toString()}
+                        value={gridSize.toString()}
                         onValueChange={handleGridSizeChange}
                         className='flex gap-4'
                     >
@@ -102,7 +97,7 @@ const GridControls = () => {
                 </div>
             </div>
             <div className='grid gap-2' style={gridStyle}>
-                {state.cells.map((cell, index) => (
+                {cells.map((cell, index) => (
                     <CellItem key={index} index={index} validated={cell.validated} onToggle={handleCellToggle} />
                 ))}
             </div>

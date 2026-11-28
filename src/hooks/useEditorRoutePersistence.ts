@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { Bingo } from "@/types/types";
 import { usePathname } from "next/navigation";
 
@@ -34,17 +35,23 @@ export const useEditorRoutePersistence = () => {
   const pathname = usePathname();
   const isMainEditorPage = pathname === "/editor";
 
+  const saveEditorState = useCallback((state: Bingo) => {
+    if (!state || state.id) return;
+    safeStorage.set("editor_main_state", state);
+  }, []);
+
+  const loadEditorState = useCallback(() => {
+    return safeStorage.get("editor_main_state");
+  }, []);
+
+  const clearEditorState = useCallback(() => {
+    safeStorage.remove("editor_main_state");
+  }, []);
+
   return {
     isMainEditorPage,
-    saveEditorState: (state: Bingo) => {
-      if (!state || state.id) return;
-      safeStorage.set("editor_main_state", state);
-    },
-    loadEditorState: () => {
-      return safeStorage.get("editor_main_state");
-    },
-    clearEditorState: () => {
-      safeStorage.remove("editor_main_state");
-    },
+    saveEditorState,
+    loadEditorState,
+    clearEditorState,
   };
 };

@@ -33,7 +33,7 @@ export const authTest = baseTest.extend<CustomFixtures>({
       await page.goto("/me");
       // Quick check if we're already logged in
       const isLoggedIn = await page
-        .getByText(/sign out|my bingos/i)
+        .getByText(/sign out|deck/i)
         .isVisible()
         .catch(() => false);
 

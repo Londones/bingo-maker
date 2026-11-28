@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useEditor } from "@/hooks/useEditor";
 import { Button } from "@/components/ui/button";
-import { Undo, Redo, Save, Loader, ChevronLeft, ChevronRight, ExternalLink, RotateCcw } from "lucide-react";
+import { Undo, Redo, Save, Loader, ChevronLeft, ChevronRight, ExternalLink, RotateCcw, Download } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Switch } from "@/components/ui/switch";
 import { useBingoStorage } from "@/hooks/useBingoStorage";
@@ -13,19 +13,22 @@ import { Bingo, BingoPatch } from "@/types/types";
 import { useEditorRoutePersistence } from "@/hooks/useEditorRoutePersistence";
 import { useRouter } from "next/navigation";
 import { cleanupOrphanedImages } from "@/lib/image-tracker";
+import { exportBoardToPng } from "@/lib/export-bingo";
 
 interface ControlsProps {
     isPanelOpen?: boolean;
     setIsPanelOpen?: (open: boolean) => void;
     setSaving?: (isSaving: boolean) => void;
+    boardRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving }: ControlsProps) {
+export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving, boardRef }: ControlsProps) {
     const { actions, canRedo, canUndo, canSave, state } = useEditor();
     const { useSaveBingo, useUpdateBingo } = useBingoStorage();
     const queryClient = useQueryClient();
     const { status: saveStatus } = useSaveBingo;
     const [isSaving, setIsSaving] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     const [justSaved, setJustSaved] = useState(false);
     const { clearEditorState } = useEditorRoutePersistence();
     const router = useRouter();
@@ -53,6 +56,10 @@ export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving }: Con
 
             const savedBingo = await useSaveBingo.mutateAsync(state);
             actions.setBingo(savedBingo);
+            clearEditorState();
+            if (savedBingo.id) {
+                window.history.replaceState({}, "", `/editor/${savedBingo.id}`);
+            }
             toast.success("Bingo saved successfully");
             setJustSaved(true);
 
@@ -63,12 +70,7 @@ export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving }: Con
                 console.error("Error cleaning up orphaned images:", cleanupError);
                 // Don't show this error to user since the save was successful
             }
-
-            clearEditorState();
-            if (savedBingo.id) {
-                window.history.replaceState({}, "", `/editor/${savedBingo.id}`);
-                return;
-            }
+            return;
         } catch (error) {
             if (error instanceof APIError) {
                 toast.error(error.message);
@@ -160,6 +162,23 @@ export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving }: Con
             await queryClient.invalidateQueries({ queryKey: ["bingo", state.id!] });
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleDownloadPng = async () => {
+        if (!boardRef?.current || isExporting) return;
+        setIsExporting(true);
+        try {
+            // Deselect any active cell so the pink selection ring isn't captured in the PNG
+            actions.setSelectedCell(null);
+            await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            await exportBoardToPng(boardRef.current, state.title);
+            toast.success("PNG downloaded");
+        } catch (error) {
+            console.error("Failed to export PNG:", error);
+            toast.error("Failed to export PNG");
+        } finally {
+            setIsExporting(false);
         }
     };
 
@@ -279,6 +298,30 @@ export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving }: Con
                         <p>Save</p>
                     </TooltipContent>
                 </Tooltip>
+                {boardRef && (
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                id='download-png-btn'
+                                variant='outline'
+                                onClick={() => {
+                                    void handleDownloadPng();
+                                }}
+                                disabled={isExporting}
+                                aria-label='Download PNG'
+                            >
+                                {isExporting ? (
+                                    <Loader className='h-4 w-4 animate-spin' />
+                                ) : (
+                                    <Download className='h-4 w-4' />
+                                )}
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Download PNG</p>
+                        </TooltipContent>
+                    </Tooltip>
+                )}
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <Button

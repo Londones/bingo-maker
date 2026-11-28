@@ -2,51 +2,33 @@ import { GradientConfig, RadialGradientStop, Stamp, Style } from "@/types/types"
 
 const gradientStops: RadialGradientStop[] = [
   {
-    position: { x: 40, y: 20 },
-    color: "hsla(28,100%,74%,1)",
-    opacity: 1,
+    position: { x: 15, y: 15 },
+    color: "hsla(330, 86%, 70%, 0.65)",
+    opacity: 0.65,
+    radius: 0.55,
+  },
+  {
+    position: { x: 85, y: 25 },
+    color: "hsla(27, 96%, 61%, 0.45)",
+    opacity: 0.45,
     radius: 0.5,
   },
   {
-    position: { x: 80, y: 0 },
-    color: "hsla(189,100%,56%,1)",
-    opacity: 1,
-    radius: 0.5,
+    position: { x: 75, y: 88 },
+    color: "hsla(234, 89%, 74%, 0.65)",
+    opacity: 0.65,
+    radius: 0.55,
   },
   {
-    position: { x: 0, y: 50 },
-    color: "hsla(355,100%,93%,1)",
-    opacity: 1,
-    radius: 0.5,
-  },
-  {
-    position: { x: 80, y: 50 },
-    color: "hsla(340,100%,76%,1)",
-    opacity: 1,
-    radius: 0.5,
-  },
-  {
-    position: { x: 0, y: 100 },
-    color: "hsla(22,100%,77%,1)",
-    opacity: 1,
-    radius: 0.5,
-  },
-  {
-    position: { x: 80, y: 100 },
-    color: "hsla(242,100%,70%,1)",
-    opacity: 1,
-    radius: 0.5,
-  },
-  {
-    position: { x: 0, y: 0 },
-    color: "hsla(343,100%,76%,1)",
-    opacity: 1,
+    position: { x: 20, y: 85 },
+    color: "hsla(224, 82%, 66%, 0.4)",
+    opacity: 0.4,
     radius: 0.5,
   },
 ];
 
 const DEFAULT_GRADIENT_CONFIG: GradientConfig = {
-  backgroundColor: "hsla(0,100%,50%,1)",
+  backgroundColor: "hsla(258, 38%, 10%, 1)",
   stops: gradientStops,
 };
 
@@ -98,4 +80,4 @@ export const FONT_FAMILIES = [
   { value: "MS Sans Serif", label: "MS Sans Serif" },
 ];
 
-export const ITEMS_PER_PAGE = 9;
+export const ITEMS_PER_PAGE = 8;

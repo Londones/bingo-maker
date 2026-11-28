@@ -87,7 +87,10 @@ export const bingoSchema = z.object({
     style: styleSchema,
     background: backgroundSchema,
     stamp: stampSchema,
-    authorToken: z.string().optional(),
+    authorToken: z
+        .string()
+        .nullish()
+        .transform((val) => val ?? undefined),
     userId: z.string().optional(),
 });
 
@@ -109,5 +112,8 @@ export const bingoPatchSchema = z.object({
     stamp: stampUpdateSchema.optional(),
     gridSize: z.number().int().positive().optional(),
     cells: z.array(bingoCellUpdateSchema).optional(),
-    authorToken: z.string().optional(),
+    authorToken: z
+        .string()
+        .nullish()
+        .transform((val) => val ?? undefined),
 });

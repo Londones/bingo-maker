@@ -48,9 +48,9 @@ authTest.describe("Bingo Permissions", () => {
       const { bingoId } = await createBingo(authenticatedPage);
       expect(bingoId).toBeTruthy();
 
-      // User A should see edit button
+      // User A should see edit link
       await authenticatedPage.goto(`/bingo/${bingoId}`);
-      await expect(authenticatedPage.getByRole("button", { name: "Edit" })).toBeVisible();
+      await expect(authenticatedPage.getByRole("link", { name: /edit board/i })).toBeVisible();
 
       // Create a second user in a separate context
       const userB = {
@@ -69,8 +69,8 @@ authTest.describe("Bingo Permissions", () => {
       // Access the first user's bingo in view mode
       await pageB.goto(`/bingo/${bingoId}`);
 
-      // Verify that the edit button is not present for User B
-      await expect(pageB.getByRole("button", { name: "Edit" })).not.toBeVisible();
+      // Verify that the edit link is not present for User B
+      await expect(pageB.getByRole("link", { name: /edit board/i })).not.toBeVisible();
 
       // Clean up
       await contextB.close();

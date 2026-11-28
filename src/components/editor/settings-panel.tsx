@@ -1,40 +1,78 @@
 "use client";
-import React, { memo } from "react";
-import BackgroundEditor from "@/components/editor/background/background-editor";
-import GridControls from "@/components/editor/grid/grid-controls";
-import CellsToolbar from "@/components/editor/cell/cells-controls";
-import StampControls from "@/components/editor/stamp/stamp-controls";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-const AccordionSection = memo(
-  ({ value, title, children }: { value: string; title: string; children: React.ReactNode }) => (
-    <AccordionItem value={value} id={`${value}-accordion`}>
-      <AccordionTrigger className={value === "cells" ? "pb-4" : "py-4"}>
-        <h1 className="text-lg font-bold">{title}</h1>
-      </AccordionTrigger>
-      <AccordionContent>{children}</AccordionContent>
-    </AccordionItem>
-  )
+import React, { memo, useState } from "react";
+import dynamic from "next/dynamic";
+import { Grid3X3, Palette, Stamp, Type } from "lucide-react";
+import CellsToolbar from "@/components/editor/cell/cells-controls";
+
+const PanelLoader = () => (
+  <div className="py-10 text-center text-xs text-muted-foreground animate-pulse">Loading controls...</div>
 );
 
-AccordionSection.displayName = "AccordionSection";
+const BackgroundEditor = dynamic(() => import("@/components/editor/background/background-editor"), {
+  ssr: false,
+  loading: PanelLoader,
+});
+
+const StampControls = dynamic(() => import("@/components/editor/stamp/stamp-controls"), {
+  ssr: false,
+  loading: PanelLoader,
+});
+
+const GridControls = dynamic(() => import("@/components/editor/grid/grid-controls"), {
+  ssr: false,
+  loading: PanelLoader,
+});
+
+type TabId = "cells" | "background" | "stamp" | "grid";
+
+const TABS: { id: TabId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { id: "cells", label: "Cells", icon: Type },
+  { id: "background", label: "Background", icon: Palette },
+  { id: "stamp", label: "Stamp", icon: Stamp },
+  { id: "grid", label: "Grid", icon: Grid3X3 },
+];
 
 const SettingsPanel = () => {
+  const [activeTab, setActiveTab] = useState<TabId>("cells");
+
   return (
-    <Accordion type="multiple" defaultValue={["cells", "stamp", "background", "grid"]}>
-      <AccordionSection value="cells" title="Cells">
-        <CellsToolbar />
-      </AccordionSection>
-      <AccordionSection value="stamp" title="Stamp">
-        <StampControls />
-      </AccordionSection>
-      <AccordionSection value="background" title="Background">
-        <BackgroundEditor />
-      </AccordionSection>
-      <AccordionSection value="grid" title="Grid">
-        <GridControls />
-      </AccordionSection>
-    </Accordion>
+    <div className="flex flex-col gap-4">
+      <div
+        role="tablist"
+        aria-label="Editor settings"
+        className="grid grid-cols-4 gap-1 p-1 rounded-lg bg-muted/60 border border-border/60"
+      >
+        {TABS.map(({ id, label, icon: Icon }) => {
+          const isActive = activeTab === id;
+          return (
+            <button
+              key={id}
+              id={`${id}-accordion`}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setActiveTab(id)}
+              className={`flex flex-col items-center justify-center gap-1 py-2 px-1.5 rounded-md text-xs font-medium transition-colors ${
+                isActive
+                  ? "bg-background text-foreground shadow-sm border border-border/60"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              <span>{label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="pt-1">
+        {activeTab === "cells" && <CellsToolbar />}
+        {activeTab === "background" && <BackgroundEditor />}
+        {activeTab === "stamp" && <StampControls />}
+        {activeTab === "grid" && <GridControls />}
+      </div>
+    </div>
   );
 };
 

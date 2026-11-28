@@ -3,10 +3,14 @@
 import { Button } from "@/components/ui/button";
 import { signout } from "@/app/actions/auth";
 import { signOut } from "next-auth/react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function SignOutButton() {
+  const queryClient = useQueryClient();
+
   const handleSignOut = async () => {
     try {
+      queryClient.clear();
       await signOut({
         redirect: false,
         callbackUrl: "/signin",
@@ -18,8 +22,12 @@ export default function SignOutButton() {
   };
 
   return (
-    <Button variant="destructive" onClick={() => void handleSignOut()}>
-      Sign Out
+    <Button
+      variant="outline"
+      className="h-10 rounded-xl border-border bg-card/80 hover:bg-destructive/15 hover:text-destructive hover:border-destructive/40"
+      onClick={() => void handleSignOut()}
+    >
+      Sign out
     </Button>
   );
 }

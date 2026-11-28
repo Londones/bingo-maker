@@ -30,51 +30,59 @@ export async function GET(req: Request): Promise<NextResponse> {
       filter.status = status;
     }
 
-    // Count total matching bingos
-    const totalCount = await prisma.bingo.count({
-      where: {
-        ...(status && { status }),
-      },
-    });
+    const whereClause = {
+      ...(status && { status }),
+    };
 
-    // If a cursor is provided, validate that it exists
-    if (cursor) {
-      const cursorExists = await prisma.bingo.findUnique({
-        where: { id: cursor },
+    const findManyQuery = () =>
+      prisma.bingo.findMany({
+        take: limit + 1, // Take one extra to determine if there are more
+        ...(cursor && {
+          cursor: { id: cursor },
+          skip: 1, // Skip the cursor item
+        }),
+        where: whereClause,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          gridSize: true,
+          style: true,
+          stamp: true,
+          background: true,
+          cells: {
+            select: {
+              position: true,
+              content: true,
+              validated: true,
+            },
+            orderBy: { position: "asc" },
+          },
+          createdAt: true,
+        },
       });
+
+    let totalCount: number;
+    let bingos: BingoPreview[];
+
+    if (cursor) {
+      const [countResult, cursorExists] = await Promise.all([
+        prisma.bingo.count({ where: whereClause }),
+        prisma.bingo.findUnique({ where: { id: cursor }, select: { id: true } }),
+      ]);
 
       if (!cursorExists) {
         throw new APIError("Invalid cursor position", APIErrorCode.INVALID_REQUEST, 400);
       }
-    }
 
-    // Fetch bingos with pagination and filtering
-    const bingos = await prisma.bingo.findMany({
-      take: limit + 1, // Take one extra to determine if there are more
-      ...(cursor && {
-        cursor: { id: cursor },
-        skip: 1, // Skip the cursor item
-      }),
-      where: {
-        ...(status && { status }),
-      },
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        title: true,
-        status: true,
-        background: {
-          select: {
-            value: true,
-            backgroundImage: true,
-            backgroundImageOpacity: true,
-            backgroundImagePosition: true,
-            backgroundImageSize: true,
-          },
-        },
-        createdAt: true,
-      },
-    });
+      totalCount = countResult;
+      bingos = (await findManyQuery()) as unknown as BingoPreview[];
+    } else {
+      const [countResult, foundBingos] = await Promise.all([prisma.bingo.count({ where: whereClause }), findManyQuery()]);
+      totalCount = countResult;
+      bingos = foundBingos as unknown as BingoPreview[];
+    }
 
     if (!bingos?.length && totalCount > 0) {
       throw new APIError("Failed to retrieve bingos", APIErrorCode.FAILED_TO_GET_BINGOS, 500);
@@ -93,7 +101,11 @@ export async function GET(req: Request): Promise<NextResponse> {
       total: totalCount,
     };
 
-    return NextResponse.json(response);
+    return NextResponse.json(response, {
+      headers: {
+        "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
+      },
+    });
   } catch (error) {
     return handleAPIError(error);
   }

@@ -62,9 +62,9 @@ model Bingo {
     titleWidth  Int? // Optional field for storing the title width
     gridSize    Int
     cells       BingoCell[]
-    style       Style?
-    background  Background?
-    stamp       StampConfig?
+    style       Json
+    background  Json
+    stamp       Json
     suggestions Suggestion[]
     status      String       @default("draft") // "draft" | "published"
     userId      String?
@@ -73,76 +73,21 @@ model Bingo {
     user        User?        @relation(fields: [userId], references: [id])
     createdAt   DateTime     @default(now())
     updatedAt   DateTime     @updatedAt
-}
 
-model Style {
-    id                    String   @id @default(cuid())
-    fontFamily            String
-    fontSize              Int
-    color                 String
-    cellSize              Int
-    gap                   Int
-    fontWeight            String
-    fontStyle             String
-    cellBorderColor       String
-    cellBorderWidth       Int
-    cellBackgroundColor   String
-    cellBackgroundOpacity Int
-    bingo                 Bingo    @relation(fields: [bingoId], references: [id])
-    bingoId               String   @unique
-    createdAt             DateTime @default(now())
-}
-
-model CellStyle {
-    id                          String    @id @default(cuid())
-    color                       String?
-    fontSize                    Int?
-    fontFamily                  String?
-    fontWeight                  String?
-    fontStyle                   String?
-    cellBorderColor             String?
-    cellBorderWidth             Int?
-    cellBackgroundImage         String?
-    cellBackgroundColor         String?
-    cellBackgroundOpacity       Int?
-    cellBackgroundImageOpacity  Int?
-    cellBackgroundImageSize     Int?
-    cellBackgroundImagePosition String?
-    bingoCellId                 String    @unique
-    bingoCell                   BingoCell @relation(fields: [bingoCellId], references: [id])
-    createdAt                   DateTime  @default(now())
-}
-
-model Background {
-    id                      String   @id @default(cuid())
-    value                   String // URL for images, gradient config for gradients
-    backgroundImage         String?
-    backgroundImageOpacity  Int?
-    backgroundImagePosition String?
-    backgroundImageSize     Int?
-    bingo                   Bingo    @relation(fields: [bingoId], references: [id])
-    bingoId                 String   @unique
-    createdAt               DateTime @default(now())
-}
-
-model StampConfig {
-    id      String @id @default(cuid())
-    type    String
-    value   String
-    size    Int
-    opacity Float
-    bingo   Bingo? @relation(fields: [bingoId], references: [id])
-    bingoId String @unique
+    @@index([status, createdAt(sort: Desc)])
+    @@index([userId, createdAt(sort: Desc)])
 }
 
 model BingoCell {
-    id        String     @id @default(cuid())
+    id        String  @id @default(cuid())
     content   String
     position  Int
-    validated Boolean    @default(false)
-    cellStyle CellStyle?
+    validated Boolean @default(false)
+    cellStyle Json?
     bingoId   String
-    bingo     Bingo      @relation(fields: [bingoId], references: [id], onDelete: Cascade)
+    bingo     Bingo   @relation(fields: [bingoId], references: [id], onDelete: Cascade)
+
+    @@index([bingoId])
 }
 
 model Suggestion {
@@ -153,4 +98,6 @@ model Suggestion {
     bingo     Bingo    @relation(fields: [bingoId], references: [id], onDelete: Cascade)
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+
+    @@index([bingoId])
 }
