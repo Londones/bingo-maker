@@ -12,8 +12,10 @@ authTest.describe("Bingo Editor State Management", () => {
       // Wait for the editor to be fully loaded
       await authenticatedPage.waitForSelector("text=New Bingo", { state: "visible", timeout: 10000 });
 
-      await authenticatedPage.getByRole("heading", { name: "New Bingo" }).dblclick();
-      await authenticatedPage.keyboard.type(testTitle);
+      await authenticatedPage.getByRole("heading", { name: "New Bingo" }).click();
+      await authenticatedPage.locator("textarea").fill(testTitle);
+      await authenticatedPage.locator("textarea").blur();
+      await authenticatedPage.waitForTimeout(400);
       await authenticatedPage.getByRole("button", { name: "Save" }).click();
 
       // Wait for save confirmation with increased timeout
@@ -48,13 +50,10 @@ authTest.describe("Bingo Editor State Management", () => {
 
       // Edit title using better selector and more explicit steps
       const titleHeading = authenticatedPage.getByRole("heading", { name: "New Bingo" });
-      await titleHeading.dblclick();
-      await authenticatedPage.keyboard.press("Control+A");
-      await authenticatedPage.keyboard.type(testTitle);
-
-      // Make sure changes are registered
-      await authenticatedPage.keyboard.press("Tab"); // Move focus to ensure change is registered
-      await authenticatedPage.waitForTimeout(500); // Short pause for state to update
+      await titleHeading.click();
+      await authenticatedPage.locator("textarea").fill(testTitle);
+      await authenticatedPage.locator("textarea").blur();
+      await authenticatedPage.waitForTimeout(500); // Allow debounced title update to commit
 
       // Step 2: Navigate to the /me page
       await authenticatedPage.getByRole("button", { name: "Profile" }).click();

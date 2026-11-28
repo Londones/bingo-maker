@@ -181,6 +181,7 @@ const PreviewPanel = React.memo(({ ref }: PreviewPanelProps) => {
                     {editingTitle ? (
                         <textarea
                             ref={titleRef}
+                            autoFocus
                             className='text-center w-full z-10 resize-none overflow-hidden text-4xl text-wrap break-words bg-transparent font-bold rounded-lg'
                             value={localTitle}
                             style={titleStyle}

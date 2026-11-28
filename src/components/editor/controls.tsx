@@ -56,6 +56,10 @@ export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving, board
 
             const savedBingo = await useSaveBingo.mutateAsync(state);
             actions.setBingo(savedBingo);
+            clearEditorState();
+            if (savedBingo.id) {
+                window.history.replaceState({}, "", `/editor/${savedBingo.id}`);
+            }
             toast.success("Bingo saved successfully");
             setJustSaved(true);
 
@@ -66,12 +70,7 @@ export default function Controls({ isPanelOpen, setIsPanelOpen, setSaving, board
                 console.error("Error cleaning up orphaned images:", cleanupError);
                 // Don't show this error to user since the save was successful
             }
-
-            clearEditorState();
-            if (savedBingo.id) {
-                window.history.replaceState({}, "", `/editor/${savedBingo.id}`);
-                return;
-            }
+            return;
         } catch (error) {
             if (error instanceof APIError) {
                 toast.error(error.message);
